@@ -1,0 +1,27 @@
+{
+  "name": "design-paradise-quotation-manager",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Quotation manager with PostgreSQL and Docker Compose",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.js",
+    "backup": "node --env-file-if-exists=.env scripts/backup.js",
+    "restore": "node --env-file-if-exists=.env scripts/restore.js",
+    "recover-admin": "node --env-file-if-exists=.env scripts/recover-admin.js",
+    "setup:docker": "node scripts/setup-docker.js",
+    "test:docker": "docker compose -f compose.test.yaml up --build --abort-on-container-exit --exit-code-from test",
+    "migrate:sqlite": "node --env-file-if-exists=.env scripts/import-sqlite.js"
+  },
+  "dependencies": {
+    "jspdf": "4.2.1",
+    "jspdf-autotable": "5.0.9",
+    "pg": "^8.23.1"
+  }
+}

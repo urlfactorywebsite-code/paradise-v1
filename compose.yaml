@@ -1,0 +1,48 @@
+name: paradise
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-paradise}
+      POSTGRES_USER: ${POSTGRES_USER:-paradise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks: [backend]
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-paradise}
+      PGUSER: ${POSTGRES_USER:-paradise}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      APP_ORIGIN: ${APP_ORIGIN:-}
+    ports:
+      - '127.0.0.1:${APP_PORT:-6400}:6400'
+    volumes:
+      - app_backups:/app/data/backups
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:6400/api/ready").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks: [backend]
+volumes:
+  postgres_data:
+  app_backups:
+networks:
+  backend:

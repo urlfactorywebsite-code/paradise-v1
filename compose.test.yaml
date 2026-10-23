@@ -1,0 +1,29 @@
+name: paradise-test
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: paradise_test
+      POSTGRES_USER: paradise_test
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U paradise_test -d paradise_test]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  test:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: paradise_test
+      PGUSER: paradise_test
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
+    volumes:
+      - ./tests:/app/tests:ro
+    command: [node, --test, tests/api.test.js, tests/backend.test.js, tests/domain.test.js, tests/frontend.test.js, tests/migration.test.js, tests/postgres.test.js]

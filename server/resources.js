@@ -1,0 +1,566 @@
+'use strict';
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const { backupDatabase } = require('./backup');
+const { fail, id, date, validateState } = require('./validation');
+const { listing, report, csvExport, integer } = require('./queries');
+const { quotationPdf } = require('./pdf');
+const DP = require('../shared/domain');
+const names = Object.freeze({
+  customers: 'customers',
+  products: 'products',
+  categories: 'cats',
+  quotations: 'quotes',
+});
+const admin = (user) => {
+  if (user.role !== 'Administrator')
+    fail('Administrator access is required.', 403);
+};
+const versionOf = (req, input) => {
+  if (req.headers['if-match']) {
+    const raw = req.headers['if-match'];
+    if (!/^"?\d+"?$/.test(raw)) fail('Invalid If-Match version.');
+    return Number(raw.replaceAll('"', ''));
+  }
+  return input.version;
+};
+const clean = (input) => {
+  const value = input.data || input;
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    fail('A record object is required.');
+  const data = { ...value };
+  for (const key of ['version', 'updatedAt', 'allowDuplicate', 'revision'])
+    delete data[key];
+  return data;
+};
+function defaults(key, input, state, user) {
+  const data = clean(input),
+    today = new Date().toISOString().slice(0, 10);
+  if (key === 'customers')
+    return {
+      date: today,
+      name: '',
+      co: '',
+      person: '',
+      mob: '',
+      email: '',
+      addr: '',
+      gstin: '',
+      notes: '',
+      ...data,
+      id: data.id || crypto.randomUUID(),
+    };
+  if (key === 'cats')
+    return { on: 1, ...data, id: data.id || crypto.randomUUID() };
+  if (key === 'products')
+    return {
+      on: 1,
+      min: 0,
+      rate: 0,
+      tax: state.set.tax,
+      tiers: null,
+      f: [],
+      ...data,
+      id: data.id || crypto.randomUUID(),
+    };
+  const until = new Date(today + 'T00:00:00Z');
+  until.setUTCDate(until.getUTCDate() + state.set.valid);
+  return {
+    date: today,
+    valid: until.toISOString().slice(0, 10),
+    cid: '',
+    sales: user.name,
+    ref: '',
+    project: '',
+    subject: '',
+    req: '',
+    items: [],
+    disc: { t: 'p', v: 0 },
+    del: 0,
+    oth: 0,
+    terms: structuredClone(state.set.terms),
+    status: 'Draft',
+    ...data,
+    id: data.id || crypto.randomUUID(),
+  };
+}
+function duplicateCustomer(state, data, existingId) {
+  const normalize = (s) =>
+    String(s || '')
+      .trim()
+      .toLowerCase();
+  return state.customers.find(
+    (c) =>
+      c.id !== existingId &&
+      ['mob', 'email', 'gstin'].some(
+        (k) => normalize(data[k]) && normalize(data[k]) === normalize(c[k]),
+      ),
+  );
+}
+function createResources({ store, body, json, publicUser, backupDir }) {
+  return async function handle(req, res, url, user) {
+    const route = url.pathname,
+      method = req.method;
+    const send = (status, value) => {
+      json(res, status, value);
+      return true;
+    };
+    const attachment = (content, mime, filename) => {
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+      res.end(content);
+      return true;
+    };
+    const stateResponse = (result) => ({ ...result, user: publicUser(user) });
+    if (route === '/api/changes' && method === 'POST') {
+      const input = await body(req);
+      if (!Number.isInteger(input.revision))
+        fail('Workspace revision is required.', 428);
+      if (
+        !Array.isArray(input.changes) ||
+        !input.changes.length ||
+        input.changes.length > 200
+      )
+        fail('Send between 1 and 200 changes.');
+      const result = await store.mutate(
+        user,
+        (s) => {
+          const touched = new Set();
+          for (const change of input.changes) {
+            if (
+              !change ||
+              !['cats', 'products', 'customers', 'quotes', 'set'].includes(
+                change.collection,
+              ) ||
+              !['upsert', 'delete'].includes(change.action)
+            )
+              fail('Invalid change operation.');
+            const token = `${change.collection}:${change.id || ''}`;
+            if (touched.has(token))
+              fail('A record can only be changed once per transaction.');
+            touched.add(token);
+            if (change.collection === 'set') {
+              if (change.action !== 'upsert')
+                fail('Settings cannot be deleted.');
+              s.set = change.record;
+              continue;
+            }
+            const recordId = id(change.id),
+              index = s[change.collection].findIndex((x) => x.id === recordId);
+            if (change.action === 'delete') {
+              if (index < 0) fail('Record no longer exists.', 404);
+              s[change.collection].splice(index, 1);
+            } else {
+              if (!change.record || change.record.id !== recordId)
+                fail('Record ID does not match operation.');
+              if (index < 0) s[change.collection].unshift(change.record);
+              else s[change.collection][index] = change.record;
+            }
+          }
+        },
+        input.revision,
+      );
+      return send(200, stateResponse(result));
+    }
+    if (route === '/api/catalog' && method === 'GET') {
+      const { state } = await store.readState();
+      return send(200, { categories: state.cats, products: state.products });
+    }
+    if (route === '/api/pricing/calculate' && method === 'POST') {
+      const input = await body(req),
+        product = (await store.get('products', id(input.productId))).data;
+      if (!product.on || !(await store.get('cats', product.cat)).data.on)
+        fail('Product is inactive.');
+      const result = DP.calc(product, input.cfg);
+      if (result.err) fail(result.err);
+      return send(200, { ...result, currency: 'INR', moneyUnit: 'paise' });
+    }
+    if (route === '/api/quotations/preview' && method === 'POST') {
+      const input = await body(req),
+        { state } = await store.readState(),
+        candidate = structuredClone(state);
+      const q = defaults('quotes', input, state, user),
+        index = candidate.quotes.findIndex((x) => x.id === q.id);
+      if (
+        !Array.isArray(q.items) ||
+        q.items.some((i) => !i || typeof i !== 'object')
+      )
+        fail('Quotation items must be an array of items.');
+      q.items = q.items.map((i) => ({ ...i, id: i.id || crypto.randomUUID() }));
+      if (index >= 0)
+        candidate.quotes[index] = { ...candidate.quotes[index], ...q };
+      else candidate.quotes.unshift(q);
+      const checked = validateState(
+        candidate,
+        state,
+        user,
+        () => 'UNSAVED',
+      ).quotes.find((x) => x.id === q.id);
+      return send(200, {
+        quotation: checked,
+        totals: DP.totals(checked),
+        currency: 'INR',
+        moneyUnit: 'paise',
+      });
+    }
+    if (route === '/api/settings') {
+      if (method === 'GET') {
+        const row = await store.db
+          .prepare('SELECT settings,settings_version FROM workspace WHERE id=1')
+          .get();
+        if (!row) fail('Complete setup.', 409);
+        return send(200, {
+          data: JSON.parse(row.settings),
+          version: row.settings_version,
+        });
+      }
+      if (['PUT', 'PATCH'].includes(method)) {
+        admin(user);
+        const input = await body(req),
+          expected = versionOf(req, input);
+        const result = await store.mutate(user, async (s) => {
+          const version = (
+            await store.db
+              .prepare('SELECT settings_version FROM workspace WHERE id=1')
+              .get()
+          ).settings_version;
+          if (!Number.isInteger(expected))
+            fail('Settings version is required.', 428);
+          if (expected !== version)
+            fail('Company settings changed. Reload before saving.', 409);
+          s.set =
+            method === 'PATCH' ? { ...s.set, ...clean(input) } : clean(input);
+        });
+        return send(200, {
+          data: result.state.set,
+          version: (
+            await store.db
+              .prepare('SELECT settings_version FROM workspace WHERE id=1')
+              .get()
+          ).settings_version,
+          revision: result.revision,
+        });
+      }
+    }
+    if (
+      [
+        '/api/reports/summary',
+        '/api/dashboard',
+        '/api/reports/quotations.csv',
+      ].includes(route) &&
+      method === 'GET'
+    ) {
+      const data = await report(store, url.searchParams);
+      if (route.endsWith('.csv')) {
+        await store.audit(user, 'reports.exported', 'reports', '', {
+          count: data.count,
+        });
+        return attachment(
+          csvExport(data),
+          'text/csv; charset=utf-8',
+          'quotation-report.csv',
+        );
+      }
+      if (route === '/api/dashboard') {
+        const recent = data.quotes.slice(0, 8);
+        delete data.quotes;
+        return send(200, {
+          ...data,
+          recent,
+          activity: (await store.readState()).state.log.slice(0, 10),
+        });
+      }
+      delete data.quotes;
+      return send(200, data);
+    }
+    if (route === '/api/audit' && method === 'GET') {
+      admin(user);
+      const page = integer(url.searchParams.get('page'), 1, 1000000),
+        pageSize = integer(url.searchParams.get('pageSize'), 50, 100);
+      const clauses = [],
+        values = [];
+      for (const [parameter, column] of [
+        ['entityType', 'entity_type'],
+        ['entityId', 'entity_id'],
+        ['actorId', 'actor_id'],
+      ])
+        if (url.searchParams.get(parameter)) {
+          clauses.push(`${column}=?`);
+          values.push(url.searchParams.get(parameter));
+        }
+      const where = clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '';
+      const total = (
+        await store.db
+          .prepare(`SELECT count(*) AS n FROM audit_events${where}`)
+          .get(...values)
+      ).n;
+      const data = (
+        await store.db
+          .prepare(
+            `SELECT * FROM audit_events${where} ORDER BY id DESC LIMIT ? OFFSET ?`,
+          )
+          .all(...values, pageSize, (page - 1) * pageSize)
+      ).map((x) => ({ ...x, details: JSON.parse(x.details) }));
+      return send(200, {
+        data,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize),
+        },
+      });
+    }
+    if (route === '/api/data/export' && method === 'GET') {
+      admin(user);
+      const data = {
+        format: 'design-paradise-workspace',
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        ...(await store.readState()),
+      };
+      await store.audit(user, 'workspace.exported', 'workspace', '', {
+        revision: data.revision,
+      });
+      return attachment(
+        JSON.stringify(data, null, 2),
+        'application/json; charset=utf-8',
+        'design-paradise-workspace.json',
+      );
+    }
+    if (route === '/api/backups' && ['GET', 'POST'].includes(method)) {
+      admin(user);
+      fs.mkdirSync(backupDir, { recursive: true });
+      if (method === 'GET')
+        return send(200, {
+          data: fs
+            .readdirSync(backupDir)
+            .filter((n) => /^paradise-[A-Za-z0-9-]+\.dump$/.test(n))
+            .map((name) => {
+              const stat = fs.statSync(path.join(backupDir, name));
+              return {
+                name,
+                bytes: stat.size,
+                createdAt: stat.mtime.toISOString(),
+              };
+            })
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        });
+      const result = await backupDatabase(store.db, backupDir);
+      await store.audit(user, 'backup.created', 'backup', result.name);
+      return send(201, result);
+    }
+    const backupMatch = /^\/api\/backups\/(paradise-[A-Za-z0-9-]+\.dump)$/.exec(
+      route,
+    );
+    if (backupMatch && method === 'GET') {
+      admin(user);
+      const file = path.join(backupDir, backupMatch[1]);
+      if (!fs.existsSync(file)) fail('Backup not found.', 404);
+      await store.audit(user, 'backup.downloaded', 'backup', backupMatch[1]);
+      return attachment(
+        fs.readFileSync(file),
+        'application/octet-stream',
+        backupMatch[1],
+      );
+    }
+    if (route === '/api/quotations/expire' && method === 'POST') {
+      admin(user);
+      const input = await body(req),
+        asOf = date(input.asOf || new Date().toISOString().slice(0, 10));
+      let count = 0;
+      const result = await store.mutate(
+        user,
+        (s) => {
+          for (const q of s.quotes)
+            if (
+              q.valid < asOf &&
+              [
+                'Pending Internal Review',
+                'Approved Internally',
+                'Sent to Customer',
+              ].includes(q.status)
+            ) {
+              q.status = 'Expired';
+              count++;
+            }
+        },
+        input.revision,
+      );
+      return send(200, { count, ...stateResponse(result) });
+    }
+    const customerQuotes =
+      /^\/api\/customers\/([A-Za-z0-9_-]+)\/quotations$/.exec(route);
+    if (customerQuotes && method === 'GET') {
+      await store.get('customers', customerQuotes[1]);
+      url.searchParams.set('customer', customerQuotes[1]);
+      return send(200, await listing(store, 'quotes', url.searchParams));
+    }
+    const quoteAction =
+      /^\/api\/quotations\/([A-Za-z0-9_-]+)\/(status|duplicate|reprice|history|pdf)$/.exec(
+        route,
+      );
+    if (quoteAction) {
+      const [, recordId, action] = quoteAction;
+      if (method === 'GET' && ['history', 'pdf'].includes(action)) {
+        const record = await store.get('quotes', recordId);
+        if (action === 'history')
+          return send(200, { data: record.data.hist, version: record.version });
+        if (!record.data.items.length)
+          fail('Add an item before generating a PDF.');
+        const buffer = quotationPdf(
+          record.data,
+          (await store.readState()).state,
+        );
+        await store.audit(user, 'quotation.pdf_generated', 'quotes', recordId);
+        return attachment(
+          buffer,
+          'application/pdf',
+          record.data.no.replace(/[^A-Za-z0-9_-]/g, '-') + '.pdf',
+        );
+      }
+      if (
+        method === 'POST' &&
+        ['status', 'duplicate', 'reprice'].includes(action)
+      ) {
+        const input = await body(req),
+          copies = new Map();
+        let savedId = recordId;
+        const result = await store.mutate(
+          user,
+          async (s) => {
+            const source = await store.expectVersion(
+                'quotes',
+                recordId,
+                versionOf(req, input),
+              ),
+              q = s.quotes.find((x) => x.id === recordId);
+            if (action === 'status') q.status = input.status;
+            if (action === 'reprice') q._refreshPrices = true;
+            if (action === 'duplicate') {
+              const copy = structuredClone(source);
+              savedId = crypto.randomUUID();
+              copy.id = savedId;
+              copy.status = 'Draft';
+              copy.date = new Date().toISOString().slice(0, 10);
+              const until = new Date(copy.date);
+              until.setUTCDate(until.getUTCDate() + s.set.valid);
+              copy.valid = until.toISOString().slice(0, 10);
+              copies.set(copy.id, source);
+              s.quotes.unshift(copy);
+            }
+          },
+          undefined,
+          { duplicateSources: copies },
+        );
+        return send(action === 'duplicate' ? 201 : 200, {
+          ...(await store.get('quotes', savedId)),
+          revision: result.revision,
+        });
+      }
+    }
+    const match =
+      /^\/api\/(customers|products|categories|quotations)(?:\/([A-Za-z0-9_-]+))?$/.exec(
+        route,
+      );
+    if (!match) return false;
+    const key = names[match[1]],
+      recordId = match[2];
+    if (method === 'GET')
+      return send(
+        200,
+        recordId
+          ? await store.get(key, recordId)
+          : await listing(store, key, url.searchParams),
+      );
+    if (['products', 'cats'].includes(key)) admin(user);
+    if (method === 'POST' && !recordId) {
+      const input = await body(req);
+      let savedId;
+      const result = await store.mutate(user, (s) => {
+        const data = defaults(key, input, s, user);
+        savedId = id(data.id);
+        if (s[key].some((x) => x.id === savedId))
+          fail('Record ID already exists.', 409);
+        if (
+          key === 'customers' &&
+          !input.allowDuplicate &&
+          duplicateCustomer(s, data)
+        )
+          fail(
+            'A customer already uses that mobile, email, or GSTIN. Set allowDuplicate only after reviewing the match.',
+            409,
+          );
+        if (key === 'quotes') {
+          if (
+            !Array.isArray(data.items) ||
+            data.items.some((i) => !i || typeof i !== 'object')
+          )
+            fail('Quotation items must be an array of items.');
+          data.items = data.items.map((i) => ({
+            ...i,
+            id: i.id || crypto.randomUUID(),
+          }));
+        }
+        s[key].unshift(data);
+      });
+      return send(201, {
+        ...(await store.get(key, savedId)),
+        revision: result.revision,
+      });
+    }
+    if (recordId && ['PATCH', 'PUT', 'DELETE'].includes(method)) {
+      const input = await body(req);
+      const result = await store.mutate(user, async (s) => {
+        const current = await store.expectVersion(
+          key,
+          recordId,
+          versionOf(req, input),
+        );
+        if (method === 'DELETE') {
+          if (key === 'customers' && s.quotes.some((q) => q.cid === recordId))
+            fail('This customer has quotations and cannot be deleted.', 409);
+          if (key === 'cats' && s.products.some((p) => p.cat === recordId))
+            fail('Move or remove products before deleting this category.', 409);
+          s[key] = s[key].filter((x) => x.id !== recordId);
+          return;
+        }
+        const updated = {
+          ...(method === 'PATCH' ? current : {}),
+          ...clean(input),
+          id: recordId,
+        };
+        if (key === 'quotes') {
+          if (
+            !Array.isArray(updated.items) ||
+            updated.items.some((i) => !i || typeof i !== 'object')
+          )
+            fail('Quotation items must be an array of items.');
+          updated.status = current.status;
+          updated.items = updated.items.map((i) => ({
+            ...i,
+            id: i.id || crypto.randomUUID(),
+          }));
+        }
+        if (
+          key === 'customers' &&
+          !input.allowDuplicate &&
+          duplicateCustomer(s, updated, recordId)
+        )
+          fail('A customer already uses that mobile, email, or GSTIN.', 409);
+        s[key][s[key].findIndex((x) => x.id === recordId)] = updated;
+      });
+      return send(
+        200,
+        method === 'DELETE'
+          ? { ok: true, revision: result.revision }
+          : { ...(await store.get(key, recordId)), revision: result.revision },
+      );
+    }
+    fail('Method not allowed.', 405);
+  };
+}
+module.exports = { createResources };
