@@ -11,6 +11,7 @@
     "start": "node --env-file-if-exists=.env server.js",
     "dev": "node --env-file-if-exists=.env server.js",
     "test": "node --test tests/*.test.js",
+    "test:browser": "node tests/browser-ui.cjs",
     "check": "node scripts/check.js",
     "backup": "node --env-file-if-exists=.env scripts/backup.js",
     "restore": "node --env-file-if-exists=.env scripts/restore.js",
@@ -23,5 +24,8 @@
     "jspdf": "4.2.1",
     "jspdf-autotable": "5.0.9",
     "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }

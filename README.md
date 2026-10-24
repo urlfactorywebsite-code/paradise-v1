@@ -13,7 +13,7 @@ docker compose up -d --build
 
 Open **http://127.0.0.1:6400**. The setup command creates a random PostgreSQL password in the private `.env` file without printing it. It preserves an existing configured password. Never commit `.env`.
 
-The app waits for a healthy database and applies its versioned schema transactionally. Fresh installations show administrator setup with no default login. Passwords must contain 12-128 characters. Review sample catalog prices and company placeholders before issuing quotations.
+The app waits for a healthy database and applies its versioned schema transactionally. Fresh installations show administrator setup with no default login. Passwords must contain 12-128 characters. Review sample catalog prices and sample company details before issuing quotations.
 
 The database is available only inside the Compose network. `APP_PORT` in `.env` controls the host app port; it binds to loopback by default. `postgres_data` stores the database and `app_backups` stores database backups. Rebuilding or recreating containers preserves these named volumes.
 
@@ -73,11 +73,15 @@ The Docker test stack uses a separate Compose project and a disposable PostgreSQ
 
 ## Behavior and API
 
-All accounts share one company workspace. Employees manage customers and quotations and view reports. Administrators additionally manage catalog, pricing, settings, team, approvals, audit, exports and backups. Employees cannot delete quotations beyond Draft/Cancelled. Disabling an account or changing access revokes sessions; temporary password resets require password rotation. Sessions expire after 12 hours.
+All accounts share one company workspace. Employees normally view their own quotations, edit their own Drafts, manage permitted customers and view their own reports. User Management supports explicit permission overrides; catalog administration and pricing administration have separate permissions. Quotation deletion requires explicit permission. Independent internal approval is enabled by default, so a creator needs another authorized approver. Disabling an account or changing access revokes sessions; temporary password resets require password rotation. Sessions expire after 12 hours.
 
 Saved quotation prices, customer details, company details and taxes remain snapshots. Repricing explicitly refreshes item prices. Duplicating retains snapshots and creates a Draft with a new number. Deleted quotation numbers are never reused. Reports show quoted values, not collected revenue. Status changes and downloads do not send email.
 
-While signed in, open `/api.html` or `/api/openapi.json`; see [docs/API.md](docs/API.md). Writes require JSON and the login CSRF token. Record updates/deletes require versions; workspace changes require a revision. Transactions serialize company mutations across app instances, preserve atomic batches and prevent duplicate numbering. PostgreSQL foreign keys and indexes enforce storage dependencies. Health/readiness endpoints `/api/health` and `/api/ready` report `database: postgresql` and schema version 3.
+While signed in, open `/api.html` or `/api/openapi.json`; see [docs/API.md](docs/API.md). Writes require JSON and the login CSRF token. Record updates/deletes require versions; workspace changes require a revision. Transactions serialize company mutations across app instances, preserve atomic batches and prevent duplicate numbering. PostgreSQL foreign keys and indexes enforce storage dependencies. Health/readiness endpoints `/api/health` and `/api/ready` report `database: postgresql` and schema version 4. The additive migration preserves existing records, maps only unambiguous legacy quotation owners, and keeps unresolved historical records restricted to authorized organization-wide viewers.
+
+The SRS implementation adds six pricing methods, conditional/numeric product fields, compatibility and charge rules, discount controls, tax treatments, expanded catalog templates, company logo/signatory/footer controls and a dedicated WhatsApp sharing history. Existing workspaces can use **Products & Services > Add missing SRS catalog entries** to add inactive templates without replacing their current catalog or prices. Configure approved prices before activating them.
+
+WhatsApp currently uses the explicit manual fallback: review the message and international recipient number, prepare/download the protected PDF, open WhatsApp, attach and send the PDF manually, then record the outcome. Prepared and Manually Confirmed are not provider delivery receipts. Automated PDF delivery requires an official Business provider and credentials; none were configured or used. See the [SRS coverage and verification](docs/SRS-COVERAGE.md) and [user guide](docs/USER-GUIDE.md).
 
 `server.js` handles HTTP/authentication; `server/database.js` owns the PostgreSQL pool and transaction context; `server/store.js` and `server/schema.sql` own schema/storage; `server/validation.js` enforces business rules; `server/resources.js` and `server/accounts.js` implement business/account APIs. `shared/domain.js` is the shared pricing engine. Browser sources are in `public/`; builds create `dist/`.
 

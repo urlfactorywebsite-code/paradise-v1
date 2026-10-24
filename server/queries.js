@@ -2,6 +2,7 @@
 const { TABLES } = require('./store');
 const { fail, date } = require('./validation');
 const DP = require('../shared/domain');
+const { hasPermission, requirePermission } = require('./access');
 function integer(value, fallback, max) {
   if (value === null || value === undefined) return fallback;
   if (!/^\d+$/.test(String(value)) || Number(value) < 1 || Number(value) > max)
@@ -9,10 +10,19 @@ function integer(value, fallback, max) {
   return Number(value);
 }
 const like = (text) => `%${text.replace(/[\\%_]/g, '\\$&')}%`;
-function filters(key, params) {
+function filters(key, params, user, reportScope = false) {
   const clauses = [],
     values = [];
   const q = params.get('q');
+  if (key === 'quotes' && user) {
+    const all = reportScope ? 'reports.view_all' : 'quotation.view_all',
+      own = reportScope ? 'reports.view_own' : 'quotation.view_own';
+    if (!hasPermission(user, all)) {
+      requirePermission(user, own);
+      clauses.push('owner_id=?');
+      values.push(user.id);
+    }
+  }
   if (q) {
     if (q.length > 200) fail('Search is too long.');
     clauses.push("body ILIKE ? ESCAPE '\\'");
@@ -24,6 +34,7 @@ function filters(key, params) {
           status: 'status',
           customer: 'customer_id',
           salesperson: 'salesperson',
+          employee: 'owner_id',
         }
       : key === 'products'
         ? { category: 'category_id' }
@@ -73,14 +84,14 @@ function filters(key, params) {
     values,
   };
 }
-async function listing(store, key, params) {
+async function listing(store, key, params, user) {
   if (!store.db.inTransaction)
-    return store.transaction(() => listing(store, key, params));
+    return store.transaction(() => listing(store, key, params, user));
   const table = TABLES[key];
   if (!table) fail('Unknown resource.', 404);
   const page = integer(params.get('page'), 1, 1000000),
     pageSize = integer(params.get('pageSize'), 25, 100);
-  const { where, values } = filters(key, params);
+  const { where, values } = filters(key, params, user);
   const allowed =
     key === 'quotes'
       ? ['date', 'number', 'total', 'status', 'updated_at']
@@ -101,13 +112,14 @@ async function listing(store, key, params) {
       `SELECT id FROM ${table}${where} ORDER BY ${sort} ${direction},id LIMIT ? OFFSET ?`,
     )
     .all(...values, pageSize, (page - 1) * pageSize);
+  const data = [];
+  // Transaction reads share one pg client and must be awaited serially.
+  for (const row of rows) {
+    const r = await store.get(key, row.id);
+    data.push({ ...r.data, version: r.version, updatedAt: r.updatedAt });
+  }
   return {
-    data: await Promise.all(
-      rows.map(async (row) => {
-        const r = await store.get(key, row.id);
-        return { ...r.data, version: r.version, updatedAt: r.updatedAt };
-      }),
-    ),
+    data,
     pagination: {
       page,
       pageSize,
@@ -116,10 +128,10 @@ async function listing(store, key, params) {
     },
   };
 }
-async function report(store, params) {
+async function report(store, params, user) {
   if (!store.db.inTransaction)
-    return store.transaction(() => report(store, params));
-  const { where, values } = filters('quotes', params);
+    return store.transaction(() => report(store, params, user));
+  const { where, values } = filters('quotes', params, user, true);
   const db = store.db,
     total = await db
       .prepare(
@@ -135,10 +147,8 @@ async function report(store, params) {
   const ids = await db
     .prepare(`SELECT id FROM quotations${where} ORDER BY date DESC,number DESC`)
     .all(...values);
-  const quotes = await Promise.all(
-      ids.map(async (r) => (await store.get('quotes', r.id)).data),
-    ),
-    productMap = new Map();
+  const quotes = [], productMap = new Map();
+  for (const row of ids) quotes.push((await store.get('quotes', row.id)).data);
   for (const q of quotes)
     for (const item of q.items) {
       const row = productMap.get(item.pid) || {
@@ -157,13 +167,22 @@ async function report(store, params) {
       x.name,
     ]),
   );
+  const sharingStatuses = await db.prepare(
+    `SELECT status AS key,count(*) AS count FROM whatsapp_message_logs WHERE quotation_id IN (SELECT id FROM quotations${where}) GROUP BY status`,
+  ).all(...values);
+  const sharingCount = (status) => sharingStatuses.find((row) => row.key === status)?.count || 0;
   return {
     ...total,
     currency: 'INR',
     moneyUnit: 'paise',
+    whatsapp: { attempts: sharingStatuses.reduce((sum, row) => sum + row.count, 0),
+      prepared: sharingCount('Prepared'), manuallyConfirmed: sharingCount('Manually Confirmed'),
+      failed: sharingCount('Failed'), automatedDelivery: false },
     byStatus: await group('status'),
     byDate: await group('date'),
     bySalesperson: await group('salesperson'),
+    byEmployee: (await group('owner_id')).map((row) => ({ ...row,
+      name: quotes.find((q) => q.createdBy === row.key)?.by || 'Legacy / unassigned' })),
     byCustomer: (await group('customer_id')).map((x) => ({
       ...x,
       name: customers.get(x.key),

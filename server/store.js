@@ -4,6 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const DP = require('../shared/domain');
 const { validateState, fail } = require('./validation');
+const { authorizeChanges, scopeState, permissionOverrides, effectivePermissions } = require('./access');
 const TABLES = Object.freeze({
   cats: 'categories',
   products: 'products',
@@ -21,7 +22,7 @@ async function createStore(db) {
     const schema = await db
       .prepare('SELECT max(version) AS version FROM schema_migrations')
       .get();
-    if (schema.version > 3)
+    if (schema.version > 4)
       throw new Error(
         'Database schema is newer than this server. Refusing to downgrade.',
       );
@@ -32,6 +33,10 @@ async function createStore(db) {
       await db
         .prepare('INSERT INTO schema_migrations VALUES(3,?)')
         .run(timestamp());
+    }
+    if ((schema.version || 3) < 4) {
+      await db.exec(fs.readFileSync(path.join(__dirname, 'migrations', '004-access-whatsapp.sql'), 'utf8'));
+      await db.prepare('INSERT INTO schema_migrations VALUES(4,?)').run(timestamp());
     }
   });
   async function audit(
@@ -92,12 +97,15 @@ async function createStore(db) {
     state.log = (
       await db
         .prepare(
-          "SELECT at,actor_name,action,entity_type,entity_id,details FROM audit_events WHERE entity_type IN ('workspace','cats','products','customers','quotes','settings') ORDER BY id DESC LIMIT 100",
+          "SELECT at,actor_id,actor_name,action,entity_type,entity_id,details FROM audit_events WHERE entity_type IN ('workspace','cats','products','customers','quotes','settings') ORDER BY id DESC LIMIT 100",
         )
         .all()
     ).map((e) => ({
       t: e.at,
       u: e.actor_name,
+      actorId: e.actor_id,
+      entityType: e.entity_type,
+      entityId: e.entity_id,
       x:
         JSON.parse(e.details).message ||
         `${e.action}${e.entity_id ? ' - ' + e.entity_id : ''}`,
@@ -150,6 +158,7 @@ async function createStore(db) {
             'valid_until',
             'status',
             'salesperson',
+            'owner_id',
             'total',
           ];
           values.push(
@@ -159,6 +168,7 @@ async function createStore(db) {
             record.valid,
             record.status,
             record.sales,
+            record.createdBy || null,
             DP.totals(record, state.set).grand,
           );
         }
@@ -211,6 +221,8 @@ async function createStore(db) {
       .run(revision, JSON.stringify(state.set), now, settingsChanged ? 1 : 0);
   }
   async function initialize(state, actor) {
+    for (const q of state.quotes) q.createdBy = actor.id;
+    for (const c of state.customers) c.createdBy = actor.id;
     await writeState(state, null, 1);
     for (const q of state.quotes) {
       const match = /\/(\d{4})\/(\d+)$/.exec(q.no);
@@ -227,16 +239,21 @@ async function createStore(db) {
         : 'Workspace created with sample catalog',
     });
   }
-  async function allocateNumber(date, prefix) {
+  async function allocateNumber(date, prefix, sequenceStart = 1) {
     const year = date.slice(0, 4);
     await db
       .prepare(
-        'INSERT INTO quote_sequences VALUES(?,1) ON CONFLICT(year) DO UPDATE SET value=quote_sequences.value+1',
+        'INSERT INTO quote_sequences VALUES(?,?) ON CONFLICT(year) DO UPDATE SET value=greatest(quote_sequences.value+1,excluded.value)',
       )
-      .run(year);
+      .run(year, sequenceStart);
     return `${prefix}/${year}/${String((await db.prepare('SELECT value FROM quote_sequences WHERE year=?').get(year)).value).padStart(4, '0')}`;
   }
   async function commit(candidate, previous, actor, options) {
+    authorizeChanges(candidate, previous.state, actor);
+    const retained = new Set(candidate.quotes.map((q) => q.id));
+    for (const old of previous.state.quotes) if (!retained.has(old.id) &&
+      await db.prepare('SELECT id FROM whatsapp_message_logs WHERE quotation_id=? LIMIT 1').get(old.id))
+      fail('Quotations with sharing history must be retained. Cancel the quotation instead.', 409);
     // Validate synchronously first; allocate real numbers only for valid new
     // quotations inside the same PostgreSQL transaction as their records.
     const state = validateState(
@@ -249,7 +266,7 @@ async function createStore(db) {
     const existing = new Set(previous.state.quotes.map((q) => q.id));
     for (const q of state.quotes)
       if (!existing.has(q.id))
-        q.no = await allocateNumber(q.date, state.set.prefix);
+        q.no = await allocateNumber(q.date, state.set.prefix, state.set.sequenceStart || 1);
     await writeState(state, previous.state, previous.revision + 1);
     for (const key of Object.keys(TABLES)) {
       const old = new Map(previous.state[key].map((x) => [x.id, x]));
@@ -284,7 +301,7 @@ async function createStore(db) {
   function mutate(actor, fn, revision, options) {
     return transaction(async () => {
       const currentActor = await db
-        .prepare('SELECT active,role FROM users WHERE id=?')
+        .prepare('SELECT * FROM users WHERE id=?')
         .get(actor.id);
       if (
         !currentActor?.active ||
@@ -296,6 +313,8 @@ async function createStore(db) {
         fail('Please sign in again.', 401);
       if (currentActor.role !== actor.role)
         fail('Account access changed. Sign in again.', 403);
+      actor = { ...actor, ...currentActor, permissionOverrides: permissionOverrides(currentActor),
+        permissions: effectivePermissions(currentActor) };
       const previous = await readState();
       if (
         revision !== undefined &&
@@ -307,7 +326,7 @@ async function createStore(db) {
         );
       const candidate = structuredClone(previous.state);
       await fn(candidate, previous);
-      return await commit(candidate, previous, actor, options);
+      return scopeState(await commit(candidate, previous, actor, options), actor);
     });
   }
   async function get(key, id) {
@@ -336,10 +355,11 @@ async function createStore(db) {
     }
     return { data, version: row.version, updatedAt: row.updated_at };
   }
-  async function expectVersion(key, id, version) {
+  async function expectVersion(key, id, version, actor) {
     if (!Number.isInteger(version) || version < 1)
       fail('A current record version is required.', 428);
     const current = await get(key, id);
+    if (key === 'quotes' && actor) require('./access').requireQuoteAccess(actor, current.data);
     if (current.version !== version)
       fail(
         'This record changed in another session. Reload before saving.',

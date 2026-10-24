@@ -46,7 +46,7 @@ async function restore(source, name, options = {}) {
       const version = await restored
         .prepare('SELECT max(version) AS version FROM schema_migrations')
         .get();
-      if (version.version !== 3) throw new Error('Unsupported backup schema.');
+      if (![3, 4].includes(version.version)) throw new Error('Unsupported backup schema.');
       await restored.exec('DELETE FROM sessions; DELETE FROM auth_attempts;');
       await restored.prepare('SELECT count(*) FROM quotations').get();
     } finally {

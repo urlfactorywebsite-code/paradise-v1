@@ -7,6 +7,8 @@ const { fail, id, date, validateState } = require('./validation');
 const { listing, report, csvExport, integer } = require('./queries');
 const { quotationPdf } = require('./pdf');
 const DP = require('../shared/domain');
+const { requirePermission, hasPermission, requireQuoteAccess, scopeState, authorizeChanges } = require('./access');
+const { createWhatsApp } = require('./whatsapp');
 const names = Object.freeze({
   customers: 'customers',
   products: 'products',
@@ -99,6 +101,11 @@ function duplicateCustomer(state, data, existingId) {
   );
 }
 function createResources({ store, body, json, publicUser, backupDir }) {
+  const whatsapp = createWhatsApp({ store, body, json });
+  const requireCatalogRead = (user) => {
+    if (!hasPermission(user, 'product.view') && !hasPermission(user, 'product.manage') && !hasPermission(user, 'pricing.manage'))
+      fail('You do not have permission for this action.', 403);
+  };
   return async function handle(req, res, url, user) {
     const route = url.pathname,
       method = req.method;
@@ -114,7 +121,8 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       res.end(content);
       return true;
     };
-    const stateResponse = (result) => ({ ...result, user: publicUser(user) });
+    const stateResponse = (result) => ({ ...scopeState(result, user), user: publicUser(user) });
+    if (await whatsapp(req, res, url, user)) return true;
     if (route === '/api/changes' && method === 'POST') {
       const input = await body(req);
       if (!Number.isInteger(input.revision))
@@ -166,10 +174,14 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       return send(200, stateResponse(result));
     }
     if (route === '/api/catalog' && method === 'GET') {
+      requireCatalogRead(user);
       const { state } = await store.readState();
-      return send(200, { categories: state.cats, products: state.products });
+      const managesCatalog = hasPermission(user, 'product.manage') || hasPermission(user, 'pricing.manage');
+      return send(200, { categories: state.cats.filter((c) => c.on || managesCatalog), products: state.products.filter((p) => p.on || managesCatalog) });
     }
     if (route === '/api/pricing/calculate' && method === 'POST') {
+      requireCatalogRead(user);
+      if (!hasPermission(user, 'pricing.view')) requirePermission(user, 'pricing.manage');
       const input = await body(req),
         product = (await store.get('products', id(input.productId))).data;
       if (!product.on || !(await store.get('cats', product.cat)).data.on)
@@ -193,6 +205,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       if (index >= 0)
         candidate.quotes[index] = { ...candidate.quotes[index], ...q };
       else candidate.quotes.unshift(q);
+      authorizeChanges(candidate, state, user);
       const checked = validateState(
         candidate,
         state,
@@ -218,7 +231,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         });
       }
       if (['PUT', 'PATCH'].includes(method)) {
-        admin(user);
+        requirePermission(user, 'settings.manage');
         const input = await body(req),
           expected = versionOf(req, input);
         const result = await store.mutate(user, async (s) => {
@@ -253,7 +266,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       ].includes(route) &&
       method === 'GET'
     ) {
-      const data = await report(store, url.searchParams);
+      const data = await report(store, url.searchParams, user);
       if (route.endsWith('.csv')) {
         await store.audit(user, 'reports.exported', 'reports', '', {
           count: data.count,
@@ -270,14 +283,14 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         return send(200, {
           ...data,
           recent,
-          activity: (await store.readState()).state.log.slice(0, 10),
+          activity: scopeState(await store.readState(), user).state.log.slice(0, 10),
         });
       }
       delete data.quotes;
       return send(200, data);
     }
     if (route === '/api/audit' && method === 'GET') {
-      admin(user);
+      requirePermission(user, 'audit.view');
       const page = integer(url.searchParams.get('page'), 1, 1000000),
         pageSize = integer(url.searchParams.get('pageSize'), 50, 100);
       const clauses = [],
@@ -395,9 +408,10 @@ function createResources({ store, body, json, publicUser, backupDir }) {
     const customerQuotes =
       /^\/api\/customers\/([A-Za-z0-9_-]+)\/quotations$/.exec(route);
     if (customerQuotes && method === 'GET') {
+      requirePermission(user, 'customer.view');
       await store.get('customers', customerQuotes[1]);
       url.searchParams.set('customer', customerQuotes[1]);
-      return send(200, await listing(store, 'quotes', url.searchParams));
+      return send(200, await listing(store, 'quotes', url.searchParams, user));
     }
     const quoteAction =
       /^\/api\/quotations\/([A-Za-z0-9_-]+)\/(status|duplicate|reprice|history|pdf)$/.exec(
@@ -407,10 +421,12 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       const [, recordId, action] = quoteAction;
       if (method === 'GET' && ['history', 'pdf'].includes(action)) {
         const record = await store.get('quotes', recordId);
+        requireQuoteAccess(user, record.data);
         if (action === 'history')
           return send(200, { data: record.data.hist, version: record.version });
         if (!record.data.items.length)
           fail('Add an item before generating a PDF.');
+        requirePermission(user, 'quotation.download_pdf');
         const buffer = quotationPdf(
           record.data,
           (await store.readState()).state,
@@ -436,9 +452,14 @@ function createResources({ store, body, json, publicUser, backupDir }) {
                 'quotes',
                 recordId,
                 versionOf(req, input),
+                user,
               ),
               q = s.quotes.find((x) => x.id === recordId);
-            if (action === 'status') q.status = input.status;
+            requireQuoteAccess(user, source);
+            if (action === 'status') {
+              q.status = input.status;
+              q._statusRemarks = input.remarks ?? input.reason ?? '';
+            }
             if (action === 'reprice') q._refreshPrices = true;
             if (action === 'duplicate') {
               const copy = structuredClone(source);
@@ -469,14 +490,19 @@ function createResources({ store, body, json, publicUser, backupDir }) {
     if (!match) return false;
     const key = names[match[1]],
       recordId = match[2];
-    if (method === 'GET')
+    if (method === 'GET') {
+      if (key === 'customers') requirePermission(user, 'customer.view');
+      if (['cats', 'products'].includes(key)) requireCatalogRead(user);
+      const record = recordId ? await store.get(key, recordId) : null;
+      if (key === 'quotes' && record) requireQuoteAccess(user, record.data);
       return send(
         200,
-        recordId
-          ? await store.get(key, recordId)
-          : await listing(store, key, url.searchParams),
+        record || await listing(store, key, url.searchParams, user),
       );
-    if (['products', 'cats'].includes(key)) admin(user);
+    }
+    if (key === 'cats') requirePermission(user, 'product.manage');
+    if (key === 'products' && !hasPermission(user, 'product.manage') && !hasPermission(user, 'pricing.manage'))
+      fail('You do not have permission for this action.', 403);
     if (method === 'POST' && !recordId) {
       const input = await body(req);
       let savedId;
@@ -519,6 +545,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
           key,
           recordId,
           versionOf(req, input),
+          user,
         );
         if (method === 'DELETE') {
           if (key === 'customers' && s.quotes.some((q) => q.cid === recordId))

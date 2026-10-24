@@ -10,6 +10,8 @@ const { createStore } = require('./server/store');
 const { createResources } = require('./server/resources');
 const { createAccounts } = require('./server/accounts');
 const { fail, str } = require('./server/validation');
+const { PERMISSIONS, EMPLOYEE_PERMISSIONS, effectivePermissions, permissionOverrides, permissionInput,
+  requirePermission, hasPermission, canViewQuote, scopeState } = require('./server/access');
 const scrypt = promisify(crypto.scrypt);
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
 const cookieName = 'paradise_session';
@@ -23,6 +25,8 @@ const publicUser = (u) =>
         active: u.active !== 0,
         mustChangePassword: Boolean(u.must_change_password),
         version: u.version || 1,
+        permissions: effectivePermissions(u),
+        permissionOverrides: permissionOverrides(u),
       }
     : null;
 const sessionLifetime = 12 * 60 * 60 * 1000;
@@ -412,7 +416,7 @@ async function createApp(options = {}) {
         }
         if (route === '/api/state' && req.method === 'GET')
           return json(res, 200, {
-            ...(await readState()),
+            ...scopeState(await readState(), session),
             user: publicUser(session),
           });
         if (
@@ -436,15 +440,18 @@ async function createApp(options = {}) {
                 'quotes',
                 'set',
               ])
-                candidate[key] = input.state[key];
+                if (key === 'quotes' && Array.isArray(input.state.quotes)) {
+                  const hidden = candidate.quotes.filter((q) => !canViewQuote(session, q));
+                  const ids = new Set(input.state.quotes.map((q) => q?.id));
+                  candidate.quotes = [...input.state.quotes, ...hidden.filter((q) => !ids.has(q.id))];
+                } else candidate[key] = input.state[key];
             },
             input.revision,
           );
           return json(res, 200, { ...result, user: publicUser(session) });
         }
         if (route === '/api/users') {
-          if (session.role !== 'Administrator')
-            fail('Administrator access is required.', 403);
+          requirePermission(session, 'users.manage');
           if (req.method === 'GET')
             return json(res, 200, {
               users: (
@@ -456,15 +463,20 @@ async function createApp(options = {}) {
               details = userInput(input);
             if (!['Administrator', 'Employee'].includes(input.role))
               fail('Invalid user role.');
+            if (session.role !== 'Administrator' && input.role === 'Administrator')
+              fail('Only administrators may manage administrator accounts.', 403);
+            const permissions = permissionInput(input.permissions);
+            if (session.role !== 'Administrator' && effectivePermissions({ role: input.role, permissions_json: permissions === null ? null : JSON.stringify(permissions) }).some((p) => !hasPermission(session, p)))
+              fail('You cannot grant permissions you do not hold.', 403);
             const encoded = await passwordHash(input.password),
-              user = { id: crypto.randomUUID(), ...details, role: input.role };
+              user = { id: crypto.randomUUID(), ...details, role: input.role, permissions_json: permissions === null ? null : JSON.stringify(permissions) };
             await transaction(async () => {
               const creator = await db
-                .prepare('SELECT active,role FROM users WHERE id=?')
+                .prepare('SELECT * FROM users WHERE id=?')
                 .get(session.id);
               if (
                 !creator?.active ||
-                creator.role !== 'Administrator' ||
+                !hasPermission(creator, 'users.manage') ||
                 !(await currentSession(req))
               )
                 fail('Administrator access is required.', 403);
@@ -476,15 +488,19 @@ async function createApp(options = {}) {
                 fail('Username already exists.', 409);
               await db
                 .prepare(
-                  'INSERT INTO users(id,name,username,password_hash,role) VALUES(?,?,?,?,?)',
+                  'INSERT INTO users(id,name,username,password_hash,role,permissions_json) VALUES(?,?,?,?,?,?)',
                 )
-                .run(user.id, user.name, user.username, encoded, user.role);
+                .run(user.id, user.name, user.username, encoded, user.role, user.permissions_json);
               await store.audit(session, 'user.created', 'users', user.id, {
                 role: user.role,
               });
             });
             return json(res, 201, { user: publicUser(user) });
           }
+        }
+        if (route === '/api/permissions' && req.method === 'GET') {
+          requirePermission(session, 'users.manage');
+          return json(res, 200, { permissions: PERMISSIONS, employeeDefaults: EMPLOYEE_PERMISSIONS });
         }
         if (route === '/api/openapi.json' && req.method === 'GET')
           return json(res, 200, require('./server/openapi'));

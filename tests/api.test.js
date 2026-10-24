@@ -518,7 +518,12 @@ test('employee role can save customers but cannot administer users, catalog, set
     ).status,
     403,
   );
-  const current = await readState(employee);
+  let current = await readState(employee);
+  assert.equal(current.state.quotes.length, 0, 'An employee must not receive seeded administrator quotations');
+  success(await employee.request('/api/quotations', { method: 'POST', body: newQuote(current.state, 'employee_draft') }));
+  const pending = success(await employee.request('/api/quotations', { method: 'POST', body: newQuote(current.state, 'employee_pending') }));
+  success(await employee.request('/api/quotations/employee_pending/status', { method: 'POST', body: { version: pending.version, status: 'Pending Internal Review' } }));
+  current = await readState(employee);
   const prohibited = [
     (state) => {
       state.set.name = 'Unauthorized company';

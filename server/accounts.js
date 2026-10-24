@@ -1,5 +1,6 @@
 'use strict';
 const { fail } = require('./validation');
+const { requirePermission, hasPermission, permissionInput, effectivePermissions } = require('./access');
 function createAccounts({
   store,
   body,
@@ -24,12 +25,20 @@ function createAccounts({
     return fresh;
   }
   async function admin(actor) {
-    if ((await currentUser(actor)).role !== 'Administrator')
-      fail('Administrator access is required.', 403);
+    const fresh = await currentUser(actor);
+    requirePermission(fresh, 'users.manage');
+    return fresh;
   }
-  async function target(id, version) {
+  async function manageable(actor, targetUser) {
+    const fresh = await currentUser(actor);
+    if (!targetUser || fresh.role === 'Administrator') return;
+    if (targetUser.role === 'Administrator' || effectivePermissions(targetUser).some((p) => !hasPermission(fresh, p)))
+      fail('You may manage only employee accounts whose permissions are within your own access.', 403);
+  }
+  async function target(id, version, actor) {
     const u = await db.prepare('SELECT * FROM users WHERE id=?').get(id);
     if (!u) fail('Account not found.', 404);
+    if (actor) await manageable(actor, u);
     if (!Number.isInteger(version)) fail('Account version is required.', 428);
     if (u.version !== version)
       fail('Account changed. Reload before retrying.', 409);
@@ -103,6 +112,10 @@ function createAccounts({
     if (!match) return false;
     await admin(user);
     const targetId = match[1];
+    const selected = await db.prepare('SELECT * FROM users WHERE id=?').get(targetId);
+    await manageable(user, selected);
+    if (selected?.role === 'Administrator' && user.role !== 'Administrator')
+      fail('Only administrators may manage administrator accounts.', 403);
     if (method === 'GET' && !match[2]) {
       const u = await db
         .prepare('SELECT * FROM users WHERE id=?')
@@ -112,13 +125,13 @@ function createAccounts({
     }
     if (match[2] === 'reset-password' && method === 'POST') {
       const input = await body(req);
-      await target(targetId, input.version);
+      await target(targetId, input.version, user);
       if (targetId === user.id)
         fail('Use Change password for your own account.');
       const encoded = await passwordHash(input.password);
       await store.transaction(async () => {
         await admin(user);
-        await target(targetId, input.version);
+        await target(targetId, input.version, user);
         await db
           .prepare(
             'UPDATE users SET password_hash=?,must_change_password=1,version=version+1 WHERE id=?',
@@ -137,13 +150,22 @@ function createAccounts({
       const input = await body(req);
       await store.transaction(async () => {
         await admin(user);
-        const old = await target(targetId, input.version),
+        const old = await target(targetId, input.version, user),
           details = userInput({
             name: input.name ?? old.name,
             username: input.username ?? old.username,
           });
         const role = input.role ?? old.role,
           active = input.active === undefined ? old.active : input.active;
+        if (role === 'Administrator' && user.role !== 'Administrator')
+          fail('Only administrators may manage administrator accounts.', 403);
+        const permissions = input.permissions === undefined
+          ? old.permissions_json && JSON.parse(old.permissions_json)
+          : permissionInput(input.permissions);
+        const encodedPermissions = permissions === null || permissions === undefined ? null : JSON.stringify(permissions);
+        const actor = await currentUser(user);
+        if (actor.role !== 'Administrator' && effectivePermissions({role, permissions_json: encodedPermissions}).some((p) => !hasPermission(actor, p)))
+          fail('You cannot grant permissions you do not hold.', 403);
         if (
           !['Administrator', 'Employee'].includes(role) ||
           ![true, false, 0, 1].includes(active)
@@ -160,16 +182,17 @@ function createAccounts({
           fail('Username already exists.', 409);
         await db
           .prepare(
-            'UPDATE users SET name=?,username=?,role=?,active=?,version=version+1 WHERE id=?',
+            'UPDATE users SET name=?,username=?,role=?,active=?,permissions_json=?,version=version+1 WHERE id=?',
           )
-          .run(details.name, details.username, role, active ? 1 : 0, targetId);
-        if (old.role !== role || !active || old.username !== details.username)
+          .run(details.name, details.username, role, active ? 1 : 0, encodedPermissions, targetId);
+        if (old.role !== role || !active || old.username !== details.username || old.permissions_json !== encodedPermissions)
           await db
             .prepare('DELETE FROM sessions WHERE user_id=?')
             .run(targetId);
         await store.audit(user, 'user.updated', 'users', targetId, {
           role,
           active: Boolean(active),
+          permissions,
         });
       });
       return send(200, {
@@ -182,7 +205,7 @@ function createAccounts({
       const input = await body(req);
       await store.transaction(async () => {
         await admin(user);
-        const old = await target(targetId, input.version);
+        const old = await target(targetId, input.version, user);
         await lastAdmin(old, { active: false });
         if (targetId === user.id)
           fail('You cannot remove your current account.');

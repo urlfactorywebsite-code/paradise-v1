@@ -8,7 +8,9 @@ The authenticated OpenAPI 3.1 reference at `/api.html` and `/api/openapi.json` e
 
 `GET /api/auth/me` reads the account. `POST /api/auth/password` accepts `{currentPassword,password}` and returns a replacement session after revoking old sessions. `POST /api/auth/logout` invalidates the current session. `/api/auth/sessions` supports GET (list owned sessions) and DELETE (revoke other sessions); DELETE `/api/auth/sessions/{id}` revokes one other owned session.
 
-Catalog, settings, internal approval, team, audit, data export, backup and expiry administration require Administrator. Customer and quotation workflows are available to Employees, subject to deletion/approval rules.
+Administrators have all permissions. Employees inherit own-quotation/customer/report permissions; explicit overrides are configurable through User Management. `GET /api/permissions` lists supported identifiers and defaults. Account create/update accepts `permissions: null` for role defaults or an explicit array. Changed access revokes sessions. Delegated user managers cannot grant permissions they lack or manage more privileged accounts.
+
+Quotation access is enforced using immutable `createdBy` account IDs across state, listing, detail, preview, PDF, status, duplication, reports and sharing history. Editing another employee's quotation requires explicit access/edit permissions. Employees normally edit Drafts only; deletion requires `quotation.delete`. Internal approval requires `quotation.approve`, and the configured independent-approval rule also applies to administrators.
 
 ## Resource convention
 
@@ -72,4 +74,22 @@ Errors return `{error,requestId}`. Codes: 401 unauthenticated, 403 forbidden, 40
 
 ## PostgreSQL storage (v3)
 
-The API contract is unchanged. Health/readiness now report `database: "postgresql"` and `schemaVersion: 3`. Administrator database backups use PostgreSQL custom-format `.dump` files and `application/octet-stream`. Restore requires a new PostgreSQL database name; run it with the Docker commands in the README. SQLite import is an offline command into an empty PostgreSQL workspace.
+Health/readiness report `database: "postgresql"` and `schemaVersion: 4`. The additive migration stores employee permissions, immutable quotation ownership and retained WhatsApp PDF/history records. Unknown legacy creators remain unresolved and restricted. Administrator database backups use PostgreSQL custom-format `.dump` files and `application/octet-stream`. Restore supports schema 3/4 backups and requires a new PostgreSQL database name; run it with the Docker commands in the README. SQLite import is an offline command into an empty PostgreSQL workspace.
+
+## SRS pricing and configuration
+
+Product pricing methods are `fixed`, `unit`, `area`, `tier`, `package`, and `base`. Products support `minQty`, minimum charge `min`, `taxMode: exclusive|inclusive|exempt`, metadata and embedded PNG/JPEG images. Specification fields support `sel`, `txt`, `dim`, `num`, defaults, required flags, numeric limits, whole numbers, and conditions `{key,equals}`. Compatibility and additional charge rules are validated on the server. Master prices are decimal INR; calculated money is integer paise. Metadata/schema changes require `product.manage`; pricing changes require `pricing.manage`. Creating/deleting products and adding/removing paid options require both.
+
+Customers have separate `wa` international WhatsApp numbers, `type`, active `on`, and immutable creator metadata. Quotations accept permitted `contact` overrides for person/mobile/WhatsApp/email/address, and reasoned item `override: {amount,reason}` only with `pricing.override`. Company settings include tax treatment/display, employee discount limits, charge authorization, independent approval, starting sequence, logo/signatory/footer and public notes. The server retains price/contact/company/tax snapshots. Status changes accept `remarks`. Quotation/report filters additionally support `employee` as an immutable creator ID; reports include `byEmployee` and scoped `whatsapp` attempt totals.
+
+## WhatsApp manual PDF sharing
+
+- `GET /api/whatsapp/config`: permitted sharing configuration and template, with no provider credentials.
+- `GET /api/whatsapp/settings`: current manual configuration; `PATCH` requires `settings.manage` and `{version,enabled,mode:"manual",messageTemplate}`.
+- `POST /api/quotations/{id}/whatsapp`: `{version,number?,message?,saveNumber?}` prepares a retained, protected PDF and returns `{data,clickToChatUrl,pdfUrl,instructions,automatedDelivery:false}`. Recipient changes require customer edit permission. With `saveNumber:true`, the reviewed number is saved to the customer in the same transaction. The current quotation version is required.
+- `GET /api/whatsapp/history`: scoped, paginated history. Filters include quotationId/customerId/status/actorId/from/to.
+- `GET /api/whatsapp/history/{id}` and `/pdf`: permitted details and the exact retained PDF.
+- `POST /api/whatsapp/history/{id}/status`: `{status:"Manually Confirmed"|"Failed",notes}` records the staff-confirmed result of a Prepared handoff.
+- `POST /api/whatsapp/history/{id}/retry`: `{version}` creates one linked successor for a failed, unchanged quotation. Changed quotations require a new sharing review. Repeated retries of the same failure are rejected.
+
+Manual [WhatsApp click-to-chat](https://faq.whatsapp.com/5913398998672934) opens a reviewed message; it does not attach or send a PDF. Quotation status remains separate, and the application does not claim provider delivery/read receipts. Automated integrations are rejected until implemented with a configured provider.

@@ -237,8 +237,10 @@ test('catalog/category APIs validate pricing, dependencies, inactive choices, an
 });
 test('quotation CRUD, preview, status, copy, repricing and historical document snapshots are authoritative', async (t) => {
   const f = await fixture(t),
-    a = f.admin,
-    initial = await a.call('/api/state');
+    a = f.admin;
+  const policy = await a.call('/api/settings');
+  await a.call('/api/settings', 'PATCH', { version: policy.version, data: { independentApproval: false } });
+  const initial = await a.call('/api/state');
   const input = freshQuote(initial.state),
     preview = await a.call('/api/quotations/preview', 'POST', input);
   assert.equal(preview.totals.grand, 59000);
@@ -448,23 +450,27 @@ test('employee restrictions cover resources, approval, audits, backups, settings
     { version: 1, data: { tax: 0 } },
     403,
   );
+  await account.call('/api/quotations/Q3', 'GET', undefined, 404);
+  const state = (await account.call('/api/state')).state;
+  assert.equal(state.quotes.length, 0);
+  const own = await account.call('/api/quotations', 'POST', freshQuote(state), 201);
   await account.call(
-    '/api/quotations/Q3/status',
+    '/api/quotations/' + own.data.id + '/status',
     'POST',
     {
-      version: (await account.call('/api/quotations/Q3')).version,
+      version: own.version,
       status: 'Approved Internally',
     },
     403,
   );
   await account.call(
-    '/api/quotations/Q2',
+    '/api/quotations/' + own.data.id,
     'DELETE',
-    { version: (await account.call('/api/quotations/Q2')).version },
+    { version: own.version },
     403,
   );
   await account.call('/api/quotations/expire', 'POST', {}, 403);
-  assert.ok((await account.call('/api/reports/summary')).count > 0);
+  assert.equal((await account.call('/api/reports/summary')).count, 1);
 });
 test('team lifecycle protects the last administrator, revokes sessions and requires temporary-password replacement', async (t) => {
   const f = await fixture(t),

@@ -66,14 +66,14 @@ async function showAudit(page = 1) {
   } catch (error) { failure(error); }
 }
 let reportRequest = 0;
-V.rep = () => `<h1>Reports</h1><div class="note">Totals are quoted values, not revenue or payments received.</div><div class="row">${fld('From date', `<input type="date" value="${RF.a}" onchange="RF.a=this.value;render()">`)}${fld('To date', `<input type="date" value="${RF.b}" onchange="RF.b=this.value;render()">`)}<button class="b2" onclick="repCsv()">Export visible reports to CSV</button></div><div id="server-reports" aria-live="polite">Loading reports…</div>`;
+V.rep = () => `<h1>Reports</h1><div class="note">Totals are quoted values, not revenue or payments received.</div><div class="row">${fld('From date', `<input type="date" value="${RF.a}" onchange="RF.a=this.value;refreshReports()">`)}${fld('To date', `<input type="date" value="${RF.b}" onchange="RF.b=this.value;refreshReports()">`)}<button class="b2" onclick="repCsv()">Export visible reports to CSV</button></div><div id="server-reports" aria-live="polite">Loading reports…</div>`;
 async function loadServerReports() {
-  const request = ++reportRequest, query = new URLSearchParams(); if (RF.a) query.set('from', RF.a); if (RF.b) query.set('to', RF.b);
+  const request = ++reportRequest, query = typeof reportQuery==='function'?reportQuery():new URLSearchParams(); if (RF.a) query.set('from', RF.a); if (RF.b) query.set('to', RF.b);
   try {
     const data = await api('/api/reports/summary?' + query); const element = $('#server-reports'); if (!element || request !== reportRequest) return;
     const table = (title, rows, columns = ['Group', 'Count', 'Quoted value']) => `<div class="card tw"><h2>${esc(title)}</h2><table><tr>${columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') : '<tr><td>No quotations match these dates.</td></tr>'}</table></div>`;
     const rows = items => items.map(i => [i.name || i.key, i.count, inr(i.quotedValue)]);
-    element.innerHTML = `<div class="cards"><div class="card"><b>${data.count}</b><span>Quotations</span></div><div class="card"><b>${inr(data.quotedValue)}</b><span>Quoted value</span></div></div>` + table('Quotations by status', rows(data.byStatus)) + table('Quotations created by date', rows(data.byDate)) + table('Quotations by salesperson', rows(data.bySalesperson)) + table('Most frequently quoted products', data.products.map(p => [p.name, p.timesQuoted, p.quantity]), ['Product', 'Times quoted', 'Total quantity']) + table('Customer-wise history', rows(data.byCustomer)) + table('Approved vs rejected', rows(data.byStatus.filter(s => ['Customer Approved', 'Customer Rejected'].includes(s.key)))) + table('Expired quotations', data.expired.map(q=>[q.number,q.customer,inr(q.quotedValue)]), ['Quotation','Customer','Quoted value']);
+    element.innerHTML = `<div class="cards"><div class="card"><b>${data.count}</b><span>Quotations</span></div><div class="card"><b>${inr(data.quotedValue)}</b><span>Quoted value</span></div></div>` + table('Quotations by status', rows(data.byStatus)) + table('Quotations created by date', rows(data.byDate)) + table('Quotations by employee', rows(data.byEmployee||data.bySalesperson)) + table('Most frequently quoted products', data.products.map(p => [p.name, p.timesQuoted, p.quantity]), ['Product', 'Times quoted', 'Total quantity']) + table('Customer-wise history', rows(data.byCustomer)) + table('Approved vs rejected', rows(data.byStatus.filter(s => ['Customer Approved', 'Customer Rejected'].includes(s.key)))) + table('Expired quotations', data.expired.map(q=>[q.number,q.customer,inr(q.quotedValue)]), ['Quotation','Customer','Quoted value']);
   } catch (error) { const element = $('#server-reports'); if (element) element.textContent = error.message; }
 }
 const customersView = V.cust;
@@ -95,5 +95,3 @@ async function dupQ(id) {
   try { const source = await api('/api/quotations/' + id); const copied = await api('/api/quotations/' + id + '/duplicate', { method: 'POST', body: JSON.stringify({ version: source.version }) }); adopt(await api('/api/state')); Q = null; render(); toast('Duplicated as ' + copied.data.no); }
   catch (error) { failure(error); } finally { lock(false); }
 }
-
-start();

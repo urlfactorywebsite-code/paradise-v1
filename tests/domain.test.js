@@ -17,13 +17,13 @@ test('currency formatting uses the rupee sign and Indian digit grouping',()=>{
 });
 
 test('demo catalog retains the original five quotation totals and no authentication state',()=>{
-  assert.equal(sample.products.length,12);
+  assert.equal(sample.products.length,40);
   assert.deepEqual(sample.quotes.map(value=>DP.totals(value,sample.set).grand),[602538,337480,2655000,590000,1265100]);
   assert.equal(Object.hasOwn(sample,'user'),false);
   assert.equal(Object.hasOwn(sample,'role'),false);
   assert.ok(sample.quotes.every(value=>value.chargeTax===18));
   const fresh=DP.seed({demo:false});
-  assert.equal(fresh.products.length,12);
+  assert.equal(fresh.products.length,40);
   assert.equal(fresh.customers.length,0);
   assert.equal(fresh.quotes.length,0);
   fresh.products[0].f.find(value=>value.k==='deliv').o[0][0]='Changed';
@@ -35,7 +35,7 @@ test('the same module loads without Node or a DOM as the browser DP global',()=>
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../shared/domain.js'),'utf8'),browser);
   assert.equal(typeof browser.DP.calc,'function');
   assert.equal(browser.DP.inr(100),'\u20b91.00');
-  assert.equal(browser.DP.seed({demo:false}).products.length,12);
+  assert.equal(browser.DP.seed({demo:false}).products.length,40);
   assert.equal(browser.DP.totals(browser.DP.seed().quotes[0],{tax:18}).grand,602538);
 });
 

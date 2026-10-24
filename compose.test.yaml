@@ -26,4 +26,4 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
     volumes:
       - ./tests:/app/tests:ro
-    command: [node, --test, tests/api.test.js, tests/backend.test.js, tests/domain.test.js, tests/frontend.test.js, tests/migration.test.js, tests/postgres.test.js]
+    command: [node, --test, tests/*.test.js]
