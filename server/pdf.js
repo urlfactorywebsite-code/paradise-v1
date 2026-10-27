@@ -82,8 +82,10 @@ function renderQuotation(q, state, compact = false) {
     body: q.items.map((item, index) => {
       const taxMode = item.taxMode || 'exclusive';
       const basis = taxMode === 'exempt' ? 'Tax exempt' : taxMode === 'inclusive' ? `Includes GST ${item.tax}%` : `GST ${item.tax}% extra`;
-      // Internal notes never appear, even in old snapshots with showNotes=true.
-      return [index + 1, string(item.name), [...(item.sp || []), basis].join('; '), item.qty, money(Math.round(item.sub / item.qty)), money(item.sub)];
+      // Rebuild customer specifications from trusted saved field metadata. The
+      // shared formatter also sanitizes legacy snapshots and always excludes
+      // internal-only values, including when a visibility flag was supplied.
+      return [index + 1, string(item.name), [...DP.customerSpecifications(item), basis].join('; '), item.qty, money(Math.round(item.sub / item.qty)), money(item.sub)];
     }),
     alternateRowStyles: { fillColor: PALE },
     styles: { fontSize: compact ? 8 : 8.3, cellPadding: padding, overflow: 'linebreak', textColor: INK, lineColor: [222, 230, 232], lineWidth: { bottom: 0.15 } },

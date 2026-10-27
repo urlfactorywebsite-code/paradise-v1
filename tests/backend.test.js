@@ -57,11 +57,12 @@ async function fixture(t, demo = true) {
           ? await response.json()
           : Buffer.from(await response.arrayBuffer());
         if (data.csrfToken) token = data.csrfToken;
-        assert.equal(
-          response.status,
-          expected,
-          `${method} ${route}: ${Buffer.isBuffer(data) ? 'binary' : JSON.stringify(data)}`,
-        );
+        const message = `${method} ${route}: ${Buffer.isBuffer(data) ? 'binary' : JSON.stringify(data)}`;
+        if (Array.isArray(expected)) {
+          assert.ok(expected.includes(response.status), message);
+          return { status: response.status, data };
+        }
+        assert.equal(response.status, expected, message);
         return data;
       },
     };
@@ -293,7 +294,8 @@ test('quotation CRUD, preview, status, copy, repricing and historical document s
     { version: latest.version },
     201,
   );
-  assert.equal(copy.data.items[0].sub, 50000);
+  assert.equal(copy.data.items[0].sub, 60000);
+  assert.equal(latest.data.items[0].sub, 50000);
   assert.equal(copy.data.status, 'Draft');
   assert.notEqual(copy.data.no, latest.data.no);
   const repriced = await a.call('/api/quotations/' + id + '/reprice', 'POST', {
@@ -328,21 +330,23 @@ test('record versions permit unrelated concurrent edits and reject lost updates 
     }),
   ]);
   const current = await a.call('/api/customers/C1');
-  const responses = await Promise.allSettled([
+  const responses = await Promise.all([
     a.call('/api/customers/C1', 'PATCH', {
       version: current.version,
       data: { notes: 'winner A' },
-    }),
+    }, [200, 409]),
     a.call(
       '/api/customers/C1',
       'PATCH',
       { version: current.version, data: { notes: 'winner B' } },
-      409,
+      [200, 409],
     ),
   ]);
-  responses.forEach((r) => {
-    if (r.status === 'rejected') throw r.reason;
-  });
+  assert.deepEqual(responses.map(response => response.status).sort(), [200, 409]);
+  const winner = responses.find(response => response.status === 200);
+  const retained = await a.call('/api/customers/C1');
+  assert.equal(retained.version, current.version + 1);
+  assert.equal(retained.data.notes, winner.data.data.notes);
 });
 test('atomic change API rolls back all operations and keeps a durable audit trail', async (t) => {
   const f = await fixture(t),

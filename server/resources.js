@@ -3,11 +3,11 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { backupDatabase } = require('./backup');
-const { fail, id, date, validateState } = require('./validation');
+const { fail, id, date, cfg, validateState } = require('./validation');
 const { listing, report, csvExport, integer } = require('./queries');
 const { quotationPdf } = require('./pdf');
 const DP = require('../shared/domain');
-const { requirePermission, hasPermission, requireQuoteAccess, scopeState, authorizeChanges } = require('./access');
+const { requirePermission, hasPermission, requireQuoteAccess, scopeState, scopeCatalogData, authorizeChanges } = require('./access');
 const { createWhatsApp } = require('./whatsapp');
 const names = Object.freeze({
   customers: 'customers',
@@ -59,7 +59,8 @@ function defaults(key, input, state, user) {
     return {
       on: 1,
       min: 0,
-      rate: 0,
+      rate: null,
+      priceConfigured: data.rate !== undefined && data.rate !== null,
       tax: state.set.tax,
       tiers: null,
       f: [],
@@ -102,15 +103,25 @@ function duplicateCustomer(state, data, existingId) {
 }
 function createResources({ store, body, json, publicUser, backupDir }) {
   const whatsapp = createWhatsApp({ store, body, json });
+  const pricingImports = require('./pricing-import').createPricingImports({store,body,json});
   const requireCatalogRead = (user) => {
     if (!hasPermission(user, 'product.view') && !hasPermission(user, 'product.manage') && !hasPermission(user, 'pricing.manage'))
       fail('You do not have permission for this action.', 403);
+  };
+  const requireCatalogManagement = user => {
+    if(!hasPermission(user,'product.manage')&&!hasPermission(user,'pricing.manage'))fail('Product or pricing management permission is required.',403);
+  };
+  const catalogTemplates = settings => ['print_product','area_product','promotional_gift','stationery_product'].map(key=>key==='promotional_gift'?(settings.giftTemplate||DP.giftTemplate()):(settings.catalogTemplates?.[key]||DP.catalogTemplate(key)));
+  const checklistResponse=(state,revision,filters={})=>{
+    const result=require('../shared/catalog').checklist(state,filters),page=result.page||filters.page||1,pageSize=result.pageSize||filters.pageSize||40,total=result.filteredTotal??result.total??result.rows.length;
+    const Readiness=require('../shared/pricing-readiness');
+    return {...result,rows:result.rows.map(row=>{const p=state.products.find(p=>p.id===row.productId);return p?{...row,activationEligibility:Readiness.eligibility(p,state.set,state.cats)}:row;}),revision,categories:state.cats.map(({id,name})=>({id,name})),templates:catalogTemplates(state.set).map(({id,name})=>({id,name})),pagination:{page,pageSize,total,totalPages:Math.ceil(total/pageSize)}};
   };
   return async function handle(req, res, url, user) {
     const route = url.pathname,
       method = req.method;
     const send = (status, value) => {
-      json(res, status, value);
+      json(res, status, scopeCatalogData(value, user));
       return true;
     };
     const attachment = (content, mime, filename) => {
@@ -122,6 +133,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       return true;
     };
     const stateResponse = (result) => ({ ...scopeState(result, user), user: publicUser(user) });
+    if(await pricingImports(req,res,url,user))return true;
     if (await whatsapp(req, res, url, user)) return true;
     if (route === '/api/changes' && method === 'POST') {
       const input = await body(req);
@@ -175,18 +187,68 @@ function createResources({ store, body, json, publicUser, backupDir }) {
     }
     if (route === '/api/catalog' && method === 'GET') {
       requireCatalogRead(user);
-      const { state } = await store.readState();
+      const { state } = await store.readCatalogConfiguration();
       const managesCatalog = hasPermission(user, 'product.manage') || hasPermission(user, 'pricing.manage');
-      return send(200, { categories: state.cats.filter((c) => c.on || managesCatalog), products: state.products.filter((p) => p.on || managesCatalog) });
+      return send(200, { categories: state.cats.filter((c) => c.on || managesCatalog), products: state.products.filter((p) => p.on || managesCatalog), giftTemplate: state.set.giftTemplate || DP.giftTemplate(),catalogTemplates:state.set.catalogTemplates||{} });
+    }
+    if(route==='/api/catalog/checklist'&&method==='GET'){
+      requireCatalogManagement(user);
+      const q=url.searchParams.get('q')||'',category=url.searchParams.get('category')||'',status=url.searchParams.get('status')||'',template=url.searchParams.get('template')||'';
+      if(q.length>200||category.length>80||status.length>80||template.length>40)fail('Catalog checklist filter is too long.');
+      if(status&&!['Missing','Inactive (Price Pending)','Active','Inactive','Conflict','missing','inactive','active','price_pending','conflict'].includes(status))fail('Invalid catalog status filter.');
+      if(template&&!['print_product','area_product','promotional_gift','stationery_product','none'].includes(template))fail('Invalid catalog template filter.');
+      const page=integer(url.searchParams.get('page'),1,100000),pageSize=integer(url.searchParams.get('pageSize'),40,100),{state,revision}=await store.readCatalogConfiguration();
+      const canonicalStatus={missing:'Missing',inactive:'Inactive',active:'Active',price_pending:'Inactive (Price Pending)',conflict:'Conflict'}[status]||status;
+      return send(200,checklistResponse(state,revision,{q,category,status:canonicalStatus,template:template==='none'?'unassigned':template,page,pageSize}));
+    }
+    if(route==='/api/catalog/prepare'&&method==='POST'){
+      requirePermission(user,'product.manage');
+      const input=await body(req);if(!Number.isInteger(input.revision))fail('Workspace revision is required.',428);
+      if(input.apply!==undefined&&typeof input.apply!=='boolean')fail('Apply must be a boolean.');
+      const CC=require('../shared/catalog');
+      if(input.apply!==true){
+        const {state,revision}=await store.readCatalogConfiguration();if(input.revision!==revision)fail('Catalog changed. Reload before preparing.',409);
+        const plan=CC.prepareCatalog(state);return send(200,{applied:false,revision,changes:plan.changes,issues:plan.issues,report:checklistResponse(plan.state,revision)});
+      }
+      requirePermission(user,'pricing.manage');let changes,issues;
+      const result=await store.mutate(user,state=>{const plan=CC.prepareCatalog(state);changes=plan.changes;issues=plan.issues;state.cats=plan.state.cats;state.products=plan.state.products;state.set=plan.state.set;},input.revision);
+      return send(200,{applied:true,changes,issues,report:checklistResponse(result.state,result.revision),...stateResponse(result)});
+    }
+    if(route==='/api/configuration-templates'&&method==='GET'){
+      requireCatalogManagement(user);const {settings,revision}=await store.readTemplateConfiguration();return send(200,{data:catalogTemplates(settings),revision});
+    }
+    const catalogTemplateMatch=/^\/api\/configuration-templates\/(print-product|area-product|stationery-product)$/.exec(route);
+    if(catalogTemplateMatch){
+      requireCatalogManagement(user);const key=catalogTemplateMatch[1].replaceAll('-','_');
+      if(method==='GET'){const {settings,revision}=await store.readTemplateConfiguration();return send(200,{data:settings.catalogTemplates?.[key]||DP.catalogTemplate(key),revision});}
+      if(method==='PUT'){
+        const input=await body(req);if(!Number.isInteger(input.revision))fail('Workspace revision is required.',428);
+        const result=await store.mutate(user,state=>{state.set.catalogTemplates={...(state.set.catalogTemplates||{}),[key]:input.data};},input.revision);
+        return send(200,{data:result.state.set.catalogTemplates[key],...stateResponse(result)});
+      }
+    }
+    if(route==='/api/configuration-templates/promotional-gift'){
+      requireCatalogRead(user);
+      if(method==='GET')return send(200,await store.readGiftTemplate());
+      if(method==='PUT'){
+        if(!hasPermission(user,'product.manage')&&!hasPermission(user,'pricing.manage'))fail('Product or pricing management permission is required.',403);
+        const input=await body(req);if(!Number.isInteger(input.revision))fail('Workspace revision is required.',428);
+        const result=await store.mutate(user,state=>{state.set.giftTemplate=input.data;},input.revision);
+        return send(200,{data:result.state.set.giftTemplate,revision:result.revision,...stateResponse(result)});
+      }
     }
     if (route === '/api/pricing/calculate' && method === 'POST') {
       requireCatalogRead(user);
       if (!hasPermission(user, 'pricing.view')) requirePermission(user, 'pricing.manage');
-      const input = await body(req),
-        product = (await store.get('products', id(input.productId))).data;
-      if (!product.on || !(await store.get('cats', product.cat)).data.on)
+      const input = await body(req),configuration=await store.readProductConfiguration(id(input.productId)),
+        product=DP.resolveProduct(configuration.product,configuration.settings);
+      if (!product.on || !configuration.category.on)
         fail('Product is inactive.');
-      const result = DP.calc(product, input.cfg);
+      const fieldErrors = require('../shared/catalog').additionalFieldErrors(product, [configuration.category]);
+      if (fieldErrors.length) fail(fieldErrors.join(' '));
+      const eligibility=require('../shared/pricing-readiness').eligibility(configuration.product,configuration.settings,[configuration.category]);
+      if(!eligibility.eligible)throw Object.assign(new Error('Pricing blocked: '+eligibility.errors.map(e=>e.action||e.label).join(' ')),{status:422,code:'PRICING_INCOMPLETE',details:eligibility});
+      const result = DP.calc(product, cfg(input.cfg, product));
       if (result.err) fail(result.err);
       return send(200, { ...result, currency: 'INR', moneyUnit: 'paise' });
     }

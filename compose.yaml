@@ -30,6 +30,8 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:docker first}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       APP_ORIGIN: ${APP_ORIGIN:-}
+      MAX_PRICING_UPLOAD_BYTES: ${MAX_PRICING_UPLOAD_BYTES:-5242880}
+      MAX_PRICING_ROWS: ${MAX_PRICING_ROWS:-5000}
     ports:
       - '127.0.0.1:${APP_PORT:-6400}:6400'
     volumes:

@@ -40,7 +40,7 @@ Create a quote using `{data:{cid,date,valid,items:[{pid,cfg,notes}],disc:{t:"p",
 | POST `/api/quotations/preview` | Quotation object; validate/recalculate without saving or consuming a number |
 | POST `/api/quotations/{id}/status` | `{version,status}`; records history, enforces administrator internal approval |
 | GET `/api/quotations/{id}/history` | Server status history |
-| POST `/api/quotations/{id}/duplicate` | `{version}`; preserves snapshots, creates Draft/new number |
+| POST `/api/quotations/{id}/duplicate` | `{version}`; requires current active products and categories, preserves eligible item snapshots, creates Draft/new number |
 | POST `/api/quotations/{id}/reprice` | `{version}`; explicitly applies current active catalog prices |
 | GET `/api/quotations/{id}/pdf` | Server PDF attachment; no status change |
 | POST `/api/quotations/expire` | Administrator `{asOf,revision?}`; expire overdue pending/internal-approved/sent records |
@@ -74,13 +74,79 @@ Errors return `{error,requestId}`. Codes: 401 unauthenticated, 403 forbidden, 40
 
 ## PostgreSQL storage (v3)
 
-Health/readiness report `database: "postgresql"` and `schemaVersion: 4`. The additive migration stores employee permissions, immutable quotation ownership and retained WhatsApp PDF/history records. Unknown legacy creators remain unresolved and restricted. Administrator database backups use PostgreSQL custom-format `.dump` files and `application/octet-stream`. Restore supports schema 3/4 backups and requires a new PostgreSQL database name; run it with the Docker commands in the README. SQLite import is an offline command into an empty PostgreSQL workspace.
+The updated server reports `database: "postgresql"` and `schemaVersion: 5`. Additive migrations store employee permissions, immutable quotation ownership, retained WhatsApp PDF/history and structural configuration constraints. Migration 005 reuses JSON documents and does not rewrite historical bodies. Unknown legacy creators remain unresolved and restricted. Administrator database backups use PostgreSQL custom-format `.dump` files and `application/octet-stream`. Restore supports schema 3/4/5 backups and requires a new PostgreSQL database name; run it with the Docker commands in the README. SQLite import is an offline command into an empty PostgreSQL workspace.
 
 ## SRS pricing and configuration
 
 Product pricing methods are `fixed`, `unit`, `area`, `tier`, `package`, and `base`. Products support `minQty`, minimum charge `min`, `taxMode: exclusive|inclusive|exempt`, metadata and embedded PNG/JPEG images. Specification fields support `sel`, `txt`, `dim`, `num`, defaults, required flags, numeric limits, whole numbers, and conditions `{key,equals}`. Compatibility and additional charge rules are validated on the server. Master prices are decimal INR; calculated money is integer paise. Metadata/schema changes require `product.manage`; pricing changes require `pricing.manage`. Creating/deleting products and adding/removing paid options require both.
 
 Customers have separate `wa` international WhatsApp numbers, `type`, active `on`, and immutable creator metadata. Quotations accept permitted `contact` overrides for person/mobile/WhatsApp/email/address, and reasoned item `override: {amount,reason}` only with `pricing.override`. Company settings include tax treatment/display, employee discount limits, charge authorization, independent approval, starting sequence, logo/signatory/footer and public notes. The server retains price/contact/company/tax snapshots. Status changes accept `remarks`. Quotation/report filters additionally support `employee` as an immutable creator ID; reports include `byEmployee` and scoped `whatsapp` attempt totals.
+
+## Phase 1 conditional fields, reusable sizes and public specifications
+
+Existing routes and authentication stay in place. Product `POST`, `PUT`, `PATCH`, `/api/changes` and `/api/state` accept the extended field definitions. Catalog/product responses return the metadata. `/api/pricing/calculate`, `/api/quotations/preview`, quotation create/edit and explicit repricing share configuration validation. Saved PDF and retained WhatsApp PDF generation share the customer specification policy.
+
+```json
+{
+  "k": "details", "l": "Design Requirements", "t": "txt",
+  "show_on_customer_pdf": true,
+  "when": {"mode": "ALL", "conditions": [
+    {"key": "material", "operator": "equals", "value": "Cotton"},
+    {"key": "method", "operator": "not_equals", "value": "Sublimation"}
+  ]}
+}
+```
+
+`ANY` matches at least one condition. Legacy `{key,equals}` remains supported. Conditions reference available text, dropdown, multiselect or numeric fields, or existing quantity/dimension scalar keys. Unknown references, unavailable option values, invalid operators and cycles return 422. Hidden dependencies cannot activate descendants. Hidden values are removed before pricing/persistence and do not satisfy required fields while hidden.
+
+Numeric references (`num`, `qty`, `w`, `h`) require numeric condition values; text references require strings. Optional dropdowns may compare against the empty string representing None. Fixed/package item quantity is normalized to 1; size-based quantity is the sum of entered counts, including zero before any sizes are entered. Conditions use these actual quantities. For non-area products, `w`, `h` and `u` are unavailable while all dimension fields are hidden, and stale dimension values are discarded. Cycles through these implicit dimension dependencies are rejected too.
+
+```json
+{
+  "k": "sizes", "l": "Size breakdown", "t": "SIZE_BREAKDOWN",
+  "show_on_customer_pdf": true,
+  "sizes": [
+    {"key": "XS", "label": "Extra Small", "enabled": true, "price": 0},
+    {"key": "kids_6", "label": "Kids 6 years", "enabled": true, "price": 0}
+  ]
+}
+```
+
+Quantity values use `cfg.sizes: {"XS":5,"kids_6":10}`. The field key determines the configuration key. One breakdown drives the total quantity for unit/tier products. Zero entries are allowed; the total must meet existing minimums and remain at most 1,000,000. Negative, fractional, unknown and disabled size entries return 422. Ordering follows the definition array. `price` is an optional per-piece INR surcharge using existing pricing; changing it requires pricing permission. No prices are inferred. Legacy `product.sizes` with `cfg.sz` remains compatible.
+
+`t: "multi"` uses select-style `o` options and a unique array of selected labels. `show_on_customer_pdf` supports all eligible field types, excludes empty values and does not change pricing. When absent, legacy visibility defaults remain. `internal_only: true`, protected internal field identifiers/labels and item-level `notes` override any visibility flag. Submitted calculated specifications or snapshot metadata are ignored; the server constructs the item snapshot. Unchanged historical quotations retain their saved prices and visibility metadata. Duplication retains eligible snapshots only when every referenced product and category is currently active. Explicit repricing refreshes against the current product and rejects newly unavailable selections.
+
+Protected internal/private/staff names are checked consistently in keys and labels, including camel-case forms, and in legacy specification labels. The browser initializes newly visible controls from the shared default configuration rather than restoring discarded hidden selections.
+
+## Phase 2 options, geometry and derived quantities
+
+Existing product CRUD, `/api/catalog`, pricing, preview, quotation and PDF routes remain in use. The existing product JSON now supports an explicit `phase2: "visiting_card" | "flex"` setup profile. Setup is staged in the product editor and uses the normal versioned save; there is no automatic catalog replacement or repricing migration. Activating/removing the profile requires both catalog and pricing permissions. Old products without the profile retain their existing behavior.
+
+Dropdown/multiselect arrays remain `[stableValue, chargeType, amount]`. Optional `optionMeta` is keyed by stable value:
+
+```json
+{
+  "k": "material", "l": "Material", "t": "sel", "required": true,
+  "rateBasis": "area", "o": [["220 GSM", "a", null]],
+  "optionMeta": {
+    "220 GSM": {"label": "220 GSM", "enabled": false, "approved": false, "order": 0}
+  }
+}
+```
+
+Null means unpriced and requires `approved:false`; it never becomes zero. New selection requires an enabled option with a finite, nonnegative, approved amount. An explicitly approved zero amount represents a deliberate free/no-extra-charge choice. Legacy numeric tuples without metadata retain their prior behavior. Label edits do not rewrite values saved in quotations. Ordering follows metadata; disabling retains the definition. A converted text field can retain `legacyTextDefault` for Admin mapping. Existing item text values and historical prices remain snapshots even when no current dropdown value maps to them.
+
+Visiting Card Size options use `geometry:{w,h,u}` or `geometry:{custom:true}`. Width and height classify square/rectangle choices; display text does not. Three product-specific managed compatibility rules follow this geometry, and custom-dimension visibility follows custom geometry. Custom Finish Details is required for Custom finish. Custom has no automatic surcharge; a pricing manager must configure/approve any additional charge needed by the job.
+
+Compatibility rules retain the existing `{when,field,allowed,message}` contract, with optional stable `id`. Conditions support Phase 1 ALL/ANY and Equals/Not Equals. Unknown references, meaningful dependency cycles and jointly contradictory constraints return 422. Complex interacting constraints are bounded and fail with a clear simplify-rules message. Harmless legacy self-rules that preserve their triggering choice remain supported. IDs beginning `phase2_shape_` or `phase2_bundle_` in a Phase 2 profile are managed from structured options; manual rules with other IDs are retained and checked for conflicts.
+
+Flex Material requires per-area rates; Printing Type supports the existing fixed/unit/percentage/area charge bases. Mandatory Material and Printing cannot be made optional or hidden by conditions. These amounts are **additional charges on top of the retained base/minimum model**, not replacement base rates. Saved prices never refresh automatically.
+
+Eyelets use an existing select field with `quantityRule:"eyelets"`, an `eyeletPolicy:{approved,spacingFt:2,corners:4}`, and option metadata `quantityRule:"none"|"corners"|"perimeter"`. A non-None selection requires explicit business-policy approval as well as an approved rate. Corners counts 4 per piece; perimeter uses `2 * (ceil(widthFt/2) + ceil(heightFt/2))`, counting corners once, then multiplies by item quantity. Linear conversion derives from the existing area-unit factors. The retained bundled finishing option has `includesEyelets:true` and a compatibility constraint allowing only None for separately priced eyelets. No historical bundled rate is split or reassigned to Hemming.
+
+Per-unit accessory options can use metadata `quantityKey` referencing a positive whole-number configuration field. Its value multiplies item quantity for unit bases; fixed, percentage and area bases retain existing semantics. The Flex editor offers the shared per-piece accessory count and synchronizes its visibility to applicable options. A single accessory choice prevents duplicate or mutually exclusive selections.
+
+Pricing responses and new item snapshots include server-derived `computed` quantities, such as `computed.eyelets:{perPiece,total}`. Submitted computed quantities, lines, specifications and totals are ignored/rebuilt. Customer specifications include readable option labels and eyelet counts under the existing visibility/internal-note policy. Unchanged saves preserve historical fields, quantities and prices; duplication does so only for currently active products and categories. Changed configurations and explicit repricing validate current availability. Restoring an original product definition through versioned PUT is possible without changing existing quotation snapshots.
 
 ## WhatsApp manual PDF sharing
 
@@ -93,3 +159,138 @@ Customers have separate `wa` international WhatsApp numbers, `type`, active `on`
 - `POST /api/whatsapp/history/{id}/retry`: `{version}` creates one linked successor for a failed, unchanged quotation. Changed quotations require a new sharing review. Repeated retries of the same failure are rejected.
 
 Manual [WhatsApp click-to-chat](https://faq.whatsapp.com/5913398998672934) opens a reviewed message; it does not attach or send a PDF. Quotation status remains separate, and the application does not claim provider delivery/read receipts. Automated integrations are rejected until implemented with a configured provider.
+# Phase 3 shared gift configuration
+
+`GET /api/configuration-templates/promotional-gift` returns `{data, revision}`. `PUT` accepts `{revision, data}` and uses the existing authenticated, CSRF-protected transactional workspace mutation. A stale revision returns 409; malformed definitions/selections return 422. Catalog metadata requires `product.manage`; rate/approval changes independently require `pricing.manage`. Company settings permission is not required for gift template changes. `/api/catalog` includes `giftTemplate`. Product CRUD/state responses retain raw local `f` fields plus the template reference; clients resolve these with the returned template before rendering or calculating.
+
+The template is `{id:"promotional_gift", version:1, name, f:[...]}` with seven stable keys: `model`, `material`, `color`, `customization`, `printing`, `packaging`, `artwork`. A product assignment is `{id:"promotional_gift", map:{semantic:existingFieldKey}, disabled:[semantic], overrides:{semantic:replacementField}}`. Replacement fields retain their mapped `k`. Local fields and mapped existing options/rates remain intact. Missing/duplicate/conflicting mappings, unsupported template references and nested/circular inheritance are rejected. Product-specific conditions can reference the resolved existing/local fields. Shared condition references are mapped to the corresponding stable product keys.
+
+New item creation, edit, preview, repricing and `/api/pricing/calculate` resolve the same effective fields and use the existing shared validator/pricing engine on the backend. Submitted totals/specification metadata cannot replace calculated prices or trusted snapshots. Unchanged historical items and retained customer PDFs keep their saved definitions and prices. A new duplicate requires every referenced product and category to be active; the historical snapshot shortcut cannot bypass this check. Existing quotations remain readable and unchanged item configurations can be retained during ordinary metadata edits after a product is disabled or removed. Setup is explicit through the existing Admin product editor; it is not an automatic seed/migration.
+
+Additional field metadata: `multiline:boolean` on `txt`; `minSelections`/`maxSelections` on `multi`; `allowCustom:boolean` on `sel` with `customCharge:{type, amount, approved}`. A custom value requires an explicitly approved finite nonnegative rate; `amount:null, approved:false` means pending. Known disabled/unapproved choices cannot bypass validation as custom values. Charge bases reuse `f/u/p/a/q`; size `price` remains the existing per-unit surcharge. `show_on_customer_pdf` is honored subject to unconditional internal-note protection. T-shirt `phase3LegacyFields` retains the old location-count definition/rates for historical readability and Admin review; new named physical locations never infer historical locations or rates.
+
+Phase 3 review hardening: projection provenance is process-private; client `__giftRaw`/`__giftBase` properties are rejected with 422 across product/state/batch writes. Effective, masked and disabled priced field definitions are validated at configuration save time. Phase 3 T-shirt explicit quantity/size mismatches fail consistently in shared preview and backend validation. Values belonging to explicitly disabled inherited fields are omitted when revising/repricing current configurations; unchanged historical item snapshots remain preserved. Pricing and template GET routes use selective catalog/settings reads without loading quotation history. See [Phase 3 production-readiness review](PHASE-3-PRODUCTION-READINESS.md).
+
+## Phase 4 catalog templates and verification
+
+Phase 4 reuses the product/settings JSON documents, template resolver, versioned resource writes and transactional workspace revision. It adds no database migration or automatic catalog update at startup. The API still operates on one company workspace; account permissions and quotation ownership remain the access boundaries.
+
+### Catalog and template endpoints
+
+| Endpoint | Contract and permission |
+| --- | --- |
+| GET `/api/catalog` | `{categories,products,giftTemplate,catalogTemplates}`; requires `product.view`, `product.manage` or `pricing.manage`. Catalog/pricing managers see inactive records; other permitted readers receive active records. |
+| GET `/api/configuration-templates` | `{data:[four templates],revision}`; requires `product.manage` or `pricing.manage`. Missing stored definitions use the shared defaults. |
+| GET `/api/configuration-templates/print-product` | `{data,revision}` for `print_product`; requires `product.manage` or `pricing.manage`. |
+| GET `/api/configuration-templates/area-product` | Same contract for `area_product`. |
+| GET `/api/configuration-templates/stationery-product` | Same contract for `stationery_product`. |
+| GET `/api/configuration-templates/promotional-gift` | Existing Phase 3 endpoint for `promotional_gift`; retains the broader catalog-read permission described above. |
+| PUT any individual template endpoint | `{revision,data:{id,version:1,name,f}}`; returns `{data,state,revision,user}`. Metadata changes require `product.manage`; pricing/approval changes independently require `pricing.manage`. |
+| GET `/api/catalog/checklist` | Backend manifest comparison, readiness, global counts and paginated rows; requires `product.manage` or `pricing.manage`. |
+| POST `/api/catalog/prepare` | `{revision,apply?:boolean}`; defaults to a nonmutating preview requiring `product.manage`. Explicit `apply:true` additionally requires `pricing.manage`. |
+
+Template and prepare writes require authentication, JSON and the CSRF token. Missing revisions return 428, stale revisions 409, invalid definitions 422 and missing permissions 403. Product assignments and product-specific fields use existing `/api/products/{id}`, `/api/changes` or `/api/state` writes; no parallel configuration-save endpoint exists.
+
+The four templates use these stable definitions:
+
+| Template ID | Shared semantic field keys |
+| --- | --- |
+| `print_product` | `size`, `paper`, `sides`, `finish` |
+| `area_product` | `dim`, `material`, `lamination`, `installation` |
+| `promotional_gift` | Existing Phase 3 `model`, `material`, `color`, `customization`, `printing`, `packaging`, `artwork` |
+| `stationery_product` | `paper`, `size`, `sides`, `binding` |
+
+Print, Area and Stationery definitions are stored under `settings.catalogTemplates`; Gift remains `settings.giftTemplate`. Products use `catalogTemplate` for the first three, or the existing `giftTemplate` reference for Gift. A product has one assignment:
+
+```json
+{
+  "catalogTemplate": {
+    "id": "print_product",
+    "map": {"paper": "existingPaperKey"},
+    "required": ["size", "paper", "sides", "finish"],
+    "disabled": [],
+    "overrides": {},
+    "order": ["size", "existingPaperKey", "sides", "finish"]
+  }
+}
+```
+
+`map` references retained local `f` keys. `required` and `disabled` contain unique known semantic keys; `order` contains unique effective product field keys. Assignment-level `required` changes requiredness while retaining shared labels/options. An explicit complete field override takes precedence and must retain its mapped `k`; overrides are isolated to the product. Unmapped local fields remain additional fields. Invalid references, conflicting/duplicate mappings, dual assignments, nested/circular inheritance and circular field conditions return 422. Client `__templateRaw`, `__templateBase`, `__giftRaw` and `__giftBase` projection metadata is also rejected. Area Dimensions retains the existing `dim` type and measurement engine with `ft`, `in`, `cm` and `m`; assignment does not change an existing product's pricing method.
+
+The seven documented print products use Print plus their supported additions: ID Card & Lanyard adds lanyard fields; Bill Book adds copies/carbon-set choices; Catalogue adds a positive whole-number page count. Other options remain Admin-managed and unpriced until configured. Social Media Poster and Custom Graphic Designs disable inherited physical print fields and retain service-specific requirements. These exceptions and other unresolved commercial mappings appear in checklist warnings and the assignment report.
+
+### Manifest identity and preparation
+
+The maintainable manifest is `shared/catalog.js`. It accounts for the 28 supplied Phase 4 products and 12 existing documented seed products. `coverage` reports `documentedRequired:40`, `placeholderRequired:28`, `fullSrsVerified:false` and the source explanation. The complete original SRS product-list artifact is unavailable, so these counts certify documented coverage only.
+
+Matching first uses stable product `code` or explicit `catalogManifestCode`. A fallback uses exact documented aliases with compatible category and pricing method; it does not use fuzzy names. An accepted alias can retain its existing ID/code and receive a persistent manifest link. Product codes and resolved manifest identities must remain unique. Ambiguous identities are reported for review; records are not automatically merged or duplicated.
+
+Preview returns `{applied:false,revision,changes,issues,report}` without saving. Its report describes the proposed catalog. Apply returns `{applied:true,changes,issues,report,state,revision,user}` using the existing atomic revision-checked transaction. `changes` identifies created/configured/linked records and relevant template IDs/names; `issues` reports blocked or exceptional mappings. Apply creates only genuinely missing inactive records, using `rate:null`, `tax:null`, `priceConfigured:false`. Existing IDs, rates, activation state and quotation/customer history are retained. Existing active products are left for explicit configuration review. Repeating preparation creates no duplicate products or assignments; it remains a versioned workspace write. No price import, approval workflow or automatic activation occurs.
+
+### Checklist filters, counts and readiness
+
+`GET /api/catalog/checklist` accepts:
+
+| Parameter | Values |
+| --- | --- |
+| `q` | Product name, actual name, stable code or documented alias; maximum 200 characters |
+| `category` | Category ID |
+| `status` | `Missing`, `Inactive (Price Pending)`, `Inactive`, `Active`, `Conflict` |
+| `template` | `print_product`, `area_product`, `promotional_gift`, `stationery_product`, `none` for unassigned |
+| `page` | Positive integer, default 1, maximum 100000 |
+| `pageSize` | Positive integer, default 40, maximum 100 |
+
+Lowercase status aliases are `missing`, `price_pending`, `inactive`, `active` and `conflict`. `inactive` selects the exact `Inactive` status; use `price_pending` for inactive records with explicit pending-price evidence. Invalid status/template/pagination values return 422.
+
+The response contains `rows`, `counts:{required,missing,inactive,active,conflicts}`, `total`, `filteredTotal`, `page`, `pageSize`, `pagination:{page,pageSize,total,totalPages}`, `coverage`, `revision`, category summaries and template summaries. `counts` and top-level `total` always describe the whole manifest, including when filters or pagination narrow the rows. `filteredTotal` and `pagination.total` describe the filtered result. Alias records never add a second required-manifest count.
+
+Rows include stable `code`, documented `name`, `actualName`, `productId`, category/template IDs and names, actual catalog `status`, `configurationReadiness`, `pricingReadiness`, `missingRequirements` and `warnings`. `Missing` means no matching record. `Conflict` identifies an ambiguous/conflicting match. `Active` requires the actual active flag, even when readiness has warnings. `Inactive (Price Pending)` requires an inactive record with evidence such as `priceConfigured:false`, an absent base/tax rate or missing approved mandatory choices. Other inactive records remain `Inactive`; they are not automatically described as price-pending.
+
+Configuration readiness checks category, assignment, definitions/options, references, duplicate identifiers and dependency validity. Pricing readiness separately checks identifiable configured rates and approved mandatory choices. Configuration may be complete while pricing is pending. Readiness never activates/deactivates a product. An unexpectedly active unpriced product receives a warning. Catalog checklist retrieval uses a fixed three catalog/settings SELECTs without loading quotation history or issuing per-product database queries.
+
+### Sensitive pricing and omission-safe catalog saves
+
+`pricing.view` or `pricing.manage` permits reading master pricing. A catalog manager with only `product.manage` can inspect/edit safe schema metadata without receiving product `rate`, `min`, `tax`, `taxMode`, `tiers` or `charges`, field `customCharge`, size surcharges, option charge bases/amounts or approval flags. Company tax/discount defaults are also omitted. The same redaction covers state, catalog/product/settings/template reads and embedded master definitions in quotation field/company snapshots. Authorized saved quotation amounts remain available under quotation access rules.
+
+Without pricing-read permission, option tuples are returned as `[stableValue]`. Resubmitting such tuples for existing options restores their hidden values from the current version before independent write authorization; other omitted private values are similarly preserved. Explicit supplied price changes are not silently replaced or authorized. Product/template edits still require the appropriate catalog/pricing permissions, and rejected writes roll back atomically.
+
+A new `[stableValue]` supplied by a catalog manager without pricing-read permission becomes `[stableValue,"f",null]` with `optionMeta[stableValue].approved:false`. It remains unavailable for new selection and never receives an implicit zero price. An explicit pending tuple also uses a null amount and `approved:false`; disabling it while awaiting configuration is supported. Clients with pricing-read permission retain full tuples when editing existing schema, and supply explicit null/unapproved metadata for new pending choices. Enabling a free or charged choice requires the appropriate authorized pricing configuration; an intentional approved numeric zero is distinct from a missing rate.
+
+New quotation, preview, calculation and changed-configuration paths use the same resolved backend fields and pricing validator. New inactive/unpriced selections are rejected; product activation with `priceConfigured:false` or missing mandatory base/tax values is rejected. Duplicate quotation creation also requires current active product/category references and cannot reuse a snapshot to bypass activation. Rejected duplicates create no quote or quotation sequence value. Ordinary unchanged historical read/edit paths preserve saved prices, configurations and PDF specifications without automatic repricing.
+
+### Phase 4 readiness refinements
+
+The catalog's shared product-specific contract is also enforced by changed active/prepared product saves, pricing calculations, new/changed quotation items and duplicate creation. Catalogue Page Count must be an unconditional, required positive whole-number numeric field. Bill Book Number of Copies must remain unconditional required Admin-managed choices; Carbon Sets uses choices when applicable. Preparation reuses a single compatible exact documented-label field with its existing stable key. Ambiguous/incompatible definitions block preparation of that record without overwriting Admin data, and checklist readiness reports the reason. Invalid legacy masters block new quoting while unchanged historical lines retain their saved snapshots and PDFs.
+
+Changing template or product field `rateBasis`, derived quantity/eyelet policies, custom charges or option rates requires `pricing.manage`, including templates with no assigned products. Reordering otherwise unchanged fields is catalog metadata work and retains the existing `product.manage` permission. Comparisons use stable field identities, so ordering does not imply a price change.
+
+`GET /api/products` retains its filters, sorting, pagination and record `version`/`updatedAt` contract while loading each product page in a count query and one page query. Sensitive pricing remains subject to the same response redaction. Checklist retrieval remains three selective catalog/settings queries.
+
+
+### Phase 5 pricing template, imports and activation
+
+All endpoints use existing authenticated company sessions. Writes require CSRF. There is one company workspace per database; no tenant ID or subcategory field is accepted by pricing imports.
+
+| Endpoint | Authorization and behavior |
+| --- | --- |
+| `GET /api/pricing/template` | `pricing.view` or `pricing.manage`, plus catalog access. In-memory XLSX download; four current-catalog sheets. Pending rates/GST stay blank. |
+| `GET /api/pricing/imports/limits` | `pricing.manage`; maxUploadBytes, maxRows, previewMinutes. |
+| `POST /api/pricing/imports/preview` | `pricing.manage`; raw XLSX bytes with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and URL-encoded `X-File-Name: prices.xlsx`. No pricing, workspace, import-history or audit writes. Normal authentication last-seen tracking remains. |
+| `POST /api/pricing/imports/confirm` | `pricing.manage`; JSON `{previewToken}` only. Recheck actor/session/permissions, expiry, workspace revision and every row. Whole import is atomic, including protected history and audit; omitted rates remain. |
+| `GET /api/pricing/imports?page=1` | `pricing.manage`; 20 confidential receipts per page. |
+| `GET /api/pricing/imports/{id}` | `pricing.manage`; receipt, actor ID and old/new target rates. |
+| `GET /api/products/{id}/activation-eligibility` | `product.manage` or `pricing.manage`; backend checks, eligible, status, errors, revision and any warning. Contains no numeric master prices. |
+
+Workbook sheets: Instructions, Product Pricing, Product Reference, Option Reference. Pricing columns, in order: Product, Option, Tier Quantity, Unit Price, GST Rate, Discount Limit, Product Code, Option Code, Pricing Type, Unit of Measure. Product Code is case-insensitively resolved to exactly one existing product; duplicate codes block mapping. BASE/TIER are applicable only to their existing method. OPTION/CUSTOM/SIZE/CHARGE use compact deterministic references derived from stable field/option/charge identities and resolved within the selected product. Names are informative. Type/unit changes, unknown identifiers and extra/missing/duplicate columns are rejected. New products/options, deletion and activation are not import actions.
+
+Remove unintended rows. Every intended row needs a literal nonnegative Unit Price with at most two decimal places, including an explicit approved free zero. Supported currency and charge bases remain the existing INR model. TIER breakpoints are positive integers up to 1000000; resulting tiers must cover minimum quantity and retain the existing maximum of 100 tiers per product. Omitted tiers remain. GST/Discount accept percentage points, literal percent strings or genuine Excel percentage cells, within 0..100. Blank GST retains its value and does not approve pending tax. Blank Discount preserves the existing company-wide employee ceiling. Filled discount cells must agree; changing it additionally requires `settings.manage`. The fixed employee discount cap and unlimited-discount permission remain enforced.
+
+Preview returns `{valid,revision,rows,errors,summary,filename}`. Summary contains totalRows, validRows, invalidRows, inserted, updated, unchanged, productsAffected and globalDiscountChanged. Rows show resolved product/option codes and names, quantity, existing/new price, tax, discount, action and errors. Each structured error includes rowNumber, product, option, field, code, message. Any invalid row blocks the whole import and produces no previewToken. Valid previews include a signed, session-bound token and expiresAt (15 minutes); files are never retained. The HMAC key stays outside public settings in PostgreSQL. An excessive signed-payload size is rejected with a smaller-import instruction.
+
+Confirm accepts no client rates, protected fields or tenant IDs. Tampering/session mismatch returns 403, expiry 410, stale revision 409. Reusing a committed token returns the existing receipt with replayed:true and creates no duplicate audit/import record. Reuploading unchanged prices creates no duplicate rates and records a truthful unchanged receipt. Any database failure rolls back rates, revision, import audit and history together; errors do not reveal database internals.
+
+Defaults are 5242880 compressed bytes and 5000 data rows, configurable through `MAX_PRICING_UPLOAD_BYTES` (up to 20 MiB) and `MAX_PRICING_ROWS` (up to 20000). Bounds include 256 ZIP entries, 16 MiB per expanded entry, 32 MiB total expanded data and excessive expansion ratios. XML row/cell addresses are checked before parsing, including sparse huge-address attacks. Malformed packages/XML, encryption, macros, external relationships, XML entities, formulas and nonliteral cells are rejected. No upload content is logged, extracted to disk or evaluated.
+
+Pending base and GST approvals are tracked independently in protected `pricingApproval:{base,tax}` metadata. Aggregate priceConfigured becomes true only with complete applicable configuration/rates. Imported approval does not enable disabled choices or activate products. Every inactive-to-active product creation/update, batch and full-state save invokes one backend eligibility service. Blocked transitions return 422 with code ACTIVATION_BLOCKED and details containing the real checklist. Existing active inconsistent masters remain active with warnings; new calculation/quotation attempts are blocked until corrected. The catalog exposes separate activationEligibility data alongside existing status/readiness.
+
+New quotations, including duplicates, use current approved item rates/GST through the existing shared engine. Duplicate source configurations must still be valid and available; retired options cannot be newly quoted. Existing quotations retain saved item, company, customer and tax snapshots during ordinary unchanged edits. Imports never reprice them. A genuine tier product may retain a null irrelevant base rate when valid applicable tiers exist.

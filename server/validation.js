@@ -1,6 +1,8 @@
 'use strict';
 const DP = require('../shared/domain');
-const { hasPermission, authorizeProductChanges } = require('./access');
+const Catalog = require('../shared/catalog');
+const PricingReadiness = require('../shared/pricing-readiness');
+const { hasPermission, authorizeProductChanges, authorizeSettingsChanges } = require('./access');
 const { isDeepStrictEqual: equal } = require('node:util');
 const fail = (message, status = 422) => { throw Object.assign(new Error(message), { status }); };
 const object = (v, label) => { if (!v || typeof v !== 'object' || Array.isArray(v)) fail(`${label} must be an object.`); return v; };
@@ -55,43 +57,94 @@ function settings(v) {
  if (!result.sequenceStart) fail('Quotation starting sequence must be positive.');
  result.logo = image(v.logo, 'company logo');
  for (const k of ['signature', 'footer', 'customerNotes', 'whatsappTemplate']) result[k] = text(v[k], k, ['signature','footer'].includes(k) ? 200 : 4000);
+ if(v.giftTemplate!==undefined)result.giftTemplate=giftTemplate(v.giftTemplate);
+ if(v.catalogTemplates!==undefined){
+  object(v.catalogTemplates,'catalog templates');result.catalogTemplates={};
+  for(const [key,value] of Object.entries(v.catalogTemplates)){
+   if(!['print_product','area_product','stationery_product'].includes(key))fail('Unknown catalog template.');
+   result.catalogTemplates[key]=catalogTemplate(value,key);
+  }
+ }
  return result;
+}
+function giftTemplate(v){
+ object(v,'promotional gift template');
+ if(Object.keys(v).some(key=>!['id','version','name','f'].includes(key))||v.id!=='promotional_gift'||v.version!==1)fail('Invalid or unsupported promotional gift template.');
+ const normalized=product({id:'gift_template',code:'GIFT-TEMPLATE',name:'Promotional gift template',cat:'gift_category',m:'unit',rate:0,tax:0,on:0,f:v.f},[{id:'gift_category'}]);
+ const template={id:v.id,version:v.version,...(v.name!==undefined?{name:str(v.name,'template name',150,true)}:{}),f:normalized.f};
+ const error=DP.giftTemplateError(template);if(error)fail(error);
+ return template;
+}
+function catalogTemplate(v,key){
+ object(v,'catalog template');
+ if(Object.keys(v).some(name=>!['id','version','name','f'].includes(name))||v.id!==key||v.version!==1)fail('Invalid or unsupported catalog template.');
+ const normalized=product({id:'catalog_template',code:'CATALOG-TEMPLATE',name:'Catalog template',cat:'template_category',m:key==='area_product'?'area':'unit',rate:0,tax:0,on:0,f:v.f},[{id:'template_category'}]);
+ const template={id:key,version:1,name:str(v.name,'template name',150,true),f:normalized.f};
+ const error=DP.catalogTemplateError(template);if(error)fail(error);
+ return template;
 }
 const fieldKey = (v) => {
  if (typeof v !== 'string' || !/^[A-Za-z][A-Za-z0-9_]{0,39}$/.test(v) || ['__proto__','constructor','prototype'].includes(v)) fail('Invalid product field key.');
  return v;
 };
 function condition(v) {
- object(v, 'field condition'); fieldKey(v.key);
+ object(v, 'field condition');
+ if (v.conditions!==undefined) {
+  const mode=choice(v.mode,['ALL','ANY'],'condition group');
+  const conditions=list(v.conditions,'field conditions',50).map(row=>{
+   object(row,'field condition');fieldKey(row.key);
+   const operator=choice(row.operator,['equals','not_equals'],'condition operator');
+   const value=typeof row.value==='number'?num(Math.abs(row.value),'condition value'):str(row.value,'condition value',4000);
+   return {key:row.key,operator,value:typeof row.value==='number'?row.value:value};
+  });
+  if(!conditions.length)fail('A condition group needs at least one condition.');
+  return {mode,conditions};
+ }
+ fieldKey(v.key);
+ if(v.operator!==undefined&&v.operator!=='equals')fail('Use a condition group for Not Equals.');
  const scalar = value => { if (typeof value === 'number') { if (!Number.isFinite(value) || Math.abs(value)>10000000) fail('Invalid condition value.'); return value; } return str(value, 'condition value', 4000); };
  return { key: v.key, equals: Array.isArray(v.equals) ? list(v.equals, 'condition options', 100).map(scalar) : scalar(v.equals) };
 }
-function product(p, cats) {
- if (!cats.some(c => c.id === p.cat)) fail('Product category does not exist.');
- const r = { id: p.id, code: str(p.code, 'product code', 80, true), name: str(p.name, 'product name', 200, true), cat: p.cat,
-  m: choice(p.m, DP.METHODS, 'pricing method'), rate: num(p.rate, 'product rate'), min: num(p.min ?? 0, 'minimum charge'), minQty: num(p.minQty ?? p.tiers?.[0]?.[0] ?? 1, 'minimum quantity', 1000000, true), tax: num(p.tax, 'product tax', 100), taxMode: choice(p.taxMode ?? 'exclusive', DP.TAX_MODES, 'product tax treatment'), on: on(p.on),
-  description: text(p.description, 'product description', 4000), image: image(p.image, 'product image'), unit: text(p.unit ?? 'item', 'unit', 80), type: text(p.type ?? 'Product', 'product type', 100), priceConfigured: bool(p.priceConfigured, 'pricing readiness', true) };
- if (!r.minQty) fail('Minimum quantity must be positive.');
- if (r.on && !r.priceConfigured) fail('Configure approved pricing before activating this product.');
- if (p.sizes && ['unit','tier'].includes(p.m)) r.sizes = 1;
- r.tiers = ['unit','tier'].includes(p.m) && p.tiers != null ? list(p.tiers, 'quantity tiers', 100).map(t => {
-  if (!Array.isArray(t) || t.length !== 2) fail('Invalid quantity tier.');
-  const q = num(t[0], 'tier quantity', 1000000, true); if (!q) fail('Tier quantity must be positive.');
-  return [q, num(t[1], 'tier price')];
- }).sort((a,b)=>a[0]-b[0]) : null;
- if ((p.m==='tier' && !r.tiers?.length) || (r.tiers && (!r.tiers.length || new Set(r.tiers.map(t=>t[0])).size!==r.tiers.length))) fail('Quantity tiers must be nonempty and unique.');
- r.f = list(p.f, 'product options', 50).map(f => {
+function productField(f) {
   object(f, 'product field'); fieldKey(f.k);
-  if (['qty','sz','w','h','u'].includes(f.k)) fail('Reserved product field key.');
-  const field = { k:f.k, l:str(f.l, 'option label', 150, true), t:choice(f.t, ['sel','txt','dim','num'], 'product field type') };
+  if (['qty','sz','w','h','u'].includes(f.k)&&!(f.k==='sz'&&f.t==='SIZE_BREAKDOWN')) fail('Reserved product field key.');
+  const field = { k:f.k, l:str(f.l, 'option label', 150, true), t:choice(f.t, ['sel','multi','txt','dim','num','SIZE_BREAKDOWN'], 'product field type') };
+  for(const key of ['show_on_customer_pdf','internal_only'])if(f[key]!==undefined)field[key]=bool(f[key],key);
   if (f.required!==undefined) field.required=bool(f.required, 'required field flag');
+  if(f.multiline!==undefined)field.multiline=bool(f.multiline,'multiline text flag');
   if (f.when!==undefined) field.when=condition(f.when);
-  if (f.t==='sel') {
+  if (['sel','multi'].includes(f.t)) {
+   if(f.allowCustom!==undefined)field.allowCustom=bool(f.allowCustom,'custom option flag');
+   if(f.customCharge!==undefined){object(f.customCharge,'custom option charge');field.customCharge={type:choice(f.customCharge.type,['f','u','p','a','q'],'custom charge basis'),amount:f.customCharge.amount===null?null:num(f.customCharge.amount,'custom option amount'),approved:bool(f.customCharge.approved,'custom rate approval')};}
+   for(const key of ['minSelections','maxSelections'])if(f[key]!==undefined)field[key]=num(f[key],key,100,true);
+   if(f.legacyTextDefault!==undefined)field.legacyTextDefault=str(f.legacyTextDefault,'retained legacy text default',4000);
+   if(f.optionMeta!==undefined){
+    object(f.optionMeta,'option metadata');field.optionMeta={};
+    for(const [key,input] of Object.entries(f.optionMeta)){
+     str(key,'option key',200,true);if(['__proto__','constructor','prototype'].includes(key))fail('Invalid option key.');object(input,'option metadata');
+     const m={};for(const k of ['enabled','approved','includesEyelets'])if(input[k]!==undefined)m[k]=bool(input[k],k);
+     if(input.label!==undefined)m.label=str(input.label,'option display name',200,true);
+     if(input.order!==undefined)m.order=num(input.order,'option order',1000000,true);
+     if(input.quantityRule!==undefined)m.quantityRule=choice(input.quantityRule,['none','corners','perimeter'],'option quantity rule');
+     if(input.quantityKey!==undefined)m.quantityKey=fieldKey(input.quantityKey);
+     if(input.geometry!==undefined){object(input.geometry,'size geometry');const g=input.geometry;m.geometry=g.custom===true?{custom:true}:{w:num(g.w,'size width',10000),h:num(g.h,'size height',10000),u:choice(g.u,Object.keys(DP.AF),'size dimension unit')};}
+     field.optionMeta[key]=m;
+    }
+   }
+   if(f.rateBasis!==undefined)field.rateBasis=choice(f.rateBasis,['area'],'field rate basis');
+   if(f.quantityRule!==undefined){field.quantityRule=choice(f.quantityRule,['eyelets'],'derived quantity rule');object(f.eyeletPolicy,'eyelet policy');field.eyeletPolicy={approved:bool(f.eyeletPolicy.approved,'eyelet policy approval'),spacingFt:num(f.eyeletPolicy.spacingFt,'eyelet spacing',2),corners:num(f.eyeletPolicy.corners,'corner count',4,true)};}
    field.o=list(f.o, 'choices', 100).map(o=>{
     if (!Array.isArray(o)||o.length!==3||!['f','u','p','a','q'].includes(o[1])) fail('Invalid option charge.');
-    return [str(o[0], 'option name', 200, true),o[1],num(o[2], 'option amount')];
+    return [str(o[0], 'option name', 200, true),o[1],o[2]===null&&DP.optionMeta(field,o[0]).approved===false?null:num(o[2], 'option amount')];
    });
    if (!field.o.length||new Set(field.o.map(x=>x[0])).size!==field.o.length) fail('Option names must be nonempty and unique.');
+  }
+  if (f.t==='SIZE_BREAKDOWN') {
+   field.sizes=list(f.sizes,'size definitions',100).map(size=>{
+    object(size,'size definition');
+    const key=str(size.key,'size key',80,true);if(['__proto__','constructor','prototype'].includes(key))fail('Invalid size key.');
+    return {key,label:str(size.label,'size label',100,true),enabled:bool(size.enabled,'size enabled flag',true),price:num(size.price??0,'size price')};
+   });
   }
   if (f.t==='num') {
    for (const k of ['min','max']) if (f[k]!==undefined) { if (typeof f[k]!=='number'||!Number.isFinite(f[k])||Math.abs(f[k])>10000000) fail('Invalid numeric field limit.'); field[k]=f[k]; }
@@ -101,41 +154,98 @@ function product(p, cats) {
   if (f.t==='txt'&&f.maxLength!==undefined) field.maxLength=num(f.maxLength,'text length',4000,true);
   if (f.default!==undefined) {
    if (f.t==='num') { if (typeof f.default!=='number'||!Number.isFinite(f.default)||(field.min!==undefined&&f.default<field.min)||(field.max!==undefined&&f.default>field.max)||(field.integer&&!Number.isInteger(f.default))) fail('Invalid numeric default.'); field.default=f.default; }
+   else if (f.t==='multi') { field.default=list(f.default,'default options',100).map(value=>str(value,'default option',200,true));if(new Set(field.default).size!==field.default.length||field.default.some(value=>!field.o.some(o=>o[0]===value)))fail('Default options must be unique and available.'); }
+   else if (f.t==='SIZE_BREAKDOWN') fail('Size breakdown defaults are quantities entered on each quotation.');
    else if (f.t!=='dim') { field.default=str(f.default,'field default',4000); if (f.t==='sel'&&field.default!==''&&!field.o.some(o=>o[0]===field.default)) fail('Default option does not exist.'); }
   }
+  // Field-local invariants also apply to retained definitions currently masked
+  // by a product override or disabled inherited field. Conditions are checked
+  // against the complete product projection below.
+  const standalone={...field};delete standalone.when;
+  const fieldError=DP.fieldDefinitionError({m:'unit',f:[standalone]});if(fieldError)fail(fieldError);
   return field;
- });
+}
+function product(p, cats, configuration={}) {
+ const templates=configuration?.id==='promotional_gift'?{giftTemplate:configuration}:configuration;
+ if(p.giftTemplate||p.catalogTemplate){try{
+  p={...p,f:list(p.f,'product options',50).map(productField)};
+  const ref=DP.templateAssignment(p);if(!ref)fail('Invalid product template assignment.');
+  DP.resolveProduct(p,templates);
+  p[ref.key]={...ref.assignment,overrides:Object.fromEntries(Object.entries(ref.assignment.overrides||{}).map(([key,field])=>[key,productField(field)]))};
+  const all=DP.resolveProduct({...p,[ref.key]:{...p[ref.key],disabled:[]}},templates);
+  for(const field of [...all.f,...p.f])if(['sel','multi'].includes(field.t)){const error=DP.optionDefinitionError(all,field);if(error)fail(error);}
+  p=DP.resolveProduct(p,templates);
+ }catch(error){fail(error.message);}}
+ if (!cats.some(c => c.id === p.cat)) fail('Product category does not exist.');
+ const priceConfigured=bool(p.priceConfigured,'pricing readiness',true),inactivePending=!priceConfigured;
+ const r = { id: p.id, code: str(p.code, 'product code', 80, true), name: str(p.name, 'product name', 200, true), cat: p.cat,
+  m: choice(p.m, DP.METHODS, 'pricing method'), rate: p.rate===null&&(inactivePending||p.m==='tier'||p.m==='unit'&&p.tiers?.length)?null:num(p.rate, 'product rate'), min: num(p.min ?? 0, 'minimum charge'), minQty: num(p.minQty ?? p.tiers?.[0]?.[0] ?? 1, 'minimum quantity', 1000000, true), tax: p.tax===null&&inactivePending?null:num(p.tax, 'product tax', 100), taxMode: choice(p.taxMode ?? 'exclusive', DP.TAX_MODES, 'product tax treatment'), on: on(p.on),
+  description: text(p.description, 'product description', 4000), image: image(p.image, 'product image'), unit: text(p.unit ?? 'item', 'unit', 80), type: text(p.type ?? 'Product', 'product type', 100), priceConfigured };
+ if (!r.minQty) fail('Minimum quantity must be positive.');
+ if(p.pricingApproval!==undefined){object(p.pricingApproval,'pricing approval');if(Object.keys(p.pricingApproval).some(key=>!['base','tax'].includes(key)))fail('Invalid pricing approval.');r.pricingApproval={base:bool(p.pricingApproval.base,'base pricing approval',false),tax:bool(p.pricingApproval.tax,'GST approval',false)};}
+ if(p.phase2!==undefined)r.phase2=choice(p.phase2,['visiting_card','flex'],'Phase 2 product profile');
+ if(p.phase3!==undefined)r.phase3=choice(p.phase3,['tshirt','logo','gift'],'Phase 3 product profile');
+ if(p.catalogManifestCode!==undefined){
+  const codes=Catalog.manifest.map(entry=>entry.code);
+  r.catalogManifestCode=choice(p.catalogManifestCode,codes,'catalog manifest identity');
+  const known=codes.find(code=>code.toLowerCase()===p.code.trim().toLowerCase());
+  if(known&&known!==r.catalogManifestCode)fail('Catalog manifest identity conflicts with the stable product code.');
+ }
+ if (p.sizes && ['unit','tier'].includes(p.m)) r.sizes = 1;
+ r.tiers = ['unit','tier'].includes(p.m) && p.tiers != null ? list(p.tiers, 'quantity tiers', 100).map(t => {
+  if (!Array.isArray(t) || t.length !== 2) fail('Invalid quantity tier.');
+  const q = num(t[0], 'tier quantity', 1000000, true); if (!q) fail('Tier quantity must be positive.');
+  return [q, num(t[1], 'tier price')];
+ }).sort((a,b)=>a[0]-b[0]) : null;
+ if ((p.m==='tier' && !r.tiers?.length) || (r.tiers && (!r.tiers.length || new Set(r.tiers.map(t=>t[0])).size!==r.tiers.length))) fail('Quantity tiers must be nonempty and unique.');
+ r.f = list(p.f, 'product options', 50).map(productField);
  if (new Set(r.f.map(f=>f.k)).size!==r.f.length) fail('Duplicate product fields.');
  const known = new Set(['qty','w','h','u',...r.f.map(f=>f.k)]);
- const checkCondition = v => { if (v&&!known.has(v.key)) fail('Condition references an unknown field.'); };
+ const checkCondition = v => { for(const row of v?.conditions??(v?[v]:[]))if(!known.has(row.key))fail('Condition references an unknown field.'); };
  r.f.forEach(f=>checkCondition(f.when));
  r.compatibility=list(p.compatibility??[], 'compatibility rules', 100).map(rule=>{
   object(rule,'compatibility rule'); const when=condition(rule.when);checkCondition(when);
   const field=r.f.find(f=>f.k===rule.field&&f.t==='sel');if(!field)fail('Compatibility rules must reference an option field.');
   const allowed=list(rule.allowed,'compatible options',100).map(v=>str(v,'compatible option',200,true));
   if(!allowed.length||allowed.some(value=>!field.o.some(o=>o[0]===value)))fail('Compatible options must exist in the field.');
-  return {when,field:field.k,allowed,message:text(rule.message,'compatibility message',500)};
+  return {...(rule.id!==undefined?{id:str(rule.id,'compatibility rule ID',240,true)}:{}),when,field:field.k,allowed,message:text(rule.message,'compatibility message',500)};
  });
  r.charges=list(p.charges??[], 'additional charges', 100).map(charge=>{
   object(charge,'additional charge');const result={label:str(charge.label,'charge label',200,true),type:choice(charge.type,['f','u','p','a','q'],'charge type'),amount:num(charge.amount,'charge amount')};
   if(charge.when!==undefined){result.when=condition(charge.when);checkCondition(result.when);}return result;
  });
  if(new Set(r.charges.map(c=>c.label)).size!==r.charges.length)fail('Additional charge names must be unique.');
+ DP.syncPhase2Rules(r);
+ for(const key of ['phase3LegacyFields','catalogLegacyFields'])if(p[key]!==undefined){
+  const legacy=product({...r,phase3:undefined,phase3LegacyFields:undefined,catalogLegacyFields:undefined,giftTemplate:undefined,catalogTemplate:undefined,f:p[key],compatibility:[],charges:[],sizes:0},cats);
+  r[key]=legacy.f;
+ }
+ if(new Set(r.compatibility.filter(rule=>rule.id).map(rule=>rule.id)).size!==r.compatibility.filter(rule=>rule.id).length)fail('Compatibility rule IDs must be unique.');
+ const definitionError=DP.pricingError({...r,rate:r.rate??0,tax:r.tax??0,priceConfigured:true});if(definitionError)fail(definitionError);
+ if(p.giftTemplate||p.catalogTemplate){
+  try{const ref=DP.templateAssignment(p),raw=DP.stripProduct(Object.assign(p,r),templates);r.f=raw.f;r[ref.key]=raw[ref.key];}catch(error){fail(error.message);}
+ }
  return r;
 }
-function cfg(v) {
+function cfg(v, product) {
   object(v, 'item configuration');
+  const quantityError=DP.sizeQuantityError(product,v);if(quantityError)fail(quantityError);
+  if(product)v=DP.normalizeConfig(product,v);
   const result = {};
   for (const [k, value] of Object.entries(v)) {
     if (k.startsWith('_')) continue;
     if (!/^[A-Za-z][A-Za-z0-9_]{0,39}$/.test(k) || ['constructor', 'prototype'].includes(k)) fail('Invalid configuration key.');
-    if (k === 'sz') {
-      object(value, 'size quantities'); result.sz = {};
+    if (value&&typeof value==='object'&&!Array.isArray(value)) {
+      object(value, 'size quantities');
+      const sizes={};
       for (const [size, amount] of Object.entries(value)) {
-        if (!DP.SZ.includes(size)) fail('Invalid clothing size.');
-        result.sz[size] = num(amount, 'size quantity', 1000000, true);
+        str(size,'size key',80,true);if(['__proto__','constructor','prototype'].includes(size))fail('Invalid size key.');
+        sizes[size] = num(amount, 'size quantity', 1000000, true);
       }
-    } else if (typeof value === 'number') { if (!Number.isFinite(value) || Math.abs(value) > 10000000) fail('Invalid configuration number.'); result[k] = value; }
+      if(Object.keys(sizes).length>100)fail('Too many size quantities.');
+      result[k]=sizes;
+    } else if(Array.isArray(value))result[k]=list(value,'selected options',100).map(value=>str(value,'selected option',200,true));
+    else if (typeof value === 'number') { if (!Number.isFinite(value) || Math.abs(value) > 10000000) fail('Invalid configuration number.'); result[k] = value; }
     else result[k] = str(value, 'configuration value', 4000);
   }
   return result;
@@ -143,15 +253,34 @@ function cfg(v) {
 function validateState(input, previous, user, allocateNumber, options = {}) {
   object(input, 'state');
   list(input.products, 'products');
-  if (!equal(input.set, previous.set) && !hasPermission(user, 'settings.manage')) fail('Company settings permission is required.', 403);
+  authorizeSettingsChanges(input.set,previous.set,user);
   if (!equal(input.cats, previous.cats) && !hasPermission(user, 'product.manage')) fail('Product management permission is required.', 403);
-  authorizeProductChanges(input.products, previous.products, user);
+  authorizeProductChanges(input.products, previous.products, user,input.set,previous.set);
   const state = {
     cats: records(input.cats, 'category', c => ({ id: c.id, name: str(c.name, 'category name', 200, true), description: text(c.description, 'category description', 4000), order: num(c.order ?? 0, 'category display order', 1000000, true), on: on(c.on) })),
     set: settings(input.set)
   };
-  state.products = records(input.products, 'product', p => product(p, state.cats));
+  state.products = records(input.products, 'product', p => {
+    const normalized = product(p, state.cats, state.set), saved = previous.products.find(value => value.id === p.id);
+    // Existing snapshots remain readable when legacy master definitions need
+    // repair. New/changed active or prepared definitions must satisfy the same
+    // documented field contract used by preparation and the checklist.
+    let changed = !equal(p, saved);
+    if (!changed && DP.templateAssignment(normalized))
+      changed = !equal(DP.resolveProduct(p, state.set).f, DP.resolveProduct(saved, previous.set).f);
+    if (changed && (normalized.on || DP.templateAssignment(normalized))) {
+      const errors = Catalog.additionalFieldErrors(DP.resolveProduct(normalized, state.set), state.cats);
+      if (errors.length) fail(errors.join(' '));
+    }
+    return normalized;
+  });
   if (new Set(state.products.map(p => p.code.trim().toLowerCase())).size !== state.products.length) fail('Product codes must be unique.');
+  const manifestCodes=new Map(Catalog.manifest.map(entry=>[entry.code.toLowerCase(),entry.code])),identities=state.products.map(p=>p.catalogManifestCode||manifestCodes.get(p.code.trim().toLowerCase())).filter(Boolean);
+  if(new Set(identities).size!==identities.length)fail('Catalog manifest identities must be unique.');
+  for(const p of state.products)if(p.on&&!previous.products.find(saved=>saved.id===p.id)?.on){
+    const eligibility=PricingReadiness.eligibility(p,state.set,state.cats);
+    if(!eligibility.eligible)throw Object.assign(new Error('Activation blocked: review approved pricing. '+eligibility.errors.map(e=>e.action||e.label).join(' ')),{status:422,code:'ACTIVATION_BLOCKED',details:eligibility});
+  }
   state.customers = records(input.customers, 'customer', c => {
     const old = previous.customers.find(x => x.id === c.id);
     const r = { id: c.id, date: date(c.date), wa: text(c.wa, 'customer WhatsApp number', 30), type: text(c.type ?? 'Individual', 'customer type', 100), on: on(c.on ?? 1), createdBy: old ? (old.createdBy || 'System') : (user.id || user.name) };
@@ -201,12 +330,21 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     r.del = num(q.del, 'delivery charge'); r.oth = num(q.oth, 'other charge'); r.terms = terms(q.terms);
     if ((r.del !== (old?.del ?? 0) || r.oth !== (old?.oth ?? 0)) && (r.del || r.oth) && (!hasPermission(user, 'quotation.additional_charges') || (user.role !== 'Administrator' && !state.set.allowAdditionalCharges))) fail('Additional quotation charges are not permitted.', 403);
     r.items = records(q.items, 'quotation item', item => {
-      const config = cfg(item.cfg), notes = text(item.notes, 'item notes', 4000);
       const saved = source?.items.find(i => i.id === item.id);
-      const sameSaved = saved && saved.pid === item.pid && equal(cfg(saved.cfg), config) && !q._refreshPrices;
+      const rawProduct = state.products.find(x => x.id === item.pid);
+      const p = rawProduct?DP.resolveProduct(rawProduct,state.set):undefined;
+      // Only an existing quotation can retain its historical item snapshots.
+      // A duplicate is a new quotation and must use current approved pricing.
+      const sameSaved = old && saved && saved.pid === item.pid && equal(item.cfg, saved.cfg) && !q._refreshPrices;
+      const config = sameSaved ? cfg(item.cfg) : cfg(item.cfg,p), notes = text(item.notes, 'item notes', 4000);
+      if (!old || !sameSaved || !equal(item.override, saved.override)) {
+        if (!p || !p.on || !state.cats.find(c => c.id === p.cat)?.on) fail('Select an active product from an active category.');
+        const errors = Catalog.additionalFieldErrors(p, state.cats);
+        if (errors.length) fail(errors.join(' '));
+        const eligibility=PricingReadiness.eligibility(rawProduct,state.set,state.cats);
+        if(!eligibility.eligible)throw Object.assign(new Error('Pricing blocked: '+eligibility.errors.map(e=>e.action||e.label).join(' ')),{status:422,code:'PRICING_INCOMPLETE',details:eligibility});
+      }
       if (sameSaved && equal(item.override, saved.override)) return { ...structuredClone(saved), notes };
-      const p = state.products.find(x => x.id === item.pid);
-      if (!p || !p.on || !state.cats.find(c => c.id === p.cat)?.on) fail('Select an active product from an active category.');
       const result = sameSaved ? { sub: saved.override?.originalSub ?? saved.sub } : DP.calc(p, config); if (result.err) fail(result.err);
       if (!Number.isSafeInteger(result.sub) || result.sub > 1000000000000) fail('Item amount exceeds the supported limit.');
       const computed = sameSaved ? { ...structuredClone(saved), notes } : DP.mkItem(p, config, item.id, notes);
@@ -242,4 +380,4 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
   state.log = [...descriptions.map(x => ({ t: now, x, u: user.name })), ...state.log].slice(0, 100);
   return state;
 }
-module.exports = { validateState, fail, str, date, id, num, settings, cfg };
+module.exports = { validateState, validateProduct:product, fail, str, date, id, num, settings, cfg };

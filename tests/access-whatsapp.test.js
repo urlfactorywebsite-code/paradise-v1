@@ -202,7 +202,7 @@ test('additive schema upgrade resolves only unambiguous legacy owners and preser
     for (const [id, author] of [['Q1', 'Unique author'], ['Q2', 'Same author'], ['Q3', 'Unknown author']])
       await db.prepare('INSERT INTO quotations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id, id, 'C1', '2026-01-01', '2026-02-01', 'Draft', author, 0, JSON.stringify({ id, by: author }), 1, 0, 'legacy');
     app = await createApp(database);
-    assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n, 4);
+    assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n, 6);
     const rows = await db.prepare('SELECT id,owner_id,body FROM quotations ORDER BY id').all();
     assert.equal(rows[0].owner_id, 'unique-id');
     assert.equal(JSON.parse(rows[0].body).createdBy, 'unique-id');

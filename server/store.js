@@ -2,9 +2,10 @@
 const { isDeepStrictEqual: equal } = require('node:util');
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const DP = require('../shared/domain');
 const { validateState, fail } = require('./validation');
-const { authorizeChanges, scopeState, permissionOverrides, effectivePermissions } = require('./access');
+const { authorizeChanges, scopeState, permissionOverrides, effectivePermissions, restorePrivatePricing } = require('./access');
 const TABLES = Object.freeze({
   cats: 'categories',
   products: 'products',
@@ -22,7 +23,7 @@ async function createStore(db) {
     const schema = await db
       .prepare('SELECT max(version) AS version FROM schema_migrations')
       .get();
-    if (schema.version > 4)
+    if (schema.version > 6)
       throw new Error(
         'Database schema is newer than this server. Refusing to downgrade.',
       );
@@ -38,6 +39,15 @@ async function createStore(db) {
       await db.exec(fs.readFileSync(path.join(__dirname, 'migrations', '004-access-whatsapp.sql'), 'utf8'));
       await db.prepare('INSERT INTO schema_migrations VALUES(4,?)').run(timestamp());
     }
+    if ((schema.version || 3) < 5) {
+      await db.exec(fs.readFileSync(path.join(__dirname, 'migrations', '005-product-configuration.sql'), 'utf8'));
+      await db.prepare('INSERT INTO schema_migrations VALUES(5,?)').run(timestamp());
+    }
+    if ((schema.version || 3) < 6) {
+      await db.exec(fs.readFileSync(path.join(__dirname, 'migrations', '006-pricing-imports.sql'), 'utf8'));
+      await db.prepare('INSERT INTO schema_migrations VALUES(6,?)').run(timestamp());
+    }
+    await db.prepare('UPDATE workspace SET pricing_import_key=? WHERE pricing_import_key IS NULL').run(crypto.randomBytes(32).toString('hex'));
   });
   async function audit(
     actor,
@@ -216,9 +226,9 @@ async function createStore(db) {
     const settingsChanged = previous && !equal(state.set, previous.set);
     await db
       .prepare(
-        'INSERT INTO workspace VALUES(1,?,?,1,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,settings=excluded.settings,updated_at=excluded.updated_at,settings_version=workspace.settings_version+?',
+        'INSERT INTO workspace(id,revision,settings,settings_version,updated_at,pricing_import_key) VALUES(1,?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,settings=excluded.settings,updated_at=excluded.updated_at,settings_version=workspace.settings_version+?',
       )
-      .run(revision, JSON.stringify(state.set), now, settingsChanged ? 1 : 0);
+      .run(revision, JSON.stringify(state.set), now, crypto.randomBytes(32).toString('hex'), settingsChanged ? 1 : 0);
   }
   async function initialize(state, actor) {
     for (const q of state.quotes) q.createdBy = actor.id;
@@ -249,6 +259,7 @@ async function createStore(db) {
     return `${prefix}/${year}/${String((await db.prepare('SELECT value FROM quote_sequences WHERE year=?').get(year)).value).padStart(4, '0')}`;
   }
   async function commit(candidate, previous, actor, options) {
+    restorePrivatePricing(candidate, previous.state, actor);
     authorizeChanges(candidate, previous.state, actor);
     const retained = new Set(candidate.quotes.map((q) => q.id));
     for (const old of previous.state.quotes) if (!retained.has(old.id) &&
@@ -355,6 +366,31 @@ async function createStore(db) {
     }
     return { data, version: row.version, updatedAt: row.updated_at };
   }
+  async function readProductConfiguration(productId) {
+    // One statement sees a consistent catalog snapshot without loading quotes,
+    // items, history or audit rows for each price calculation.
+    const row=await db.prepare("SELECT p.body AS product,c.body AS category,w.settings::jsonb->'giftTemplate' AS gift_template,w.settings::jsonb->'catalogTemplates' AS catalog_templates FROM products p JOIN categories c ON c.id=p.category_id CROSS JOIN workspace w WHERE p.id=? AND w.id=1").get(productId);
+    if(!row)fail('Product not found.',404);
+    const settings={giftTemplate:row.gift_template||DP.giftTemplate(),catalogTemplates:row.catalog_templates||{}};
+    return {product:JSON.parse(row.product),category:JSON.parse(row.category),giftTemplate:settings.giftTemplate,settings};
+  }
+  async function readTemplateConfiguration() {
+    const row=await db.prepare("SELECT revision,settings::jsonb->'giftTemplate' AS gift_template,settings::jsonb->'catalogTemplates' AS catalog_templates FROM workspace WHERE id=1").get();
+    if(!row)fail('Complete administrator setup first.',409);
+    return {settings:{giftTemplate:row.gift_template||DP.giftTemplate(),catalogTemplates:row.catalog_templates||{}},revision:row.revision};
+  }
+  async function readCatalogConfiguration(pricing=false) {
+    if(!db.inTransaction)return transaction(()=>readCatalogConfiguration(pricing));
+    let templates;
+    if(pricing){const row=await db.prepare('SELECT revision,settings FROM workspace WHERE id=1').get();if(!row)fail('Complete administrator setup first.',409);templates={revision:row.revision,settings:JSON.parse(row.settings)};}
+    else templates=await readTemplateConfiguration();
+    return {state:{set:templates.settings,cats:(await db.prepare('SELECT body FROM categories ORDER BY position,id').all()).map(row=>JSON.parse(row.body)),products:(await db.prepare('SELECT body FROM products ORDER BY position,id').all()).map(row=>JSON.parse(row.body))},revision:templates.revision};
+  }
+  async function readGiftTemplate() {
+    const row=await db.prepare("SELECT revision,settings::jsonb->'giftTemplate' AS gift_template FROM workspace WHERE id=1").get();
+    if(!row)fail('Complete administrator setup first.',409);
+    return {data:row.gift_template||DP.giftTemplate(),revision:row.revision};
+  }
   async function expectVersion(key, id, version, actor) {
     if (!Number.isInteger(version) || version < 1)
       fail('A current record version is required.', 428);
@@ -375,6 +411,11 @@ async function createStore(db) {
     mutate,
     commit,
     get,
+    readProductConfiguration,
+    readTemplateConfiguration,
+    readCatalogConfiguration,
+    readPricingCatalog:()=>readCatalogConfiguration(true),
+    readGiftTemplate,
     expectVersion,
     transaction,
     audit,

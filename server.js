@@ -520,6 +520,7 @@ async function createApp(options = {}) {
         fail('File not found.', 404);
       const special = {
         '/shared/domain.js': path.join(__dirname, 'shared', 'domain.js'),
+        '/shared/catalog.js': path.join(__dirname, 'shared', 'catalog.js'),
         '/vendor/jspdf.umd.min.js': path.join(
           __dirname,
           'node_modules',
@@ -570,6 +571,8 @@ async function createApp(options = {}) {
               ? 'The server could not complete this request.'
               : error.message,
           requestId,
+          ...(status<500&&error.code?{code:error.code}:{}),
+          ...(status<500&&error.details?{details:error.details}:{}),
         });
       else res.end();
     }

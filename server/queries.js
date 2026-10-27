@@ -109,14 +109,21 @@ async function listing(store, key, params, user) {
   ).n;
   const rows = await store.db
     .prepare(
-      `SELECT id FROM ${table}${where} ORDER BY ${sort} ${direction},id LIMIT ? OFFSET ?`,
+      `SELECT ${key === 'products' ? 'body,version,updated_at' : 'id'} FROM ${table}${where} ORDER BY ${sort} ${direction},id LIMIT ? OFFSET ?`,
     )
     .all(...values, pageSize, (page - 1) * pageSize);
   const data = [];
-  // Transaction reads share one pg client and must be awaited serially.
-  for (const row of rows) {
-    const r = await store.get(key, row.id);
-    data.push({ ...r.data, version: r.version, updatedAt: r.updatedAt });
+  // Catalog pages already have every stored product column they need. Avoid
+  // one additional round trip per row while retaining the existing response.
+  if (key === 'products') {
+    for (const row of rows)
+      data.push({ ...JSON.parse(row.body), version: row.version, updatedAt: row.updated_at });
+  } else {
+    // Transaction reads share one pg client and must be awaited serially.
+    for (const row of rows) {
+      const r = await store.get(key, row.id);
+      data.push({ ...r.data, version: r.version, updatedAt: r.updatedAt });
+    }
   }
   return {
     data,
