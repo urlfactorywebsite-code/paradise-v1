@@ -237,4 +237,4 @@ function csvExport(data) {
   ];
   return '\uFEFF' + rows.map((row) => row.map(cell).join(',')).join('\r\n');
 }
-module.exports = { listing, report, csvExport, integer };
+module.exports = { listing, report, csvExport, integer, filters };

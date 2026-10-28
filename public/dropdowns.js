@@ -108,6 +108,11 @@
     search.addEventListener('input', () => filter(control));
     let frame = 0;
     list.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; paint(control); }); }, { passive: true });
+    // Keep focus in the popup until selection. A focusable page container must
+    // not receive mousedown focus and dismiss the menu before its click fires.
+    menu.addEventListener('mousedown', event => {
+      if (event.target.closest('[data-match-index]')) event.preventDefault();
+    });
     menu.addEventListener('click', event => {
       const row = event.target.closest('[data-match-index]'); if (!row) return;
       event.preventDefault(); choose(control, Number(row.dataset.matchIndex));

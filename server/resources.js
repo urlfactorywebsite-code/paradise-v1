@@ -5,6 +5,7 @@ const path = require('node:path');
 const { backupDatabase } = require('./backup');
 const { fail, id, date, cfg, validateState } = require('./validation');
 const { listing, report, csvExport, integer } = require('./queries');
+const { dashboard, search } = require('./dashboard');
 const { quotationPdf } = require('./pdf');
 const DP = require('../shared/domain');
 const { requirePermission, hasPermission, requireQuoteAccess, scopeState, scopeCatalogData, authorizeChanges } = require('./access');
@@ -15,6 +16,17 @@ const names = Object.freeze({
   categories: 'cats',
   quotations: 'quotes',
 });
+// A document preview is a customer projection, not an editable staff record.
+// Allowlisting also excludes nested configuration notes and override audit data.
+const previewFields = (value, keys) => Object.fromEntries(keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]));
+function customerPreview(q) {
+  return {
+    ...previewFields(q, ['id','no','cid','date','valid','status','sales','ref','project','subject','req','chargeTax','chargeTaxMode','taxDisplay','disc','del','oth','terms']),
+    customerSnapshot: previewFields(q.customerSnapshot, ['name','co','person','mob','wa','email','addr','gstin']),
+    companySnapshot: previewFields(q.companySnapshot, ['name','tag','addr','phone','email','web','gstin','logo','signature','footer','customerNotes','terms','taxDisplay']),
+    items: q.items.map(item => ({...previewFields(item, ['id','pid','name','code','unit','qty','base','sub','tax','taxMode']), sp: DP.customerSpecifications(item)})),
+  };
+}
 const admin = (user) => {
   if (user.role !== 'Administrator')
     fail('Administrator access is required.', 403);
@@ -275,7 +287,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         () => 'UNSAVED',
       ).quotes.find((x) => x.id === q.id);
       return send(200, {
-        quotation: checked,
+        quotation: customerPreview(checked),
         totals: DP.totals(checked),
         currency: 'INR',
         moneyUnit: 'paise',
@@ -320,10 +332,13 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         });
       }
     }
+    if (route === '/api/dashboard' && method === 'GET')
+      return send(200, await dashboard(store, url.searchParams, user));
+    if (route === '/api/search' && method === 'GET')
+      return send(200, await search(store, url.searchParams, user));
     if (
       [
         '/api/reports/summary',
-        '/api/dashboard',
         '/api/reports/quotations.csv',
       ].includes(route) &&
       method === 'GET'
@@ -338,15 +353,6 @@ function createResources({ store, body, json, publicUser, backupDir }) {
           'text/csv; charset=utf-8',
           'quotation-report.csv',
         );
-      }
-      if (route === '/api/dashboard') {
-        const recent = data.quotes.slice(0, 8);
-        delete data.quotes;
-        return send(200, {
-          ...data,
-          recent,
-          activity: scopeState(await store.readState(), user).state.log.slice(0, 10),
-        });
       }
       delete data.quotes;
       return send(200, data);
@@ -555,6 +561,8 @@ function createResources({ store, body, json, publicUser, backupDir }) {
     if (method === 'GET') {
       if (key === 'customers') requirePermission(user, 'customer.view');
       if (['cats', 'products'].includes(key)) requireCatalogRead(user);
+      if (key === 'products' && !recordId && url.searchParams.get('view') === 'catalog')
+        return send(200, await require('./product-catalog').productCatalog(store, url.searchParams, user));
       const record = recordId ? await store.get(key, recordId) : null;
       if (key === 'quotes' && record) requireQuoteAccess(user, record.data);
       return send(

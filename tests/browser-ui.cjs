@@ -23,9 +23,19 @@ async function choose(name, label) {
   await page.getByRole('option', { name: label, exact: true }).click();
 }
 async function goView(view) {
-  await page.locator(`nav a[href="#${view}"]`).click();
+  const mobile = await page.evaluate(() => matchMedia('(max-width: 800px)').matches);
+  if (mobile && !await page.locator('body').evaluate(node => node.classList.contains('navigation-open')))
+    await page.locator('#mobile-menu').click();
+  await page.locator(`#workspace-sidebar nav a[href="#${view}"]`).click();
   await page.waitForFunction(view => document.querySelector('nav a.on')?.getAttribute('href') === '#' + view, view);
+  if (mobile && await page.locator('body').evaluate(node => node.classList.contains('navigation-open')))
+    await page.locator('#workspace-sidebar .mobile-close').click();
   await page.waitForFunction(() => [...document.querySelectorAll('select')].filter(select => !select.multiple && select.size <= 1 && !select.hasAttribute('data-native-select')).every(select => select.classList.contains('dp-select-native')));
+}
+async function openDashboardFilters() {
+  const filters = page.locator('#dashboard-filters');
+  if (!await filters.evaluate(node => node.open)) await filters.locator('summary').click();
+  await page.getByRole('combobox', { name: 'Customer', exact: true }).waitFor();
 }
 async function auditDropdowns(scope) {
   await scope.locator('details').evaluateAll(nodes => nodes.forEach(node => { node.open = true; }));
@@ -122,15 +132,24 @@ async function restore() { await page.evaluate(async () => { adopt(await api('/a
     return { quotations: 1500, rowsPerPage: 100 };
   });
   await check('Dashboard filtering preserves its active dropdown and matches totals', async () => {
-    await page.locator('nav a[href="#dash"]').click();
+    // The preceding list fixture is deliberately browser-only. Dashboard totals
+    // now come from the API, so restore the real disposable records first.
+    await restore();
+    await goView('dash');
+    await openDashboardFilters();
+    const customer = await page.evaluate(() => ({ id: S.customers[0].id, name: S.customers[0].name }));
     await page.getByRole('combobox', { name: 'Customer', exact: true }).evaluate(button => { button.dataset.regressionIdentity = 'retained'; });
-    await choose('Customer', 'Performance Customer 1499');
+    const response = page.waitForResponse(r => new URL(r.url()).pathname === '/api/dashboard' && new URL(r.url()).searchParams.get('customer') === customer.id && r.ok());
+    await choose('Customer', customer.name);
+    const expected = await (await response).json();
+    await page.waitForFunction(() => document.querySelector('#dashboard-results')?.getAttribute('aria-busy') === 'false');
     assert.equal(await page.getByRole('combobox', { name: 'Customer', exact: true }).getAttribute('data-regression-identity'), 'retained');
-    assert.equal(await page.locator('#dashboard-results .cards .card b').first().innerText(), '1');
+    assert.equal(expected.kpis.total, await page.evaluate(id => S.quotes.filter(q => q.cid === id).length, customer.id));
+    assert.equal(await page.locator('#dashboard-results .cards .card b').first().innerText(), String(expected.kpis.total));
     await restore();
   });
   await check('Reports dropdown updates results without replacing its controls', async () => {
-    await page.locator('nav a[href="#rep"]').click(); await page.getByRole('combobox', { name: 'Status', exact: true }).waitFor();
+    await page.locator('#workspace-sidebar nav a[href="#rep"]').click(); await page.getByRole('combobox', { name: 'Status', exact: true }).waitFor();
     await page.getByRole('combobox', { name: 'Status', exact: true }).evaluate(b => { b.dataset.regressionIdentity = 'retained'; });
     const response = page.waitForResponse(r => r.url().includes('/api/reports/summary?') && r.url().includes('status=Draft'));
     await choose('Status', 'Draft'); assert.equal((await response).status(), 200);
@@ -230,12 +249,14 @@ async function restore() { await page.evaluate(async () => { adopt(await api('/a
       await goView(view);
       const size = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth })); assert.ok(size.scroll <= size.width + 1, JSON.stringify({ view, ...size }));
     }
-    await page.locator('nav a[href="#dash"]').click(); await page.getByRole('combobox', { name: 'Customer', exact: true }).click();
+    await goView('dash'); await openDashboardFilters(); await page.getByRole('combobox', { name: 'Customer', exact: true }).click();
     const rect = await page.locator('.dp-select-menu').boundingBox(); assert.ok(rect.x >= 0 && rect.x + rect.width <= 391 && rect.y >= 0 && rect.y + rect.height <= 845);
     await page.screenshot({ path: 'test-results/dropdown-mobile.png', fullPage: true }); await page.keyboard.press('Escape');
   });
   await check('Desktop dropdown screenshot and no JavaScript exceptions', async () => {
-    await page.setViewportSize({ width: 1440, height: 1000 }); await page.getByRole('combobox', { name: 'Customer', exact: true }).click();
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.waitForFunction(() => document.querySelector('.workspace-frame').getBoundingClientRect().left >= document.querySelector('#workspace-sidebar').getBoundingClientRect().right - 1);
+    await page.getByRole('combobox', { name: 'Customer', exact: true }).click();
     await page.screenshot({ path: 'test-results/dropdown-desktop.png', fullPage: true }); await page.keyboard.press('Escape'); assert.deepEqual(exceptions, []);
   });
 })().catch(async error => { console.error(error.message); process.exitCode = 1; if (page) { console.error((await page.locator('#connection').innerText().catch(() => '')).slice(0, 500)); await page.screenshot({ path: 'test-results/ui-regression-failure.png', fullPage: true }).catch(() => {}); } }).finally(async () => { fs.writeFileSync('test-results/ui-regressions.json', JSON.stringify({ results, exceptions }, null, 2)); if (browser) await browser.close(); });

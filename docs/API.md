@@ -29,15 +29,23 @@ Search parameters: `q`, `page`, `pageSize` (default 25, maximum 100), `sort`, `d
 
 `GET /api/customers/{id}/quotations` provides customer quotation history. `GET /api/catalog` returns categories/products.
 
+`GET /api/products?view=catalog` adds a read-only display projection without changing the default product listing or mutation APIs. It returns `{data,summary:{total,attention},categories,pagination}`. Rows contain product ID/code/name, category ID/name, pricing method/tier basis, active state, configured GST (or `null` and `pricingVisible:false` without pricing access), and boolean `configurationReady`, `pricingReady`, `ready`. No full definitions, option metadata, master rates or notes are serialized. Existing catalog read permissions apply; this application uses one workspace, with no new tenant model.
+
+The projection also includes `taxMode` (or `null` without pricing access), so exempt treatment and inclusive GST can be displayed without changing the stored rate or calculation engine. Catalog-view search `q` is trimmed, case-insensitive, limited to product names/codes and 200 characters. `category`, `active=0|1`, `readiness=ready|attention|configuration|pricing`, `page` and `pageSize` (25 default, 100 maximum) combine with AND. Ordering is name/ID; out-of-range pages clamp after deletions/filter changes. Global counts describe all actual products, independent of current filters. The server scans product definitions in batches of 100 within one transaction and returns only the requested page; it does not read quotations or make per-row database calls.
+
+Readiness uses `shared/pricing-readiness.eligibility`, the existing activation/quotation contract. Category/template/configuration checks determine configuration readiness; approval/base/GST/pricing-reference/tier/approved-choice checks determine pricing readiness. Template resolution failure cannot be reported as pricing-ready. Ready-to-quote requires both eligibility and active status. Attention counts each inactive or ineligible product once. Approved intentional zero prices remain valid. An inactive fully configured product can show both readiness badges as Ready while still requiring activation. These are derived display values, never stored statuses; pricing formulas, records and quotation snapshots are unchanged.
+
 ## Pricing and quotations
 
 `POST /api/pricing/calculate` accepts `{productId,cfg}`. Numeric quantity/size/dimension fields must be JSON numbers; selected values must match the product's options. Catalog rates and extra charges use decimal INR; calculated totals use integer paise.
 
 Create a quote using `{data:{cid,date,valid,items:[{pid,cfg,notes}],disc:{t:"p",v:5},del:0,oth:0}}`. Select all required product options in `cfg`. New quotes start as Draft. Submitted item totals, numbering, creator, snapshots and history are not trusted; the server calculates/assigns them.
 
+Optional `internalNotes` (maximum 4,000 characters) stores private quotation-level staff notes in the existing quotation JSON body, separately from customer `terms` and item `notes`. Existing quotation create/edit/view permissions apply. Older records need no migration; omission preserves previously saved notes, while an empty string clears them. Customer-facing preview projections omit this field, and customer previews, PDFs and automatic WhatsApp content never render it. Authenticated quotation detail/state still return it to authorized staff for editing. There is no customer/public quotation API added by this field.
+
 | Endpoint | Contract |
 | --- | --- |
-| POST `/api/quotations/preview` | Quotation object; validate/recalculate without saving or consuming a number |
+| POST `/api/quotations/preview` | Quotation object; validate/recalculate without saving or consuming a number. Returns customer-facing quotation fields and totals. Omits private notes, raw configurations/field metadata, override audit data, customer master notes and internal company settings. Use authenticated detail/state for editable staff records. |
 | POST `/api/quotations/{id}/status` | `{version,status}`; records history, enforces administrator internal approval |
 | GET `/api/quotations/{id}/history` | Server status history |
 | POST `/api/quotations/{id}/duplicate` | `{version}`; requires current active products and categories, preserves eligible item snapshots, creates Draft/new number |
@@ -52,6 +60,20 @@ Ordinary resource PUT/PATCH preserves the current quotation status; use the expl
 `GET /api/settings` returns `{data,version}`; administrator PUT/PATCH accepts `{data,version}`.
 
 `GET /api/dashboard`, `/api/reports/summary`, `/api/reports/quotations.csv` use quotation filters. Report totals are quoted values, not revenue. CSV text cells that might trigger formulas are escaped.
+
+The dashboard uses `quotation.view_own` / `quotation.view_all`; report grants cannot broaden its quotation visibility, and quotation viewers do not require a separate report grant. Existing report endpoints retain their report permissions. Dashboard filters include inclusive quotation dates `from`/`to`, `employee` (immutable creator account ID), `customer`, `status`, `salesperson`, `q`, `min` and `max`. Invalid IDs, statuses, dates and reversed date ranges return 422.
+
+`GET /api/dashboard` retains `count`, `quotedValue`, `currency`, `moneyUnit`, status/date/salesperson/employee/customer breakdowns, top product counts, expired records, WhatsApp counts, recent quotations and scoped activity. It adds:
+
+- `kpis: {total,draft,pendingReview,quotedValue}` from database aggregates; quoted value sums stored integer-paise totals across every selected status.
+- `recent`: up to six matching quotations ordered by quotation date descending, number descending and ID descending. Each preserves existing quotation fields/items/history and adds stored `total`, `customer`, `company`, `creator`, `createdAt` (first saved history timestamp, or null), `version`, and `updatedAt`.
+- `attention`: up to six matching records, deduplicated by quotation ID, with `{id,no,cid,customer,company,status,valid,total,reason,pendingSince,canReview}` and `attentionTotal` for the full matching count. Real pending review records have `reason:"review"`; their latest review transition supplies `pendingSince` when available. `canReview` requires quotation approval permission and respects independent approval, including for administrators. These are links into the existing workflow; reading the dashboard never changes status.
+- Expiry attention has `reason:"expiry"` and uses actual validity dates from `today` through the next seven days, for the same pending/internal-approved/sent statuses supported by existing expiry processing. Pending records appear once as review attention. Draft and terminal statuses never become expiry alerts. `expiryWindowDays:7` describes a display horizon, not an automatic expiry rule. No configured review age threshold exists, so `reviewThresholdHours:null` never claims an overdue review.
+- `timezone`: a valid existing `TZ` environment value, otherwise `Asia/Kolkata`; `today` uses that calendar. No timezone or threshold setting is added. Activity date boundaries use the same calendar. Quotation filters continue to use the stored calendar date.
+
+Dashboard primary aggregates and bounded records use direct SQL and bulk item/history reads; they do not load every full quotation or the workspace. Existing reporting/CSV APIs remain available.
+
+`GET /api/search?q=...&page=1&pageSize=5` performs a server-side global lookup. It returns `{quotations:[{id,no,date,status,customer}],customers:[{id,name,co}],pagination:{page,pageSize,total,totalPages}}`. Quotation lookup searches existing numbers and saved customer/company names within quotation permissions. Customer lookup requires `customer.view`, and returns no contact details, notes or addresses. Empty search returns empty arrays; literal SQL wildcard characters are escaped. Search is limited to 200 characters and `pageSize` is at most 10 per category. Each category uses the shared page independently; `total` counts both categories and `totalPages` is the larger category page count. Authentication and permission failures use the existing 401/403 behavior.
 
 `GET /api/state` bootstraps the current UI with `{state,revision,user}`. `POST /api/changes` accepts `{revision,changes:[{collection,action,id,record}]}`. Collections: `cats`, `products`, `customers`, `quotes`, `set`; actions: `upsert`, `delete`. Upserts provide the complete changed record; deletes provide its ID. Settings cannot be deleted. Up to 200 changes commit atomically or all roll back. The client cannot write audit history. Compatibility `PUT /api/state` accepts `{state,revision}` and uses the same validation/storage.
 

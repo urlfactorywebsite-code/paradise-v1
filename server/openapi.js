@@ -78,6 +78,7 @@ Object.assign(schemas.Settings.properties, {
   ...Object.fromEntries(['logo', 'signature', 'footer', 'customerNotes'].map((key) => [key, str])),
 });
 const paths = {};
+schemas.Quote.properties.internalNotes = { type: 'string', maxLength: 4000, description: 'Private staff quotation notes in the existing JSON body. Requires existing quotation create/edit access. Excluded from customer preview projections, PDFs and automatic WhatsApp content; distinct from customer terms.' };
 function add(path, method, summary, request, options = {}) {
   const operation = { summary, tags: [options.tag || path.split('/')[2]], operationId: method + path.replace(/[^A-Za-z0-9]/g, '_'), security: options.public ? [] : [{ session: [], ...(method === 'get' ? {} : { csrf: [] }) }], responses: { [method === 'post' && options.created ? '201' : '200']: { description: 'Success. Monetary totals use integer paise unless a CSV column explicitly says INR.', content: { [options.mime || 'application/json']: { schema: options.response || object } } }, ...Object.fromEntries([400, 401, 403, 404, 409, 413, 422, 428, 429, 500].map(code => [code, { description: { 409: 'Stale version or conflicting record', 428: 'Version/revision required', 422: 'Invalid input' }[code] || 'Request rejected', content: { 'application/json': { schema: ref('Error') } } }])) } };
   operation.parameters = [...path.matchAll(/\{(\w+)\}/g)].map(m => ({ name: m[1], in: 'path', required: true, schema: str }));
@@ -108,6 +109,10 @@ for (const [route, name] of [['customers', 'Customer'], ['products', 'Product'],
   add('/api/' + route + '/{id}', 'delete', 'Delete record with dependency and role checks', 'Version');
 }
 add('/api/customers/{id}/quotations', 'get', 'Customer quotation history', null, { list: true });
+paths['/api/products'].get.parameters.push(
+ {name:'view',in:'query',schema:{type:'string',enum:['catalog']},description:'Optional display projection: paginated lightweight catalog rows, global total/unique attention counts and backend categories. Uses canonical activation eligibility; definitions, option metadata and base prices are omitted. GST is restricted without pricing read permission. Existing default listing is unchanged. Name/code-only trimmed search; fixed name/id order; out-of-range pages clamp to the last page.'},
+ {name:'readiness',in:'query',schema:{type:'string',enum:['ready','attention','configuration','pricing']},description:'Catalog view only. Ready requires active product and canonical eligibility. Attention includes inactive or ineligible products. Configuration/pricing select the failed check group; all filters AND together.'}
+);
 add('/api/catalog', 'get', 'Catalog and categories');
 add('/api/configuration-templates/promotional-gift','get','Read the shared promotional gift template and workspace revision');
 add('/api/configuration-templates/promotional-gift','put','Update shared gift definitions with product and independent pricing authorization; rejects stale workspace revisions','GiftTemplateUpdate');
@@ -128,7 +133,35 @@ add('/api/quotations/{id}/pdf', 'get', 'Download a server-generated saved quotat
 add('/api/quotations/expire', 'post', 'Administrator: expire overdue pending/sent quotes', { type: 'object', properties: { revision: { type: 'integer' }, asOf: { type: 'string', format: 'date' } } });
 add('/api/settings', 'get', 'Company settings and version');
 for (const method of ['put', 'patch']) add('/api/settings', method, 'Administrator: update company settings', { type: 'object', required: ['version', 'data'], properties: { version: { type: 'integer' }, data: ref('Settings') } });
-for (const route of ['/api/dashboard', '/api/reports/summary']) add(route, 'get', 'Server report totals and breakdowns', null, { list: true });
+add('/api/dashboard', 'get', 'Permission-scoped quotation dashboard with stored aggregates and bounded recent/attention records', null, {
+  list: true,
+  description: 'Uses quotation.view_own/view_all independently of report grants. Inclusive from/to filter quotation dates. Preserves existing report breakdowns and returns kpis, six stable recent quotations with stored total/customer/company/creator/createdAt, six deduplicated attention records and attentionTotal. Review alerts use the real Pending Internal Review status; no review threshold is configured (reviewThresholdHours:null). Expiry alerts use the existing expirable statuses and actual valid-until dates from today through expiryWindowDays:7; this is a display horizon, not an expiry/status policy. canReview also enforces independent approval. Timezone is valid process TZ or Asia/Kolkata; today uses that calendar. All monetary totals are integer paise and quoted value includes every selected status, not recognized revenue. No data or status is changed.',
+  response: { type: 'object', additionalProperties: true, properties: {
+    count: { type: 'integer', minimum: 0 }, quotedValue: { type: 'integer', minimum: 0 },
+    currency: { const: 'INR' }, moneyUnit: { const: 'paise' },
+    kpis: { type: 'object', properties: Object.fromEntries(['total', 'draft', 'pendingReview', 'quotedValue'].map((key) => [key, { type: 'integer', minimum: 0 }])) },
+    recent: { type: 'array', maxItems: 6, items: { ...schemas.Quote, properties: { ...schemas.Quote.properties, total: { type: 'integer' }, customer: str, company: str, creator: str, createdAt: { type: ['string', 'null'] } } } },
+    attention: { type: 'array', maxItems: 6, items: { type: 'object', properties: {
+      id: str, no: str, cid: str, customer: str, company: str, status: { enum: DP.ST }, valid: { type: 'string', format: 'date' }, total: { type: 'integer' },
+      reason: { enum: ['review', 'expiry'] }, pendingSince: { type: ['string', 'null'] }, canReview: { type: 'boolean' },
+    } } }, attentionTotal: { type: 'integer', minimum: 0 }, timezone: str, today: { type: 'string', format: 'date' },
+    reviewThresholdHours: { type: 'null' }, expiryWindowDays: { const: 7 },
+  } },
+});
+add('/api/search', 'get', 'Bounded global quotation/customer lookup', null, {
+  description: 'Searches quotation numbers and saved customer names/company names using quotation.view_own/view_all; customers require customer.view. Returns minimal display fields only. q is at most 200 characters; empty q returns no records. page defaults to 1; pageSize defaults to 5 and is at most 10 per result category. Each category paginates independently, with the shared page and totalPages equal to the larger category page count. SQL wildcard characters are literal. No data is changed.',
+  response: { type: 'object', properties: {
+    quotations: { type: 'array', maxItems: 10, items: { type: 'object', properties: { id: str, no: str, date: str, status: { enum: DP.ST }, customer: str } } },
+    customers: { type: 'array', maxItems: 10, items: { type: 'object', properties: { id: str, name: str, co: str } } },
+    pagination: { type: 'object', properties: Object.fromEntries(['page', 'pageSize', 'total', 'totalPages'].map((key) => [key, { type: 'integer', minimum: key === 'page' || key === 'pageSize' ? 1 : 0 }])) },
+  } },
+});
+paths['/api/search'].get.parameters.push(
+  { name: 'q', in: 'query', schema: { type: 'string', maxLength: 200 } },
+  { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 1000000, default: 1 } },
+  { name: 'pageSize', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 10, default: 5 } },
+);
+add('/api/reports/summary', 'get', 'Server report totals and breakdowns', null, { list: true });
 add('/api/reports/quotations.csv', 'get', 'Download filtered report CSV', null, { list: true, mime: 'text/csv', response: { type: 'string' } });
 add('/api/users', 'get', 'Administrator: list active and inactive accounts');
 add('/api/users', 'post', 'Create an account with configurable permissions', { ...schemas.Setup, properties: { ...schemas.Setup.properties, role: { type: 'string', enum: ['Administrator', 'Employee'] }, permissions: ref('Permissions') } }, { created: true });

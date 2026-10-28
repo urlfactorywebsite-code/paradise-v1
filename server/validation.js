@@ -306,6 +306,10 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     if (r.valid < r.date) fail('Valid-until date must be on or after quotation date.');
     r.no = old ? old.no : allocateNumber(r.date, state.set.prefix, state.set.sequenceStart);
     for (const k of ['sales', 'ref', 'project', 'subject', 'req']) r[k] = text(q[k], k, k === 'req' ? 4000 : 500);
+    // Staff-only quotation notes live in the existing JSON body. Older records
+    // remain unchanged, and an omitted field cannot erase previously saved notes.
+    if (q.internalNotes !== undefined || old?.internalNotes !== undefined)
+      r.internalNotes = text(q.internalNotes ?? old?.internalNotes, 'internal quotation notes', 4000);
     r.by = old ? old.by : user.name;
     r.createdBy = old ? (old.createdBy || null) : (user.id || user.name);
     r.customerSnapshot = structuredClone(source?.cid === q.cid ? (source.customerSnapshot || previous.customers.find(c => c.id === q.cid)) : state.customers.find(c => c.id === q.cid));
