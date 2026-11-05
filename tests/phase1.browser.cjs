@@ -58,7 +58,7 @@ async function noOverflow(name){
   await check('Admin condition controls preserve legacy Equals and save multiple ALL/ANY operators',async()=>{
     await page.locator('nav a[href="#prod"]').click();
     const productRow=page.locator('tr').filter({has:page.getByText(fixtureName,{exact:true})});
-    await productRow.getByRole('button',{name:'Edit',exact:true}).click();
+    await page.evaluate(id=>prodForm(id),fixtureId);
     const condition=editor(2);
     await condition.getByRole('button',{name:'+ Add condition',exact:true}).click();
     const second=condition.locator('.condition-row').nth(1);
@@ -96,15 +96,15 @@ async function noOverflow(name){
     await editor(5).locator('.size-editor-row').last().scrollIntoViewIfNeeded();
     await page.screenshot({path:'test-results/phase1-editor-mobile.png',fullPage:false});await page.setViewportSize({width:1440,height:1000});
     await page.getByRole('button',{name:'Save product',exact:true}).click();await page.locator('#modal').waitFor({state:'hidden'});await idle();
-    await page.locator('tr').filter({has:page.getByText(fixtureName,{exact:true})}).getByRole('button',{name:'Edit',exact:true}).click();
+    await page.evaluate(id=>prodForm(id),fixtureId);
     const saved=await page.evaluate(()=>PRODUCT_DRAFT);
     assert.equal(saved.f[2].when.mode,'ALL');assert.equal(saved.f[2].show_on_customer_pdf,true);assert.equal(saved.f[5].sizes[8].key,'kids');
     await page.getByRole('button',{name:'Close',exact:true}).click();return {sizes:sizes.length,desktop,mobile};
   });
   await check('Quotation ALL/ANY conditions update immediately and clear hidden values',async()=>{
     await page.locator('nav a[href="#new"]').click();await page.getByRole('heading',{name:/^Create Quotation/}).waitFor();
-    const customerName=await page.evaluate(()=>S.customers[0].name);await choose(page,'Customer',customerName+' — '+await page.evaluate(()=>S.customers[0].mob));
-    await page.getByRole('button',{name:'+ Add product or service',exact:true}).click();await page.locator('#cq').fill(fixtureName);
+    await choose(page,'Customer',await page.evaluate(()=>[S.customers[0].name,S.customers[0].co].filter(Boolean).join(' '+String.fromCharCode(8212)+' ')));
+    await page.getByRole('button',{name:'Add product',exact:true}).first().click();await page.locator('#cq').fill(fixtureName);
     await page.locator('#cl .pc').filter({hasText:fixtureName}).click();
     await commit(page.getByLabel('Design requirements',{exact:true}),'PUBLIC-PHASE1-DESIGN');
     await choose(page.locator('#modal'),'Printing method','Sublimation');
@@ -117,7 +117,7 @@ async function noOverflow(name){
     assert.equal(await page.getByLabel('Design requirements',{exact:true}).count(),0);assert.equal(await page.getByLabel('Any match instructions',{exact:true}).count(),1);
     await choose(page.locator('#modal'),'Material','Cotton');
     await commit(page.getByLabel('Design requirements',{exact:true}),'PUBLIC-PHASE1-DESIGN');
-    await commit(page.getByLabel('Internal notes',{exact:true}),'SECRET-PHASE1-INTERNAL');
+    await commit(page.locator('#modal').getByLabel('Internal notes',{exact:true}),'SECRET-PHASE1-INTERNAL');
     await commit(page.getByLabel('Any match instructions',{exact:true}),'PUBLIC-PHASE1-ANY');
   });
   await check('Reusable size quantities calculate total and prices, validate and survive quotation save/edit',async()=>{
@@ -128,16 +128,16 @@ async function noOverflow(name){
     await page.getByRole('spinbutton',{name:'M',exact:true}).fill('-1');await page.locator('#cc').getByText(/nonnegative/).waitFor();
     await page.getByRole('spinbutton',{name:'M',exact:true}).fill('6');
     await page.setViewportSize({width:390,height:844});const mobile=await noOverflow('Mobile quotation configurator');await page.locator('.size-breakdown').scrollIntoViewIfNeeded();await page.screenshot({path:'test-results/phase1-configurator-mobile.png',fullPage:false});await page.setViewportSize({width:1440,height:1000});
-    await page.getByRole('button',{name:'Add to quotation',exact:true}).click();await page.getByRole('button',{name:'Save as Draft',exact:true}).click();await idle();
+    await page.getByRole('button',{name:'Add to quotation',exact:true}).click();await page.getByRole('button',{name:'Save Draft',exact:true}).first().click();await idle();
     await page.getByRole('heading',{name:/^Edit Quotation/}).waitFor();quotationId=await page.evaluate(()=>Q.id);
     const saved=await page.evaluate(async id=>(await api('/api/quotations/'+id)).data,quotationId);
     assert.equal(saved.items[0].qty,10);assert.deepEqual(saved.items[0].cfg.sizes,{M:6,L:0,XL:0,XXL:0,XS:0,'3XL':0,kids:4,'4XL':0,'5XL':0});
-    await page.locator('#its').getByRole('button',{name:'Edit',exact:true}).click();
+    await page.locator('#its').getByRole('button',{name:'Edit item 1',exact:true}).click();
     assert.equal(await page.getByRole('spinbutton',{name:'M',exact:true}).inputValue(),'6');assert.equal(await page.getByRole('spinbutton',{name:'Kids 6-8',exact:true}).inputValue(),'4');
     await page.getByText('Total Quantity: 10',{exact:true}).waitFor();await page.getByRole('button',{name:'Close',exact:true}).click();return {quantity:10,subtotalPaise:102000,mobile};
   });
   await check('Customer preview and protected PDF include flagged values and exclude internal notes',async()=>{
-    await page.getByRole('button',{name:'Preview Quotation',exact:true}).click();
+    await page.getByRole('button',{name:'Preview',exact:true}).first().click();
     const preview=await page.locator('#modal .doc').innerText();assert.match(preview,/PUBLIC-PHASE1-DESIGN/);assert.match(preview,/PUBLIC-PHASE1-ANY/);assert.doesNotMatch(preview,/SECRET-PHASE1-INTERNAL/);assert.match(preview,/Kids 6-8 4/);
     await page.screenshot({path:'test-results/phase1-customer-preview.png',fullPage:false});await page.getByRole('button',{name:'Close',exact:true}).click();
     const response=await page.request.get(base+'/api/quotations/'+quotationId+'/pdf');assert.equal(response.status(),200);

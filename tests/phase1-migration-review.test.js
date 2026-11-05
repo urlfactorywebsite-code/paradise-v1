@@ -11,7 +11,7 @@ test('review: concurrent fresh startups apply Phase 1 migrations once',async()=>
  const database=await testDatabase(),a=connectDatabase(database),b=connectDatabase(database);
  try{
   await Promise.all([createStore(a),createStore(b)]);
-  assert.deepEqual((await a.prepare('SELECT version FROM schema_migrations ORDER BY version').all()).map(row=>row.version),[3,4,5,6]);
+  assert.deepEqual((await a.prepare('SELECT version FROM schema_migrations ORDER BY version').all()).map(row=>row.version),[3,4,5,6,7,8,9,10,11,12,13]);
   assert.equal((await a.prepare("SELECT count(*) AS n FROM pg_constraint WHERE conname IN ('products_configuration_shape','quotation_items_configuration_shape')").get()).n,2);
  }finally{await a.close();await b.close();await database.destroy();}
 });
@@ -30,8 +30,8 @@ test('review: failed Phase 1 migration rolls back DDL and version and permits sa
   assert.equal((await db.prepare("SELECT count(*) AS n FROM pg_constraint WHERE conname IN ('products_configuration_shape','quotation_items_configuration_shape')").get()).n,0);
   assert.equal((await db.prepare("SELECT count(*) AS n FROM pg_proc WHERE proname='paradise_product_fields_valid'").get()).n,0);
   await createStore(db);
-  assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n,6);
-  await db.exec("INSERT INTO schema_migrations VALUES(7,'future');");
+  assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n,13);
+  await db.exec("INSERT INTO schema_migrations VALUES(14,'future');");
   await assert.rejects(createStore(db),/newer than this server/);
  }finally{await db.close();await database.destroy();}
 });

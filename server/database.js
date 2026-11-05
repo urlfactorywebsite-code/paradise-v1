@@ -84,6 +84,23 @@ function connectDatabase(options = {}) {
       };
     },
     exec: (sql) => query(sql),
+    // Reports need a coherent snapshot, but must not queue behind (or hold)
+    // the workspace mutation lock. Keep the existing write transaction intact.
+    async readTransaction(fn) {
+      if (context.getStore()) return fn();
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+        const result = await context.run(client, fn);
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
     async transaction(fn) {
       if (context.getStore()) return fn();
       const client = await pool.connect();

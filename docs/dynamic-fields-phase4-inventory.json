@@ -1,0 +1,2766 @@
+{
+  "definitions": [
+    {
+      "id": "system_dashboard_period_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "period_caption",
+      "label": "Date range",
+      "selector": "select[onchange^=\"D.r=\"]",
+      "source": "Canonical dashboard periods",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_employee_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "employee_caption",
+      "label": "Employee",
+      "selector": "select[onchange^=\"D.sp=\"]",
+      "source": "employeeOptions(): permitted quotation creators",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_customer_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "customer_caption",
+      "label": "Customer",
+      "selector": "select[onchange^=\"D.cu=\"]",
+      "source": "S.customers from scoped API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_status_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "status_caption",
+      "label": "Quotation status",
+      "selector": "select[onchange^=\"D.st=\"]",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotation_list_status_caption",
+      "pageKey": "quotation_list",
+      "fieldKey": "status_caption",
+      "label": "Quotation status",
+      "selector": "select[onchange^=\"F.st=\"]",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotation_list_sales_caption",
+      "pageKey": "quotation_list",
+      "fieldKey": "sales_caption",
+      "label": "Salesperson filter",
+      "selector": "select[onchange^=\"F.sp=\"]",
+      "source": "Salespeople on permitted quotations",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotations_customer",
+      "pageKey": "quotations",
+      "fieldKey": "customer",
+      "label": "Customer",
+      "selector": "#editor-customer",
+      "source": "Scoped customer records",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Customer contact/category/delivery snapshot"
+      ],
+      "backend": "Customer existence/access, address ownership, quotation validation",
+      "storage": "quotations.customer_id and saved JSON",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_delivery_address",
+      "pageKey": "quotations",
+      "fieldKey": "delivery_address",
+      "label": "Delivery address",
+      "selector": "select[onchange^=\"Q.deliveryAddressId=\"]",
+      "source": "Selected customer delivery addresses",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Selected customer"
+      ],
+      "backend": "Customer/address ownership and active state",
+      "storage": "Quotation delivery address ID/snapshot",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_discount_type",
+      "pageKey": "quotations",
+      "fieldKey": "discount_type",
+      "label": "Discount type",
+      "selector": "select[onchange^=\"editorDiscount(\"]",
+      "source": "Canonical p/f discount types",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_status",
+      "pageKey": "quotations",
+      "fieldKey": "status",
+      "label": "Quotation status",
+      "selector": "#ns",
+      "source": "DP.ST and permitted status workflow",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_catalog_category_caption",
+      "pageKey": "quotations",
+      "fieldKey": "catalog_category_caption",
+      "label": "Product category",
+      "selector": "#cc2",
+      "source": "S.cats active product categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customers_category",
+      "pageKey": "customers",
+      "fieldKey": "category",
+      "label": "Customer category",
+      "selector": "#cf_categoryId",
+      "source": "Managed customer category API",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Other custom value; category association"
+      ],
+      "backend": "Active category/reference validation",
+      "storage": "customers.category_id and custom category text",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_customers_delivery_caption",
+      "pageKey": "customers",
+      "fieldKey": "delivery_caption",
+      "label": "Delivery address",
+      "selector": "#cf_deliveryAddressId",
+      "source": "This customer saved delivery addresses",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Customer form selected address; address editor"
+      ],
+      "backend": "Customer/address ownership",
+      "storage": "customer_delivery_addresses IDs and selected default",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_reports_month_caption",
+      "pageKey": "reports",
+      "fieldKey": "month_caption",
+      "label": "Month",
+      "selector": "#pa-month",
+      "source": "Calendar months",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_customer_caption",
+      "pageKey": "reports",
+      "fieldKey": "customer_caption",
+      "label": "Customer",
+      "selector": "#pa-customer",
+      "source": "Report filter-options customers",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_employee_caption",
+      "pageKey": "reports",
+      "fieldKey": "employee_caption",
+      "label": "Employee",
+      "selector": "#pa-employee",
+      "source": "Report filter-options users",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_status_caption",
+      "pageKey": "reports",
+      "fieldKey": "status_caption",
+      "label": "Status",
+      "selector": "#pa-status",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_category_caption",
+      "pageKey": "reports",
+      "fieldKey": "category_caption",
+      "label": "Product category",
+      "selector": "#pa-category",
+      "source": "Report filter-options categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_metric_caption",
+      "pageKey": "reports",
+      "fieldKey": "metric_caption",
+      "label": "Analytics metric",
+      "selector": "#pa-metric",
+      "source": "Canonical analytics metrics",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_mode_caption",
+      "pageKey": "reports",
+      "fieldKey": "mode_caption",
+      "label": "Chart mode",
+      "selector": "#pa-mode",
+      "source": "Supported renderer modes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_period_caption",
+      "pageKey": "reports",
+      "fieldKey": "period_caption",
+      "label": "Date range",
+      "selector": "#rd-range",
+      "source": "Canonical date presets",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_products_caption",
+      "pageKey": "reports",
+      "fieldKey": "products_caption",
+      "label": "Compare products",
+      "selector": "#pa-products",
+      "source": "Real product/historical IDs from report API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string[]",
+      "dependencies": [
+        "All Products checkbox; up to 50 stable product IDs"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_employee_metric_caption",
+      "pageKey": "reports",
+      "fieldKey": "employee_metric_caption",
+      "label": "Employee metric",
+      "selector": "#rd-employee-metric",
+      "source": "Canonical employee metrics",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_category_caption",
+      "pageKey": "products",
+      "fieldKey": "category_caption",
+      "label": "Category",
+      "selector": "#products-category",
+      "source": "Product categories API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_status_caption",
+      "pageKey": "products",
+      "fieldKey": "status_caption",
+      "label": "Status",
+      "selector": "select[onchange^=\"productsFilter('active'\"]",
+      "source": "Canonical active/inactive filter",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_readiness_caption",
+      "pageKey": "products",
+      "fieldKey": "readiness_caption",
+      "label": "Readiness",
+      "selector": "select[onchange^=\"productsFilter('readiness'\"]",
+      "source": "Canonical readiness filters",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_page_size_caption",
+      "pageKey": "products",
+      "fieldKey": "page_size_caption",
+      "label": "Products per page",
+      "selector": "select[onchange^=\"productsFilter('pageSize'\"]",
+      "source": "Bounded catalog page sizes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_category",
+      "pageKey": "products",
+      "fieldKey": "category",
+      "label": "Product category",
+      "selector": "#pe_cat",
+      "source": "Real product categories",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "products.category_id",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_pricing_method",
+      "pageKey": "products",
+      "fieldKey": "pricing_method",
+      "label": "Pricing method",
+      "selector": "#pe_m",
+      "source": "Canonical pricing methods",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_tax_classification",
+      "pageKey": "products",
+      "fieldKey": "tax_classification",
+      "label": "Tax classification",
+      "selector": "#pe_taxMode",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_catalog_template",
+      "pageKey": "products",
+      "fieldKey": "catalog_template",
+      "label": "Catalog template",
+      "selector": "#catalog-template-choice",
+      "source": "Canonical template IDs",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_product_categories_name_caption",
+      "pageKey": "product_categories",
+      "fieldKey": "name_caption",
+      "label": "Category name",
+      "selector": "input[onchange^=\"catName(\"]",
+      "source": "Existing category name input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing category validation",
+      "storage": "categories body/name",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_pricing_tax_classification",
+      "pageKey": "pricing",
+      "fieldKey": "tax_classification",
+      "label": "Tax classification",
+      "selector": "#pricing-editor select[onchange^=\"pcSet('taxMode'\"]",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_pricing_option_charges",
+      "pageKey": "pricing",
+      "fieldKey": "option_charges",
+      "label": "Priced options and compatibility",
+      "selector": "#pricing-editor select[data-charge-kind]",
+      "source": "Canonical charge bases f/u/p/a/q",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_catalog_category_caption",
+      "pageKey": "catalog",
+      "fieldKey": "category_caption",
+      "label": "Catalog category",
+      "selector": "select[onchange^=\"setCatalogFilter('category'\"]",
+      "source": "Real product categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_status_caption",
+      "pageKey": "catalog",
+      "fieldKey": "status_caption",
+      "label": "Catalog status",
+      "selector": "select[onchange^=\"setCatalogFilter('status'\"]",
+      "source": "Catalog readiness states",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_page_size_caption",
+      "pageKey": "catalog",
+      "fieldKey": "page_size_caption",
+      "label": "Products per page",
+      "selector": "select[onchange^=\"setCatalogFilter('pageSize'\"]",
+      "source": "Bounded checklist page sizes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_template_caption",
+      "pageKey": "catalog",
+      "fieldKey": "template_caption",
+      "label": "Assigned template",
+      "selector": "select[onchange^=\"setCatalogFilter('template'\"]",
+      "source": "Canonical catalog template definitions",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_users_role",
+      "pageKey": "users",
+      "fieldKey": "role",
+      "label": "System role",
+      "selector": "#team_role,#edit_user_role",
+      "source": "Administrator/Employee",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "User management authorization and last-administrator protection",
+      "storage": "users.role",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_users_member_name_caption",
+      "pageKey": "users",
+      "fieldKey": "member_name_caption",
+      "label": "Name",
+      "selector": "#team_name,#edit_user_name",
+      "source": "Account display name input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "users.name",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_tax_display",
+      "pageKey": "settings",
+      "fieldKey": "tax_display",
+      "label": "Tax display",
+      "selector": "select[onchange^=\"SETD.taxDisplay=\"]",
+      "source": "Canonical split/igst",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_tax_classification",
+      "pageKey": "settings",
+      "fieldKey": "tax_classification",
+      "label": "Default tax treatment",
+      "selector": "select[onchange^=\"SETD.taxMode=\"]",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_signature_caption",
+      "pageKey": "settings",
+      "fieldKey": "signature_caption",
+      "label": "Authorized signatory",
+      "selector": "input[oninput=\"SETD.signature=this.value\"]",
+      "source": "Existing settings input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "workspace.settings.signature",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_whatsapp_status_caption",
+      "pageKey": "whatsapp",
+      "fieldKey": "status_caption",
+      "label": "Sharing status",
+      "selector": "select[onchange^=\"WF.status=\"]",
+      "source": "Prepared/Manually Confirmed/Failed",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customer_categories_status_caption",
+      "pageKey": "customer_categories",
+      "fieldKey": "status_caption",
+      "label": "Category status",
+      "selector": "select[onchange^=\"CATEGORY_PAGE.status=\"]",
+      "source": "all/active/inactive/archived",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customer_categories_status",
+      "pageKey": "customer_categories",
+      "fieldKey": "status",
+      "label": "Category status",
+      "selector": "#ce_active",
+      "source": "Canonical active boolean",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    }
+  ],
+  "selectCallsites": [
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "period_caption",
+      "source": "public/app.js",
+      "line": 40,
+      "currentOptionSource": "Canonical dashboard periods",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_dashboard_period_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "new",
+      "fieldKey": "Q.cid=this.value",
+      "source": "public/app.js",
+      "line": 51,
+      "currentOptionSource": "<option value=\"\">Select existing customer…</option>${S.customers.map(c=>`<option value=\"${c.id}\" ${c.id===Q.cid?'selected':''}>${esc(c.name)} — ${esc(c.mob)}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "quotations",
+      "component": "new",
+      "fieldKey": "Q.disc.t=this.value",
+      "source": "public/app.js",
+      "line": 54,
+      "currentOptionSource": "<option value=\"p\" ${Q.disc.t=='p'?'selected':''}>Percentage (%)</option><option value=\"f\" ${Q.disc.t=='f'?'selected':''}>Fixed amount (₹)</option>",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "quotations",
+      "component": "openCat",
+      "fieldKey": "catalog_category_caption",
+      "source": "public/app.js",
+      "line": 64,
+      "currentOptionSource": "S.cats active product categories",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_quotations_catalog_category_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "openCfg",
+      "fieldKey": "cs_('${f.k}',this.value)",
+      "source": "public/app.js",
+      "line": 68,
+      "currentOptionSource": "${f.o.map(x=>`<option ${CF[f.k]===x[0]?'selected':''}>${esc(x[0])}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Resolved product, visibility, compatibility, approved native options"
+      ],
+      "backendValidation": "Canonical product/pricing validation and native binding guards",
+      "databaseRepresentation": "Product JSON; line cfg and fieldSnapshot plus product_field_bindings",
+      "businessRuleDependencies": "Canonical pricing keys, charges and conditional dependencies remain protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Existing Phase 3 product adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "openCfg",
+      "fieldKey": "cs_('u',this.value)",
+      "source": "public/app.js",
+      "line": 68,
+      "currentOptionSource": "${Object.keys(AF).map(u=>`<option ${CF.u===u?'selected':''}>${u}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Resolved product, visibility, compatibility, approved native options"
+      ],
+      "backendValidation": "Canonical product/pricing validation and native binding guards",
+      "databaseRepresentation": "Product JSON; line cfg and fieldSnapshot plus product_field_bindings",
+      "businessRuleDependencies": "Canonical pricing keys, charges and conditional dependencies remain protected",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical geometry units"
+    },
+    {
+      "page": "quotations",
+      "component": "statusQ",
+      "fieldKey": "status",
+      "source": "public/app.js",
+      "line": 101,
+      "currentOptionSource": "DP.ST and permitted status workflow",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_quotations_status",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "quotation_list",
+      "component": "list",
+      "fieldKey": "status_caption",
+      "source": "public/app.js",
+      "line": 126,
+      "currentOptionSource": "DP.ST",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_quotation_list_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotation_list",
+      "component": "list",
+      "fieldKey": "sales_caption",
+      "source": "public/app.js",
+      "line": 126,
+      "currentOptionSource": "Salespeople on permitted quotations",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_quotation_list_sales_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "prodForm",
+      "fieldKey": "pk",
+      "source": "public/app.js",
+      "line": 150,
+      "currentOptionSource": "${S.cats.map(c=>`<option value=\"${c.id}\" ${c.id===p.cat?'selected':''}>${esc(c.name)}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "prodForm",
+      "fieldKey": "pm",
+      "source": "public/app.js",
+      "line": 150,
+      "currentOptionSource": "<option value=\"unit\" ${p.m=='unit'?'selected':''}>Per unit (quantity tiers)</option><option value=\"area\" ${p.m=='area'?'selected':''}>Per area (sq ft)</option><option value=\"fixed\" ${p.m=='fixed'?'selected':''}>Fixed package</option>",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "pricing",
+      "component": "price",
+      "fieldKey": "op_('${p.id}','${f.k}',${i},1,this.value)",
+      "source": "public/app.js",
+      "line": 159,
+      "currentOptionSource": "${['f','u','p','a'].map(t=>`<option ${x[1]===t?'selected':''}>${t}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "users",
+      "component": "userForm",
+      "fieldKey": "role",
+      "source": "public/app.js",
+      "line": 268,
+      "currentOptionSource": "Administrator/Employee",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "User management authorization and last-administrator protection",
+      "databaseRepresentation": "users.role",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_users_role",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "users",
+      "component": "editUser",
+      "fieldKey": "role",
+      "source": "public/backend-ui.js",
+      "line": 26,
+      "currentOptionSource": "Administrator/Employee",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "User management authorization and last-administrator protection",
+      "databaseRepresentation": "users.role",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_users_role",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "customer_categories",
+      "component": "customer-categories",
+      "fieldKey": "status_caption",
+      "source": "public/customer-categories-ui.js",
+      "line": 6,
+      "currentOptionSource": "all/active/inactive/archived",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_customer_categories_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "customer_categories",
+      "component": "categoryForm",
+      "fieldKey": "status",
+      "source": "public/customer-categories-ui.js",
+      "line": 27,
+      "currentOptionSource": "Canonical active boolean",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_customer_categories_status",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "customers",
+      "component": "custForm",
+      "fieldKey": "category",
+      "source": "public/customer-ui.js",
+      "line": 13,
+      "currentOptionSource": "Managed customer category API",
+      "dataType": "string",
+      "dependencies": [
+        "Other custom value; category association"
+      ],
+      "backendValidation": "Active category/reference validation",
+      "databaseRepresentation": "customers.category_id and custom category text",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_customers_category",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "customers",
+      "component": "customerRenderAddresses",
+      "fieldKey": "delivery_caption",
+      "source": "public/customer-ui.js",
+      "line": 87,
+      "currentOptionSource": "This customer saved delivery addresses",
+      "dataType": "string",
+      "dependencies": [
+        "Customer form selected address; address editor"
+      ],
+      "backendValidation": "Customer/address ownership",
+      "databaseRepresentation": "customer_delivery_addresses IDs and selected default",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_customers_delivery_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "customerQuotationDeliveryHTML",
+      "fieldKey": "delivery_address",
+      "source": "public/customer-ui.js",
+      "line": 117,
+      "currentOptionSource": "Selected customer delivery addresses",
+      "dataType": "string",
+      "dependencies": [
+        "Selected customer"
+      ],
+      "backendValidation": "Customer/address ownership and active state",
+      "databaseRepresentation": "Quotation delivery address ID/snapshot",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_quotations_delivery_address",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "shared_custom_sections",
+      "component": "valueControl",
+      "fieldKey": "public/dynamic-fields-ui.js:40:1",
+      "source": "public/dynamic-fields-ui.js",
+      "line": 40,
+      "currentOptionSource": "${field.fieldType==='dropdown'?'<option value=\"\">Choose an option</option>':''}${options.map(option=>`<option value=\"${esc(option.value)}\"${selected.includes(option.value)?' selected':''}${!option.isActive||option.archivedAt?' disabled':''}>${esc(option.label)}${option.retained?' (saved)':option.archivedAt?' (archived)':''}</option>`).join('')}",
+      "dataType": "string[]",
+      "dependencies": [
+        "Central field definition, current record and snapshot"
+      ],
+      "backendValidation": "field-values/product-field-values and shared dynamic-values validation",
+      "databaseRepresentation": "Immutable field/option IDs; business record customFields and snapshots",
+      "businessRuleDependencies": "Typed descriptive values; no money calculations",
+      "classification": "fully_configurable",
+      "classifications": [
+        "fully_configurable"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Existing shared typed field/option editor"
+    },
+    {
+      "page": "shared_custom_sections",
+      "component": "renderEditor",
+      "fieldKey": "df-field-type",
+      "source": "public/dynamic-fields-ui.js",
+      "line": 123,
+      "currentOptionSource": "${DynamicValues.TYPES.map(type=>`<option value=\"${type}\"${type===draft.fieldType?' selected':''}>${labels[type]}</option>`).join('')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "field_management",
+      "component": "field-customization",
+      "fieldKey": "field-page",
+      "source": "public/field-pages-ui.js",
+      "line": 46,
+      "currentOptionSource": "${selectOptions(Object.entries(FieldControls.pages),m.page,'All pages')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "field_management",
+      "component": "field-customization",
+      "fieldKey": "FieldPages.filter('policy',this.value)",
+      "source": "public/field-pages-ui.js",
+      "line": 46,
+      "currentOptionSource": "${selectOptions([['configurable','Configurable'],['label_only','Label only'],['protected','Protected']],m.policy,'All policies')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "field_management",
+      "component": "field-customization",
+      "fieldKey": "FieldPages.filter('fieldType',this.value)",
+      "source": "public/field-pages-ui.js",
+      "line": 46,
+      "currentOptionSource": "${selectOptions([...DynamicValues.TYPES,'system'],m.fieldType,'All types')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "field_management",
+      "component": "field-customization",
+      "fieldKey": "field-product",
+      "source": "public/field-pages-ui.js",
+      "line": 46,
+      "currentOptionSource": "${selectOptions(S.products.map(product=>[product.id,product.name]),m.scope,'All product scopes')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "pricing",
+      "component": "pcSelectedHTML",
+      "fieldKey": "tax_classification",
+      "source": "public/pricing-editor.js",
+      "line": 51,
+      "currentOptionSource": "DP.TAX_MODES",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_pricing_tax_classification",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "pricing",
+      "component": "pcChargeRow",
+      "fieldKey": "pcCharge(this.dataset.chargeKind,Number(this.dataset.field),Number(this.dataset.index),'type',this.value)",
+      "source": "public/pricing-editor.js",
+      "line": 61,
+      "currentOptionSource": "${selectOptions(choices,type)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "reports",
+      "component": "productAnalyticsView",
+      "fieldKey": "month_caption, customer_caption, employee_caption, status_caption, category_caption, metric_caption",
+      "source": "public/product-analytics.js",
+      "line": 8,
+      "currentOptionSource": "Calendar months; Report filter-options customers; Report filter-options users; DP.ST; Report filter-options categories; Canonical analytics metrics",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "label_only",
+      "classifications": [
+        "label_only",
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [
+        {
+          "id": "system_reports_month_caption",
+          "pageKey": "reports",
+          "fieldKey": "month_caption",
+          "label": "Month",
+          "selector": "#pa-month",
+          "source": "Calendar months",
+          "classification": "label_only",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Calendar months",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_customer_caption",
+          "pageKey": "reports",
+          "fieldKey": "customer_caption",
+          "label": "Customer",
+          "selector": "#pa-customer",
+          "source": "Report filter-options customers",
+          "classification": "entity_selector",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Report filter-options customers",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_employee_caption",
+          "pageKey": "reports",
+          "fieldKey": "employee_caption",
+          "label": "Employee",
+          "selector": "#pa-employee",
+          "source": "Report filter-options users",
+          "classification": "entity_selector",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Report filter-options users",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_status_caption",
+          "pageKey": "reports",
+          "fieldKey": "status_caption",
+          "label": "Status",
+          "selector": "#pa-status",
+          "source": "DP.ST",
+          "classification": "label_only",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "DP.ST",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_category_caption",
+          "pageKey": "reports",
+          "fieldKey": "category_caption",
+          "label": "Product category",
+          "selector": "#pa-category",
+          "source": "Report filter-options categories",
+          "classification": "entity_selector",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Report filter-options categories",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_metric_caption",
+          "pageKey": "reports",
+          "fieldKey": "metric_caption",
+          "label": "Analytics metric",
+          "selector": "#pa-metric",
+          "source": "Canonical analytics metrics",
+          "classification": "label_only",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Canonical analytics metrics",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        }
+      ],
+      "integration": "Shared caption adapters for runtime fields"
+    },
+    {
+      "page": "reports",
+      "component": "productAnalyticsView",
+      "fieldKey": "mode_caption",
+      "source": "public/product-analytics.js",
+      "line": 11,
+      "currentOptionSource": "Supported renderer modes",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_reports_mode_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "reports",
+      "component": "productAnalyticsView",
+      "fieldKey": "products_caption",
+      "source": "public/product-analytics.js",
+      "line": 12,
+      "currentOptionSource": "Real product/historical IDs from report API",
+      "dataType": "string[]",
+      "dependencies": [
+        "All Products checkbox; up to 50 stable product IDs"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_reports_products_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "prod",
+      "fieldKey": "category_caption",
+      "source": "public/products-ui.js",
+      "line": 9,
+      "currentOptionSource": "Product categories API",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_products_category_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "prod",
+      "fieldKey": "status_caption",
+      "source": "public/products-ui.js",
+      "line": 9,
+      "currentOptionSource": "Canonical active/inactive filter",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_products_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "prod",
+      "fieldKey": "readiness_caption",
+      "source": "public/products-ui.js",
+      "line": 9,
+      "currentOptionSource": "Canonical readiness filters",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_products_readiness_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "productsTable",
+      "fieldKey": "page_size_caption",
+      "source": "public/products-ui.js",
+      "line": 47,
+      "currentOptionSource": "Bounded catalog page sizes",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_products_page_size_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "new",
+      "fieldKey": "customer",
+      "source": "public/quotation-ui.js",
+      "line": 49,
+      "currentOptionSource": "Scoped customer records",
+      "dataType": "string",
+      "dependencies": [
+        "Customer contact/category/delivery snapshot"
+      ],
+      "backendValidation": "Customer existence/access, address ownership, quotation validation",
+      "databaseRepresentation": "quotations.customer_id and saved JSON",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_quotations_customer",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "quotations",
+      "component": "new",
+      "fieldKey": "discount_type",
+      "source": "public/quotation-ui.js",
+      "line": 51,
+      "currentOptionSource": "Canonical p/f discount types",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_quotations_discount_type",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "reports",
+      "component": "rep",
+      "fieldKey": "month_caption, customer_caption, employee_caption, status_caption",
+      "source": "public/reports-dashboard.js",
+      "line": 14,
+      "currentOptionSource": "Calendar months; Report filter-options customers; Report filter-options users; DP.ST",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "label_only",
+      "classifications": [
+        "label_only",
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [
+        {
+          "id": "system_reports_month_caption",
+          "pageKey": "reports",
+          "fieldKey": "month_caption",
+          "label": "Month",
+          "selector": "#pa-month",
+          "source": "Calendar months",
+          "classification": "label_only",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Calendar months",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_customer_caption",
+          "pageKey": "reports",
+          "fieldKey": "customer_caption",
+          "label": "Customer",
+          "selector": "#pa-customer",
+          "source": "Report filter-options customers",
+          "classification": "entity_selector",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Report filter-options customers",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_employee_caption",
+          "pageKey": "reports",
+          "fieldKey": "employee_caption",
+          "label": "Employee",
+          "selector": "#pa-employee",
+          "source": "Report filter-options users",
+          "classification": "entity_selector",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "Report filter-options users",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        },
+        {
+          "id": "system_reports_status_caption",
+          "pageKey": "reports",
+          "fieldKey": "status_caption",
+          "label": "Status",
+          "selector": "#pa-status",
+          "source": "DP.ST",
+          "classification": "label_only",
+          "policy": "label_only",
+          "dataType": "string",
+          "dependencies": [
+            "Existing filters and pagination"
+          ],
+          "backend": "Existing reporting/list query whitelist and authorization",
+          "storage": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRules": "Only the caption is configurable; filter values and semantics are protected",
+          "currentOptionSource": "DP.ST",
+          "backendValidation": "Existing reporting/list query whitelist and authorization",
+          "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+          "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+          "integration": "Shared caption adapter"
+        }
+      ],
+      "integration": "Shared caption adapters for runtime fields"
+    },
+    {
+      "page": "reports",
+      "component": "rep",
+      "fieldKey": "period_caption",
+      "source": "public/reports-dashboard.js",
+      "line": 17,
+      "currentOptionSource": "Canonical date presets",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_reports_period_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "reports",
+      "component": "renderReportsSecondary",
+      "fieldKey": "employee_metric_caption",
+      "source": "public/reports-dashboard.js",
+      "line": 109,
+      "currentOptionSource": "Canonical employee metrics",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_reports_employee_metric_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "employee_caption",
+      "source": "public/srs-ui.js",
+      "line": 27,
+      "currentOptionSource": "employeeOptions(): permitted quotation creators",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_dashboard_employee_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "customer_caption",
+      "source": "public/srs-ui.js",
+      "line": 27,
+      "currentOptionSource": "S.customers from scoped API",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_dashboard_customer_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "status_caption",
+      "source": "public/srs-ui.js",
+      "line": 27,
+      "currentOptionSource": "DP.ST",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_dashboard_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "products",
+      "component": "prodForm",
+      "fieldKey": "category",
+      "source": "public/srs-ui.js",
+      "line": 70,
+      "currentOptionSource": "Real product categories",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "products.category_id",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_products_category",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "products",
+      "component": "prodForm",
+      "fieldKey": "pricing_method",
+      "source": "public/srs-ui.js",
+      "line": 70,
+      "currentOptionSource": "Canonical pricing methods",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_products_pricing_method",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "products",
+      "component": "prodForm",
+      "fieldKey": "tax_classification",
+      "source": "public/srs-ui.js",
+      "line": 70,
+      "currentOptionSource": "DP.TAX_MODES",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_products_tax_classification",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "products",
+      "component": "fieldEditor",
+      "fieldKey": "changeFieldType(${i},this.value)",
+      "source": "public/srs-ui.js",
+      "line": 74,
+      "currentOptionSource": "${selectOptions([['sel','Dropdown'],['multi','Multiselect'],['txt','Text'],['num','Number'],['dim','Dimensions'],['SIZE_BREAKDOWN','Size breakdown']],f.t)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "conditionsEditor",
+      "fieldKey": "setConditionMode(${i},this.value)",
+      "source": "public/srs-ui.js",
+      "line": 80,
+      "currentOptionSource": "${selectOptions([['ALL','ALL conditions match'],['ANY','ANY condition matches']],group.mode)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "conditionsEditor",
+      "fieldKey": "updateFieldCondition(${i},${j},'key',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 80,
+      "currentOptionSource": "${selectOptions(refs,c.key)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "conditionsEditor",
+      "fieldKey": "updateFieldCondition(${i},${j},'operator',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 80,
+      "currentOptionSource": "${selectOptions([['equals','Equals'],['not_equals','Not Equals']],c.operator)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "advancedFieldEditor",
+      "fieldKey": "PRODUCT_DRAFT.f[${i}].customCharge.type=this.value",
+      "source": "public/srs-ui.js",
+      "line": 114,
+      "currentOptionSource": "${selectOptions([['f','Fixed charge'],['u','Per unit'],['p','Percentage of base'],['a','Per square foot'],['q','Per unit quantity']],f.customCharge?.type||'f')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "catalogTemplateAssignmentPanel",
+      "fieldKey": "setProductTemplateMapping(${esc(JSON.stringify(shared.k))},this.value)",
+      "source": "public/srs-ui.js",
+      "line": 151,
+      "currentOptionSource": "${selectOptions([['','Shared field ('+shared.k+')'],...raw.f.filter(f=>f.t===shared.t).map(f=>[f.k,f.l+' ('+f.k+')'])],assignment.map?.[shared.k]||'')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "catalogTemplateAssignmentPanel",
+      "fieldKey": "catalog_template",
+      "source": "public/srs-ui.js",
+      "line": 154,
+      "currentOptionSource": "Canonical template IDs",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_products_catalog_template",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "products",
+      "component": "accessoryQuantityEditor",
+      "fieldKey": "public/srs-ui.js:175:1",
+      "source": "public/srs-ui.js",
+      "line": 175,
+      "currentOptionSource": "${selectOptions([['','Item quantity (default)'],...PRODUCT_DRAFT.f.filter(f=>f.t==='num'&&f.integer&&f.min>=1).map(f=>[f.k,f.l])],m.quantityKey||'')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "managedOptionsEditor",
+      "fieldKey": "PRODUCT_DRAFT.f[${i}].o[${j}][1]=this.value",
+      "source": "public/srs-ui.js",
+      "line": 180,
+      "currentOptionSource": "${selectOptions(types.some(t=>t[0]===o[1])?types:[...types,[o[1],'Existing basis - select supported basis']],o[1])}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "managedOptionsEditor",
+      "fieldKey": "public/srs-ui.js:180:2",
+      "source": "public/srs-ui.js",
+      "line": 180,
+      "currentOptionSource": "${selectOptions([['none','None'],['corners','Four corners per piece'],['perimeter','Maximum two-foot spacing']],m.quantityRule)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "managedOptionsEditor",
+      "fieldKey": "setOptionGeometry(${i},${value},'u',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 180,
+      "currentOptionSource": "${selectOptions(Object.keys(AF),m.geometry?.u||'in')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "rulesEditor",
+      "fieldKey": "ruleCondition('${collection}',${index},'key',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 200,
+      "currentOptionSource": "${selectOptions(fields,rule.when?.key,optional?'Always apply':undefined)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "rulesEditor",
+      "fieldKey": "PRODUCT_DRAFT.charges[${i}].type=this.value",
+      "source": "public/srs-ui.js",
+      "line": 201,
+      "currentOptionSource": "${selectOptions([['f','Fixed amount'],['u','Per unit'],['p','Percentage of base price'],['a','Per square foot']],r.type)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "rulesEditor",
+      "fieldKey": "PRODUCT_DRAFT.compatibility[${i}].field=this.value",
+      "source": "public/srs-ui.js",
+      "line": 202,
+      "currentOptionSource": "${selectOptions(p.f.filter(f=>f.t==='sel').map(f=>[f.k,f.l]),r.field)}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "products",
+      "component": "rulesEditor",
+      "fieldKey": "PRODUCT_DRAFT.compatibility[${i}].allowed=Array.from(this.selectedOptions,x=>x.value)",
+      "source": "public/srs-ui.js",
+      "line": 202,
+      "currentOptionSource": "${(target?.o||[]).map(o=>`<option value=\"${esc(o[0])}\" ${r.allowed.includes(o[0])?'selected':''}>${esc(DP.optionLabel(target,o[0]))}</option>`).join('')}",
+      "dataType": "string[]",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "quotations",
+      "component": "openCat",
+      "fieldKey": "catalog_category_caption",
+      "source": "public/srs-ui.js",
+      "line": 210,
+      "currentOptionSource": "S.cats active product categories",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_quotations_catalog_category_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "catalog",
+      "component": "catalog",
+      "fieldKey": "category_caption",
+      "source": "public/srs-ui.js",
+      "line": 218,
+      "currentOptionSource": "Real product categories",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_catalog_category_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "catalog",
+      "component": "catalog",
+      "fieldKey": "status_caption",
+      "source": "public/srs-ui.js",
+      "line": 218,
+      "currentOptionSource": "Catalog readiness states",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_catalog_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "catalog",
+      "component": "catalog",
+      "fieldKey": "template_caption",
+      "source": "public/srs-ui.js",
+      "line": 218,
+      "currentOptionSource": "Canonical catalog template definitions",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_catalog_template_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "catalog",
+      "component": "catalog",
+      "fieldKey": "page_size_caption",
+      "source": "public/srs-ui.js",
+      "line": 218,
+      "currentOptionSource": "Bounded checklist page sizes",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_catalog_page_size_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "configurationSelectField",
+      "fieldKey": "cs_('${f.k}',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 285,
+      "currentOptionSource": "${f.required===false?'<option value=\"\">None</option>':''}${!options.length?'<option value=\"\" disabled>Configure active approved options</option>':''}${saved?`<option value=\"${esc(value)}\" selected disabled>Saved choice unavailable: ${esc(DP.optionLabel(f,value))}</option>`:''}${custom?`<option value=\"${esc(value)}\" selected>Custom: ${esc(value)}</option>`:''}${selectOptions(options.map(o=>[o[0],DP.optionLabel(f,o[0])]),value)}",
+      "dataType": "string",
+      "dependencies": [
+        "Resolved product, visibility, compatibility, approved native options"
+      ],
+      "backendValidation": "Canonical product/pricing validation and native binding guards",
+      "databaseRepresentation": "Product JSON; line cfg and fieldSnapshot plus product_field_bindings",
+      "businessRuleDependencies": "Canonical pricing keys, charges and conditional dependencies remain protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Existing Phase 3 product adapter"
+    },
+    {
+      "page": "quotations",
+      "component": "configurationFields",
+      "fieldKey": "cs_('u',this.value)",
+      "source": "public/srs-ui.js",
+      "line": 298,
+      "currentOptionSource": "${selectOptions(Object.keys(AF),CF.u)}",
+      "dataType": "string",
+      "dependencies": [
+        "Resolved product, visibility, compatibility, approved native options"
+      ],
+      "backendValidation": "Canonical product/pricing validation and native binding guards",
+      "databaseRepresentation": "Product JSON; line cfg and fieldSnapshot plus product_field_bindings",
+      "businessRuleDependencies": "Canonical pricing keys, charges and conditional dependencies remain protected",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical geometry units"
+    },
+    {
+      "page": "quotations",
+      "component": "configurationMultiField",
+      "fieldKey": "cs_('${f.k}',Array.from(this.selectedOptions).filter(o=>!o.disabled).map(o=>o.value))",
+      "source": "public/srs-ui.js",
+      "line": 304,
+      "currentOptionSource": "${unavailable.map(value=>`<option value=\"${esc(value)}\" selected disabled>Saved choice unavailable: ${esc(DP.optionLabel(f,value))}</option>`).join('')}${options.map(o=>`<option value=\"${esc(o[0])}\" ${selected.includes(o[0])?'selected':''}>${esc(DP.optionLabel(f,o[0]))}</option>`).join('')}",
+      "dataType": "string[]",
+      "dependencies": [
+        "Resolved product, visibility, compatibility, approved native options"
+      ],
+      "backendValidation": "Canonical product/pricing validation and native binding guards",
+      "databaseRepresentation": "Product JSON; line cfg and fieldSnapshot plus product_field_bindings",
+      "businessRuleDependencies": "Canonical pricing keys, charges and conditional dependencies remain protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Existing Phase 3 product adapter"
+    },
+    {
+      "page": "settings",
+      "component": "set",
+      "fieldKey": "tax_display",
+      "source": "public/srs-ui.js",
+      "line": 332,
+      "currentOptionSource": "Canonical split/igst",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_settings_tax_display",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "settings",
+      "component": "set",
+      "fieldKey": "tax_classification",
+      "source": "public/srs-ui.js",
+      "line": 332,
+      "currentOptionSource": "DP.TAX_MODES",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_settings_tax_classification",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "quotations",
+      "component": "statusQ",
+      "fieldKey": "status",
+      "source": "public/srs-ui.js",
+      "line": 368,
+      "currentOptionSource": "DP.ST and permitted status workflow",
+      "dataType": "string",
+      "dependencies": [],
+      "backendValidation": "Existing canonical API validation",
+      "databaseRepresentation": "Existing business records or transient filter state",
+      "businessRuleDependencies": "Caption only; canonical values and handlers are immutable",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": "system_quotations_status",
+      "runtimeFields": [],
+      "integration": "Preserved; no editing controls"
+    },
+    {
+      "page": "reports",
+      "component": "rep",
+      "fieldKey": "RF.sp=this.value",
+      "source": "public/srs-ui.js",
+      "line": 373,
+      "currentOptionSource": "${selectOptions(employeeOptions(),RF.sp,'All permitted employees')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "reports",
+      "component": "rep",
+      "fieldKey": "RF.cu=this.value",
+      "source": "public/srs-ui.js",
+      "line": 373,
+      "currentOptionSource": "${selectOptions(S.customers.map(c=>[c.id,c.name]),RF.cu,'All customers')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "reports",
+      "component": "rep",
+      "fieldKey": "RF.st=this.value",
+      "source": "public/srs-ui.js",
+      "line": 373,
+      "currentOptionSource": "${selectOptions(ST,RF.st,'All statuses')}",
+      "dataType": "string",
+      "dependencies": [
+        "Existing handler and canonical option source"
+      ],
+      "backendValidation": "Canonical API or UI-only enum validation; no generic option mutation",
+      "databaseRepresentation": "Existing canonical records/settings, or transient UI filter state",
+      "businessRuleDependencies": "Workflow, reporting, security, pricing or relationships remain canonical",
+      "classification": "protected",
+      "classifications": [
+        "protected"
+      ],
+      "registryId": null,
+      "runtimeFields": [],
+      "integration": "Preserved canonical or legacy control; no arbitrary option editor"
+    },
+    {
+      "page": "whatsapp",
+      "component": "wa",
+      "fieldKey": "status_caption",
+      "source": "public/srs-ui.js",
+      "line": 409,
+      "currentOptionSource": "Prepared/Manually Confirmed/Failed",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_whatsapp_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "period_caption",
+      "source": "public/workspace-ui.js",
+      "line": 59,
+      "currentOptionSource": "Canonical dashboard periods",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_dashboard_period_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "employee_caption",
+      "source": "public/workspace-ui.js",
+      "line": 60,
+      "currentOptionSource": "employeeOptions(): permitted quotation creators",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_dashboard_employee_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "customer_caption",
+      "source": "public/workspace-ui.js",
+      "line": 60,
+      "currentOptionSource": "S.customers from scoped API",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "entity_selector",
+      "classifications": [
+        "entity_selector"
+      ],
+      "registryId": "system_dashboard_customer_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    },
+    {
+      "page": "dashboard",
+      "component": "dash",
+      "fieldKey": "status_caption",
+      "source": "public/workspace-ui.js",
+      "line": 60,
+      "currentOptionSource": "DP.ST",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backendValidation": "Existing reporting/list query whitelist and authorization",
+      "databaseRepresentation": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRuleDependencies": "Only the caption is configurable; filter values and semantics are protected",
+      "classification": "label_only",
+      "classifications": [
+        "label_only"
+      ],
+      "registryId": "system_dashboard_status_caption",
+      "runtimeFields": [],
+      "integration": "Shared caption adapter"
+    }
+  ],
+  "nonSelectControls": [
+    {
+      "page": "shared",
+      "component": "public/dropdowns.js",
+      "fieldKey": "native_select_enhancer",
+      "currentOptionSource": "The original select element; searchable listbox is a projection",
+      "dataType": "string",
+      "dependencies": [
+        "Native change/input events, labels, disabled/required state"
+      ],
+      "backendValidation": "Original control API validation",
+      "databaseRepresentation": "Original native control value",
+      "businessRuleDependencies": "No independent option store",
+      "classification": "protected"
+    },
+    {
+      "page": "products",
+      "component": "public/products-ui.js/productsMenu",
+      "fieldKey": "product_action_menu",
+      "currentOptionSource": "Permission-filtered canonical catalog actions",
+      "dataType": "action",
+      "dependencies": [
+        "Product ID, action authorization"
+      ],
+      "backendValidation": "Existing product/pricing CRUD authorization",
+      "databaseRepresentation": "No dropdown value persisted",
+      "businessRuleDependencies": "Canonical catalog workflow",
+      "classification": "protected"
+    },
+    {
+      "page": "pricing",
+      "component": "public/pricing-editor.js/pcProductList",
+      "fieldKey": "product_navigation",
+      "currentOptionSource": "Real products in scoped state",
+      "dataType": "product ID",
+      "dependencies": [
+        "Product pricing session and unsaved changes"
+      ],
+      "backendValidation": "Existing product/pricing permissions",
+      "databaseRepresentation": "products.id; selection is transient",
+      "businessRuleDependencies": "Canonical product pricing session",
+      "classification": "entity_selector"
+    },
+    {
+      "page": "shared",
+      "component": "public/workspace-ui.js/global-search",
+      "fieldKey": "search_suggestions",
+      "currentOptionSource": "/api/search permitted records",
+      "dataType": "entity ID",
+      "dependencies": [
+        "Current query and authorization"
+      ],
+      "backendValidation": "Scoped search API",
+      "databaseRepresentation": "Existing customers/quotations; no option definitions",
+      "businessRuleDependencies": "Entity access and navigation",
+      "classification": "entity_selector"
+    },
+    {
+      "page": "quotations",
+      "component": "public/srs-ui.js/catList",
+      "fieldKey": "product_cards",
+      "currentOptionSource": "Actual active products and categories",
+      "dataType": "product ID",
+      "dependencies": [
+        "Selected category and catalog readiness"
+      ],
+      "backendValidation": "Canonical product eligibility and backend pricing",
+      "databaseRepresentation": "products.id; quotation item pid/cfg/snapshots",
+      "businessRuleDependencies": "Pricing keys and eligibility",
+      "classification": "entity_selector"
+    }
+  ]
+}

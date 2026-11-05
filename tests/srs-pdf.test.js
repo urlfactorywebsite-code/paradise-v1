@@ -13,6 +13,16 @@ function fixture() {
   return { state, quote };
 }
 
+test('category highlight precedes terms, retains multiline text and never changes money or source data',()=>{
+ const {state,quote}=fixture();quote.categorySnapshot={id:'cc_bni',name:'Saved Association',highlightEnabled:true,highlightMessage:'SAVED-MEMBER-BENEFIT\nSECOND-MESSAGE-LINE'};const before=JSON.stringify(quote),total=DP.totals(quote,state.set).grand;
+ const content=quotationPdf(quote,state).toString('latin1');assert.ok(content.includes('SAVED-MEMBER-BENEFIT'));assert.ok(content.includes('SECOND-MESSAGE-LINE'));assert.ok(content.indexOf('SAVED-MEMBER-BENEFIT')<content.indexOf('Terms and conditions'));assert.equal(DP.totals(quote,state.set).grand,total);assert.equal(JSON.stringify(quote),before);
+ quote.categorySnapshot.highlightEnabled=false;assert.ok(!quotationPdf(quote,state).toString('latin1').includes('SAVED-MEMBER-BENEFIT'));
+});
+
+test('long category highlights paginate without losing their final message or terms',()=>{
+ const {state,quote}=fixture();quote.categorySnapshot={name:'Long category',highlightEnabled:true,highlightMessage:('Complete multiline message for members.\n'.repeat(95))+'END-OF-CATEGORY-MESSAGE'};const content=quotationPdf(quote,state).toString('latin1');assert.ok(content.includes('END-OF-CATEGORY-MESSAGE'));assert.ok(content.includes('Terms and conditions'));assert.ok(content.includes('Authorized Signatory'));
+});
+
 test('customer PDFs include public quotation details and never internal notes', () => {
   const { state, quote } = fixture();
   const before = JSON.stringify({ state, quote });

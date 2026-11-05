@@ -521,6 +521,11 @@ async function createApp(options = {}) {
       const special = {
         '/shared/domain.js': path.join(__dirname, 'shared', 'domain.js'),
         '/shared/catalog.js': path.join(__dirname, 'shared', 'catalog.js'),
+        '/shared/customer-categories.js': path.join(__dirname, 'shared', 'customer-categories.js'),
+        '/shared/dynamic-values.js': path.join(__dirname, 'shared', 'dynamic-values.js'),
+        '/shared/product-fields.js': path.join(__dirname, 'shared', 'product-fields.js'),
+        '/shared/field-controls.js': path.join(__dirname, 'shared', 'field-controls.js'),
+        '/shared/quotation-filters.js': path.join(__dirname, 'shared', 'quotation-filters.js'),
         '/vendor/jspdf.umd.min.js': path.join(
           __dirname,
           'node_modules',

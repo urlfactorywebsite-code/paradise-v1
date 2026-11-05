@@ -135,7 +135,7 @@ test('Phase 3 HTTP C/D: all five gifts inherit once, preserve existing rates and
  assert.ok(after.giftTemplate); assert.equal(after.products.filter(p => p.giftTemplate).length, 5);
  for (const product of beforeCatalog.products.filter(p => !['p8', 'p9', 'p10', 'p11', 'p12'].includes(p.id))) assert.deepEqual(after.products.find(p => p.id === product.id), product);
  for (const historical of oldQuotes) assert.deepEqual((await request('/api/quotations/' + historical.id)).data, historical);
- assert.equal((await request('/api/ready')).schemaVersion, 6);
+ assert.equal((await request('/api/ready')).schemaVersion, 13);
 });
 
 test('Phase 3 HTTP D: shared definitions propagate, product overrides/disable persist and saved price snapshots remain stable', async t => {

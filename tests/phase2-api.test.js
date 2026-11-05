@@ -42,7 +42,7 @@ test('Phase 2 HTTP B/D: approved Flex components, computed counts, historical sn
  await request('/api/pricing/calculate','POST',{productId:'p5',cfg},422);await request('/api/quotations/'+q.data.id+'/reprice','POST',{version:unchanged.version},422);
  // Historical edits retain snapshots, but a new duplicate must have currently available approved options.
  await request('/api/quotations/'+q.data.id+'/duplicate','POST',{version:unchanged.version},422);assert.deepEqual((await request('/api/quotations/'+q.data.id)).data.items,q.data.items);
- assert.equal((await request('/api/ready')).schemaVersion,6);
+ assert.equal((await request('/api/ready')).schemaVersion,13);
  let current=await request('/api/products/p5');const extended=structuredClone(current.data),longKey='B'.repeat(200),fin=extended.f.find(f=>f.k==='fin');fin.o.push([longKey,'f',0]);fin.optionMeta[longKey]={label:'Long-key bundle fixture',enabled:true,approved:true,includesEyelets:true};current=await request('/api/products/p5','PUT',{version:current.version,data:extended});current=await request('/api/products/p5','PUT',{version:current.version,data:current.data});
  const restored=await request('/api/products/p5','PUT',{version:current.version,data:original});assert.equal(restored.data.phase2,undefined);assert.deepEqual((await request('/api/quotations/'+q.data.id)).data.items,q.data.items);assert.deepEqual((await request('/api/quotations/Q2')).data.items,historic.data.items);
 });

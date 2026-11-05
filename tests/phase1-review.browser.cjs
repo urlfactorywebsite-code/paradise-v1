@@ -49,15 +49,15 @@ async function choose(name,label){await page.getByRole('combobox',{name,exact:tr
   const bounds=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(bounds.scroll<=bounds.width+1);
   await page.screenshot({path:'test-results/phase1-review-mobile.png'});
   await page.getByRole('button',{name:'Add to quotation',exact:true}).click();
-  await page.getByRole('button',{name:'Save as Draft',exact:true}).click();await page.getByRole('heading',{name:/^Edit Quotation/}).waitFor();
-  await page.locator('#its').getByRole('button',{name:'Edit',exact:true}).click();
+  await page.getByRole('button',{name:'Save Draft',exact:true}).first().click();await page.getByRole('heading',{name:/^Edit Quotation/}).waitFor();
+  await page.locator('#its').getByRole('button',{name:'Edit item 1',exact:true}).click();
   assert.equal(await page.getByRole('spinbutton',{name:'Kids',exact:true}).inputValue(),'5');
   assert.equal(await page.evaluate(()=>CF.finish),'Plain');assert.equal(await page.evaluate(()=>CF.bulk),'Standard');
   assert.equal(await page.evaluate(()=>calc(prod(CF._p),CF).sub),7500);
   await page.getByRole('button',{name:'Close',exact:true}).click();
  });
  await check('Review browser: camel-case internal data is excluded from preview and authenticated PDF',async()=>{
-  await page.getByRole('button',{name:'Preview Quotation',exact:true}).click();
+  await page.getByRole('button',{name:'Preview',exact:true}).first().click();
   assert.ok(!(await page.locator('#modal .doc').innerText()).includes('SECRET-REVIEW-BROWSER'));
   await page.getByRole('button',{name:'Close',exact:true}).click();
   const quoteId=await page.evaluate(()=>Q.id),response=await page.request.get(base+'/api/quotations/'+quoteId+'/pdf');assert.equal(response.status(),200);
@@ -71,7 +71,7 @@ async function choose(name,label){await page.getByRole('combobox',{name,exact:tr
   assert.equal(await page.evaluate(()=>Object.hasOwn(CF.sizes,'retired')),false);
   assert.equal(await page.evaluate(()=>calc(prod(CF._p),CF).err),null);
   await page.getByRole('button',{name:'Update item',exact:true}).click();
-  await page.getByRole('button',{name:'Save quotation',exact:true}).click();await page.waitForFunction(()=>!busy);
+  await page.getByRole('button',{name:'Save Draft',exact:true}).first().click();await page.waitForFunction(()=>!busy);
   const saved=await page.evaluate(async()=>(await api('/api/quotations/'+Q.id)).data);
   assert.equal(saved.items[0].qty,5);assert.equal(saved.items[0].cfg.sizes.retired,undefined);
   assert.deepEqual(exceptions,[]);

@@ -124,12 +124,23 @@ async function restore() { await page.evaluate(async () => { adopt(await api('/a
     await page.locator('#label-regression').evaluate(s => s.parentElement.remove());
   });
   await check('Large quotation lists paginate and preserve search controls', async () => {
-    await page.evaluate(() => { const sample = DP.seed(), q = sample.quotes[0], c = sample.customers[0]; S.customers = Array.from({ length: 1500 }, (_, i) => ({ ...structuredClone(c), id: 'PerfCustomer' + i, name: 'Performance Customer ' + i })); S.quotes = Array.from({ length: 1500 }, (_, i) => ({ ...structuredClone(q), id: 'PerfQuote' + i, cid: 'PerfCustomer' + i, no: 'PERF/2026/' + i, status: i % 2 ? 'Draft' : 'Sent to Customer', createdBy: AUTH.id })); location.hash = '#list'; render(); });
-    await page.getByRole('heading', { name: 'All Quotations', exact: true }).waitFor(); assert.equal(await page.locator('#tb tr').count(), 100);
-    await page.getByRole('button', { name: 'Next quotations', exact: true }).click(); await page.locator('#tb').getByText('PERF/2026/100', { exact: true }).waitFor();
+    // This control stress fixture supplies a paged API response. Actual database
+    // aggregation and owner isolation have separate integration tests.
+    await page.route('**/api/quotation-list?*',async route=>{
+      const params=new URL(route.request().url()).searchParams;
+      const result=await page.evaluate(({params})=>{
+        const sample=DP.seed(),source=sample.quotes[0],customer=sample.customers[0],all=Array.from({length:1500},(_,i)=>({...structuredClone(source),id:'PerfQuote'+i,cid:'PerfCustomer'+i,no:'PERF/2026/'+i,createdBy:AUTH.id}));
+        const match=all.filter(q=>!params.q||q.no.includes(params.q)),size=Number(params.pageSize||10),total=match.length,pages=Math.max(1,Math.ceil(total/size)),current=Math.min(Number(params.page||1),pages),data=match.slice((current-1)*size,current*size);
+        return {data,display:Object.fromEntries(data.map(q=>[q.id,{total:quotedTotal(q),customer:{name:customer.name,co:customer.co}}])),pagination:{page:current,pageSize:size,total,totalPages:pages}};
+      },{params:Object.fromEntries(params)});
+      await route.fulfill({json:result});
+    });
+    await page.evaluate(()=>{location.hash='#list';render();});
+    await page.getByRole('heading', { name: 'All Quotations', exact: true }).waitFor(); await page.waitForFunction(()=>document.querySelector('#tb')?.getAttribute('aria-busy')==='false');assert.equal(await page.locator('#tb tr').count(), 10);
+    await page.getByRole('button', { name: 'Next Page', exact: true }).click(); await page.locator('#tb').getByText('PERF/2026/10', { exact: true }).waitFor();
     await page.getByPlaceholder('Search number, customer, mobile, product').fill('PERF/2026/1499');
     await page.locator('#tb').getByText('PERF/2026/1499', { exact: true }).waitFor(); assert.equal(await page.locator('#tb tr').count(), 1);
-    return { quotations: 1500, rowsPerPage: 100 };
+    await page.unroute('**/api/quotation-list?*');return { quotations: 1500, rowsPerPage: 10 };
   });
   await check('Dashboard filtering preserves its active dropdown and matches totals', async () => {
     // The preceding list fixture is deliberately browser-only. Dashboard totals
@@ -167,7 +178,7 @@ async function restore() { await page.evaluate(async () => { adopt(await api('/a
     for (const view of views) {
       await goView(view);
       await page.waitForFunction(() => [...document.querySelectorAll('select')].filter(s => !s.multiple && s.size <= 1).every(s => s.classList.contains('dp-select-native')));
-      assert.equal(await page.locator('select:not(.dp-select-native)').count(), 0, view);
+      assert.equal(await page.locator('select:not([multiple]):not(.dp-select-native)').count(), 0, view);
     }
     await restore();
   });

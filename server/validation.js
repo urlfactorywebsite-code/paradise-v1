@@ -2,6 +2,9 @@
 const DP = require('../shared/domain');
 const Catalog = require('../shared/catalog');
 const PricingReadiness = require('../shared/pricing-readiness');
+const { normalizeDetails } = require('./customer-details');
+const CustomerCategories = require('../shared/customer-categories');
+const FieldValues = require('./field-values');
 const { hasPermission, authorizeProductChanges, authorizeSettingsChanges } = require('./access');
 const { isDeepStrictEqual: equal } = require('node:util');
 const fail = (message, status = 422) => { throw Object.assign(new Error(message), { status }); };
@@ -281,15 +284,19 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     const eligibility=PricingReadiness.eligibility(p,state.set,state.cats);
     if(!eligibility.eligible)throw Object.assign(new Error('Activation blocked: review approved pricing. '+eligibility.errors.map(e=>e.action||e.label).join(' ')),{status:422,code:'ACTIVATION_BLOCKED',details:eligibility});
   }
+  const addressOwners = new Map(previous.customers.flatMap(c => (c.deliveryAddresses || []).map(a => [a.id,c.id])));
   state.customers = records(input.customers, 'customer', c => {
     const old = previous.customers.find(x => x.id === c.id);
-    const r = { id: c.id, date: date(c.date), wa: text(c.wa, 'customer WhatsApp number', 30), type: text(c.type ?? 'Individual', 'customer type', 100), on: on(c.on ?? 1), createdBy: old ? (old.createdBy || 'System') : (user.id || user.name) };
+    const r = { id: c.id, date: date(c.date), wa: text(c.wa, 'customer WhatsApp number', 30), type: text(c.type ?? 'Individual', 'customer type', 100), on: on(c.on ?? old?.on ?? 1), createdBy: old ? (old.createdBy || 'System') : (user.id || user.name) };
     for (const k of ['name', 'co', 'person', 'mob', 'email', 'addr', 'gstin', 'notes']) r[k] = text(c[k], `customer ${k}`, ['notes', 'addr'].includes(k) ? 4000 : 200);
     str(r.name, 'customer name', 200, true);
     if (!/^[0-9+ ()-]{10,20}$/.test(r.mob)) fail('Enter a valid customer mobile number.');
     r.wa = r.wa.replace(/[ ()-]/g, '');
     if (r.wa && !/^\+[1-9]\d{7,14}$/.test(r.wa)) fail('WhatsApp number must include + and an international dialing code, using 8-15 digits.');
     if (r.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) fail('Invalid customer email.');
+    Object.assign(r, normalizeDetails(c, old, previous.customerCategories || [], addressOwners));
+    FieldValues.carry(r,c,old);
+    for (const a of r.deliveryAddresses || []) addressOwners.set(a.id,c.id);
     return r;
   });
   const oldQuotes = new Map(previous.quotes.map(q => [q.id, q]));
@@ -297,15 +304,26 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
   state.quotes = records(input.quotes, 'quotation', q => {
     const old = oldQuotes.get(q.id);
     const source = old || options.duplicateSources?.get(q.id);
+    // Document creation already permits its customer snapshot. Live address
+    // lookups remain a separate customer permission, including guessed IDs.
+    const savedDelivery = source && source.cid === q.cid && source.deliveryAddressId === q.deliveryAddressId && source.deliveryAddressSnapshot;
+    if (q.deliveryAddressId && !savedDelivery && !hasPermission(user, 'customer.view'))
+      fail('Customer view permission is required to select a delivery address.', 403);
     if (!state.customers.some(c => c.id === q.cid)) fail('Quotation customer does not exist.');
     if (!DP.ST.includes(q.status)) fail('Invalid quotation status.');
     if (!old && q.status !== 'Draft') fail('New quotations must start as Draft.');
     if (q.status === 'Approved Internally' && old?.status !== q.status && !hasPermission(user, 'quotation.approve')) fail('Internal approval permission is required.', 403);
     if (q.status === 'Approved Internally' && old?.status !== q.status && state.set.independentApproval && (old?.createdBy || q.createdBy) === user.id) fail('Independent approval requires a different authorized user.', 403);
     const r = { id: q.id, cid: q.cid, date: date(q.date), valid: date(q.valid), status: q.status };
+    FieldValues.carry(r,q,old);
+    // Server-owned: new records (including duplicates) use exact arithmetic.
+    // Existing records keep their calculation policy, even on category refresh.
+    if (!old || old.calculationVersion === 2) r.calculationVersion = 2;
     if (r.valid < r.date) fail('Valid-until date must be on or after quotation date.');
     r.no = old ? old.no : allocateNumber(r.date, state.set.prefix, state.set.sequenceStart);
-    for (const k of ['sales', 'ref', 'project', 'subject', 'req']) r[k] = text(q[k], k, k === 'req' ? 4000 : 500);
+    for (const k of ['sales', 'project', 'subject', 'req']) r[k] = text(q[k], k, k === 'req' ? 4000 : 500);
+    // References are assigned on first commit; edits retain the saved value.
+    r.ref = old ? old.ref || '' : '';
     // Staff-only quotation notes live in the existing JSON body. Older records
     // remain unchanged, and an omitted field cannot erase previously saved notes.
     if (q.internalNotes !== undefined || old?.internalNotes !== undefined)
@@ -313,8 +331,28 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     r.by = old ? old.by : user.name;
     r.createdBy = old ? (old.createdBy || null) : (user.id || user.name);
     r.customerSnapshot = structuredClone(source?.cid === q.cid ? (source.customerSnapshot || previous.customers.find(c => c.id === q.cid)) : state.customers.find(c => c.id === q.cid));
+    if (!source?.customerSnapshot) {delete r.customerSnapshot.deliveryAddresses;delete r.customerSnapshot.customFields;delete r.customerSnapshot.customFieldSnapshots;}
+    const customer = state.customers.find(c=>c.id===q.cid);
+    let categoryDiscount;
+    try { categoryDiscount=CustomerCategories.resolve(q,source,customer,previous.customerCategories||[]); }
+    catch(error){fail(error.message);}
+    if(categoryDiscount.categorySnapshot!==undefined)r.categorySnapshot=structuredClone(categoryDiscount.categorySnapshot);
+    if (q.deliveryAddressId !== undefined || old?.deliveryAddressId !== undefined || !old && customer.deliveryAddressId && hasPermission(user, 'customer.view')) {
+      const selected = q.deliveryAddressId === undefined ? (old?.cid === q.cid ? old.deliveryAddressId : customer.deliveryAddressId) : q.deliveryAddressId;
+      if (selected != null && typeof selected !== 'string') fail('Invalid quotation delivery address ID.');
+      r.deliveryAddressId = selected || null;
+      if (!selected) r.deliveryAddressSnapshot = null;
+      else if (source?.cid === q.cid && source.deliveryAddressId === selected && source.deliveryAddressSnapshot)
+        r.deliveryAddressSnapshot = structuredClone(source.deliveryAddressSnapshot);
+      else {
+        if (!hasPermission(user, 'customer.view')) fail('Customer view permission is required to select a delivery address.', 403);
+        const address = (customer.deliveryAddresses||[]).find(a=>a.id===selected&&!a.archived);
+        if (!address) fail('Select an active delivery address belonging to the quotation customer.');
+        r.deliveryAddressSnapshot = Object.fromEntries(['id','label','line1','line2','city','state','postalCode','country'].map(k=>[k,address[k]]));
+      }
+    }
     r.companySnapshot = structuredClone(source?.companySnapshot || (source ? previous.set : state.set));
-    if (q.contact !== undefined) {
+    if (q.contact !== undefined && !(source && source.cid !== q.cid && equal(q.contact, source.contact))) {
       object(q.contact, 'quotation contact');
       if (!equal(q.contact, old?.contact) && !hasPermission(user, 'customer.edit')) fail('Customer edit permission is required to change quotation contact details.', 403);
       r.contact = {};
@@ -329,7 +367,11 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     r.chargeTax = source?.chargeTax ?? (source ? previous.set.tax : state.set.tax);
     r.chargeTaxMode = source ? (source.chargeTaxMode ?? source.companySnapshot?.taxMode ?? 'exclusive') : state.set.taxMode;
     r.taxDisplay = source ? (source.taxDisplay ?? source.companySnapshot?.taxDisplay ?? 'split') : state.set.taxDisplay;
-    r.disc = { t: q.disc?.t, v: num(q.disc?.v, 'discount') };
+    // Validate client structure, then resolve the one authoritative discount.
+    num(q.disc?.v,'discount');
+    if(!['f','p'].includes(q.disc?.t)||q.disc.t==='p'&&q.disc.v>100)fail('Invalid discount.');
+    r.disc = { t: categoryDiscount.disc?.t, v: num(categoryDiscount.disc?.v, 'discount') };
+    if(categoryDiscount.discountSource!==undefined)r.discountSource=categoryDiscount.discountSource;
     if (!['f', 'p'].includes(r.disc.t) || (r.disc.t === 'p' && r.disc.v > 100)) fail('Invalid discount.');
     r.del = num(q.del, 'delivery charge'); r.oth = num(q.oth, 'other charge'); r.terms = terms(q.terms);
     if ((r.del !== (old?.del ?? 0) || r.oth !== (old?.oth ?? 0)) && (r.del || r.oth) && (!hasPermission(user, 'quotation.additional_charges') || (user.role !== 'Administrator' && !state.set.allowAdditionalCharges))) fail('Additional quotation charges are not permitted.', 403);
@@ -348,27 +390,29 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
         const eligibility=PricingReadiness.eligibility(rawProduct,state.set,state.cats);
         if(!eligibility.eligible)throw Object.assign(new Error('Pricing blocked: '+eligibility.errors.map(e=>e.action||e.label).join(' ')),{status:422,code:'PRICING_INCOMPLETE',details:eligibility});
       }
-      if (sameSaved && equal(item.override, saved.override)) return { ...structuredClone(saved), notes };
-      const result = sameSaved ? { sub: saved.override?.originalSub ?? saved.sub } : DP.calc(p, config); if (result.err) fail(result.err);
+      if (sameSaved && equal(item.override, saved.override)) {const result={...structuredClone(saved),notes};FieldValues.carry(result,item,saved);return result;}
+      const result = sameSaved ? { sub: saved.override?.originalSub ?? saved.sub } : DP.calc(p, config, r.calculationVersion); if (result.err) fail(result.err);
       if (!Number.isSafeInteger(result.sub) || result.sub > 1000000000000) fail('Item amount exceeds the supported limit.');
-      const computed = sameSaved ? { ...structuredClone(saved), notes } : DP.mkItem(p, config, item.id, notes);
+      const computed = sameSaved ? { ...structuredClone(saved), notes } : DP.mkItem(p, config, item.id, notes, r.calculationVersion);
       if (sameSaved && saved.override) { computed.sub = saved.override.originalSub; computed.base = saved.override.originalBase; computed.L = structuredClone(saved.override.originalLines); delete computed.override; }
       if (item.override !== undefined) {
         object(item.override, 'manual price override');
         if (!hasPermission(user, 'pricing.override')) fail('Manual pricing override permission is required.', 403);
         const amount = num(item.override.amount, 'overridden item price'), reason = str(item.override.reason, 'override reason', 1000, true);
         computed.override = { amount, reason, originalSub: computed.sub, originalBase: computed.base, originalLines: structuredClone(computed.L), by: user.id || user.name, at: now };
-        computed.sub = DP.R(amount); computed.base = Math.min(computed.base, computed.sub);
+        computed.sub = DP.money(amount, r.calculationVersion); computed.base = Math.min(computed.base, computed.sub);
         computed.L.push(['Authorized price adjustment', computed.sub - computed.override.originalSub]);
       } else if (saved?.override && !hasPermission(user, 'pricing.override')) fail('Manual pricing override permission is required.', 403);
+      FieldValues.carry(computed,item,saved?.pid===item.pid?saved:null);
       return computed;
     });
     if (!r.items.length && !['Draft', 'Cancelled'].includes(r.status)) fail('Add an item before changing status.');
     let totals;
     try { totals = DP.totals(r, state.set); }
     catch (error) { fail(error.message); }
+    if(r.discountSource!==undefined)r.categoryDiscountAmount=r.discountSource==='category'?totals.disc:0;
     if ((!old || !equal(r.disc, old.disc) || !equal(r.items, old.items)) && !hasPermission(user, 'quotation.discount_unlimited')) {
-      if (totals.disc > Math.round(totals.isub * state.set.employeeDiscountLimit / 100) || (state.set.employeeDiscountMax > 0 && totals.disc > DP.R(state.set.employeeDiscountMax))) fail('Discount exceeds the authorized employee limit.', 403);
+      if (totals.disc > DP.percentageAmount(totals.isub, state.set.employeeDiscountLimit, r.calculationVersion) || (state.set.employeeDiscountMax > 0 && totals.disc > DP.money(state.set.employeeDiscountMax, r.calculationVersion))) fail('Discount exceeds the authorized employee limit.', 403);
     }
     if (totals.warn) fail('Discount cannot exceed the product subtotal.');
     if (!Number.isSafeInteger(totals.grand) || totals.grand < 0 || totals.grand > 10000000000000) fail('Quotation total exceeds the supported limit.');

@@ -167,7 +167,7 @@ test('migration 005 preserves v4 bodies, credentials, revisions and quantities a
   const originalQuote = await db.prepare('SELECT body,version,total FROM quotations').get();
   const originalWorkspace = await db.prepare('SELECT settings,revision FROM workspace').get();
   await createStore(db);
-  assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n, 6);
+  assert.equal((await db.prepare('SELECT max(version) AS n FROM schema_migrations').get()).n, 13);
   assert.deepEqual(await db.prepare('SELECT body,version FROM products').get(), before);
   assert.deepEqual(await db.prepare('SELECT body,quantity,subtotal FROM quotation_items').get(), originalItem);
   assert.deepEqual(await db.prepare('SELECT body,version FROM customers').get(), originalCustomer);

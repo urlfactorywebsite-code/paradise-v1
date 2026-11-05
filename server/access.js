@@ -9,6 +9,8 @@ const PERMISSIONS = Object.freeze([
   'quotation.delete', 'quotation.download_pdf', 'quotation.share_whatsapp',
   'quotation.status', 'quotation.additional_charges', 'quotation.discount_unlimited',
   'customer.view', 'customer.create', 'customer.edit', 'customer.delete',
+  'customer_categories.view', 'customer_categories.manage',
+  'fields.view', 'fields.manage',
   'product.view', 'product.manage', 'pricing.view', 'pricing.manage', 'pricing.override',
   'reports.view_own', 'reports.view_all', 'users.manage', 'settings.manage', 'audit.view',
 ]);
@@ -281,6 +283,7 @@ function scopeState(result, user) {
       ? visible.has(e.entityId) : e.actorId === user.id);
   }
   if (!hasPermission(user, 'customer.view')) state.customers = [];
+  if (!['customer.view','customer.create','customer.edit','customer_categories.view','customer_categories.manage'].some(p=>hasPermission(user,p))) state.customerCategories = [];
   if (!['product.view','product.manage','pricing.manage'].some((permission) => hasPermission(user, permission))) { state.products = []; state.cats = []; }
   return { ...result, state: scopeCatalogData(state, user) };
 }

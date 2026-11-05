@@ -67,7 +67,9 @@ function renderQuotation(q, state, compact = false) {
   const metadataEnd = position();
   const headerEnd = companyEnd.page > metadataEnd.page ? companyEnd : metadataEnd.page > companyEnd.page ? metadataEnd : { page: companyEnd.page, y: Math.max(companyEnd.y, metadataEnd.y, logoBottom) };
   doc.setPage(headerEnd.page);
+  const delivery = q.deliveryAddressSnapshot;
   const quoteDetails = [q.project && `Project: ${q.project}`, q.ref && `Reference: ${q.ref}`,
+    delivery && `Delivery (${delivery.label}): ${[delivery.line1,delivery.line2,delivery.city,delivery.state,delivery.postalCode,delivery.country].filter(Boolean).join(', ')}`,
     q.subject && `Subject: ${q.subject}`, q.req && `Requirements: ${q.req}`].filter(Boolean).join('\n');
   const customerDetails = [customer.name, customer.co, customer.person && `Contact: ${customer.person}`, customer.addr,
     customer.mob && `Mobile: ${customer.mob}`, (customer.wa || customer.whatsapp) && `WhatsApp: ${customer.wa || customer.whatsapp}`,
@@ -95,9 +97,10 @@ function renderQuotation(q, state, compact = false) {
   const rows = [['Product subtotal', money(totals.ib)]];
   // Omit inapplicable charges, retaining every amount that contributes to the total.
   if (totals.ic) rows.push(['Item-level charges', money(totals.ic)]);
-  if (q.del) rows.push(['Delivery charges', money(DP.R(q.del))]);
-  if (q.oth) rows.push(['Other charges', money(DP.R(q.oth))]);
-  if (totals.disc) rows.push(['Discount', '- ' + money(totals.disc)]);
+  if (q.del) rows.push(['Delivery charges', money(DP.money(q.del,q.calculationVersion))]);
+  if (q.oth) rows.push(['Other charges', money(DP.money(q.oth,q.calculationVersion))]);
+  const categoryDiscountLabel=require('../shared/customer-categories').discountLabel(q);
+  if (totals.disc||categoryDiscountLabel) rows.push([categoryDiscountLabel||'Discount', '- ' + money(totals.disc)]);
   rows.push(['Net taxable amount', money(totals.taxable)]);
   for (const bracket of totals.br) {
     if (!bracket.r) { rows.push(['Zero-rated / exempt (0%)', money(bracket.x)]); continue; }
@@ -113,7 +116,8 @@ function renderQuotation(q, state, compact = false) {
   // full width after the totals, avoiding mostly empty continuation pages.
   const bottomStart = position();
   doc.setFont('helvetica', 'normal'); doc.setFontSize(fontSize);
-  const narrativeLines = [settings.customerNotes, ...(terms || [])].filter(Boolean).reduce((count, text) => count + doc.splitTextToSize(string(text), 89).length + 1, 0);
+  const categoryHighlight = require('../shared/customer-categories').highlight(q);
+  const narrativeLines = [settings.customerNotes, categoryHighlight?.message, ...(terms || [])].filter(Boolean).reduce((count, text) => count + doc.splitTextToSize(string(text), 89).length + 1, 0);
   const fullWidthNarrative = narrativeLines * fontSize * 1.15 / doc.internal.scaleFactor > 297 - margin.bottom - margin.top;
   table({ startY: bottomStart.y + gap, body: rows, pageBreak: 'avoid', margin: { ...margin, left: 113 },
     styles: { fontSize, cellPadding: compact ? 1.3 : 1.8, textColor: INK, overflow: 'linebreak' },
@@ -132,6 +136,10 @@ function renderQuotation(q, state, compact = false) {
   if (settings.customerNotes) {
     table({ startY: leftEnd.y, margin: leftMargin, head: [['Notes for the customer']], body: [[string(settings.customerNotes)]], headStyles: sectionHead, rowPageBreak: 'auto' });
     leftEnd = position(); leftEnd.y += gap;
+  }
+  if (categoryHighlight) {
+    table({startY:leftEnd.y,margin:leftMargin,head:[[string(categoryHighlight.name)+' member benefit']],body:[[string(categoryHighlight.message)]],headStyles:{fillColor:PALE,textColor:TEAL,fontStyle:'bold'},bodyStyles:{fillColor:PALE},rowPageBreak:'auto'});
+    leftEnd=position();leftEnd.y+=gap;
   }
   if (terms?.length) {
     table({ startY: leftEnd.y, margin: leftMargin, head: [['Terms and conditions']], rowPageBreak: 'auto',

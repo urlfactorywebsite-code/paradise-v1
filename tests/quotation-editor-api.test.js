@@ -16,6 +16,37 @@ async function fixture(t){
  const draft={cid:customer.id,date:'2026-10-28',valid:'2026-11-10',internalNotes:'PRIVATE-QUOTATION-SECRET',terms:['CUSTOMER-TERMS-VISIBLE'],items:[{pid:'p2',cfg:{...DP.defCfg(state.products.find(p=>p.id==='p2')),qty:3},notes:'PRIVATE-ITEM-SECRET'}],del:35.25,oth:12.50,disc:{t:'p',v:5}};
  return {app,admin,client,password,customer,draft,state};
 }
+test('customer references are automatic, stable on edits and renewed on duplicate',async t=>{
+ const f=await fixture(t);
+ const created=await f.admin.request('/api/quotations','POST',{...f.draft,ref:'CLIENT-SUPPLIED'},201),q=created.data;
+ assert.equal(q.ref,'CR/'+q.no.split('/').slice(-2).join('/'));
+ const edited=await f.admin.request('/api/quotations/'+q.id,'PATCH',{version:created.version,data:{ref:'REPLACEMENT',project:'Changed project',date:'2027-01-01',valid:'2027-01-15'}});
+ assert.equal(edited.data.ref,q.ref);assert.equal(edited.data.no,q.no);
+ const copy=await f.admin.request('/api/quotations/'+q.id+'/duplicate','POST',{version:edited.version},201);
+ assert.notEqual(copy.data.ref,q.ref);assert.equal(copy.data.ref,'CR/'+copy.data.no.split('/').slice(-2).join('/'));
+ const concurrent=await Promise.all([1,2,3].map(()=>f.admin.request('/api/quotations','POST',f.draft,201)));
+ assert.equal(new Set([q.ref,copy.data.ref,...concurrent.map(r=>r.data.ref)]).size,5);
+ const before=await f.admin.request('/api/state');
+ await f.admin.request('/api/quotations','POST',{...f.draft,valid:'2000-01-01'},422);
+ assert.equal((await f.admin.request('/api/state')).revision,before.revision);
+ const current=await f.admin.request('/api/state'),id='reference-batch-quote';
+ const batch=await f.admin.request('/api/changes','POST',{revision:current.revision,changes:[{collection:'quotes',action:'upsert',id,record:{...q,id,ref:'BATCH-SUPPLIED'}}]});
+ const saved=batch.state.quotes.find(q=>q.id===id);
+ assert.equal(saved.ref,'CR/'+saved.no.split('/').slice(-2).join('/'));
+ assert.equal((await f.admin.request('/api/quotations/'+id)).data.ref,saved.ref);
+});
+
+test('historical references survive edits and automatic references avoid historical collisions',async t=>{
+ const f=await fixture(t),created=await f.admin.request('/api/quotations','POST',f.draft,201),q=created.data;
+ const sequence=Number(q.no.split('/').at(-1))+1,legacy='CR/2026/'+String(sequence).padStart(4,'0');
+ // Simulate an existing manually entered reference in this disposable database.
+ await f.app.db.prepare('UPDATE quotations SET body=? WHERE id=?').run(JSON.stringify({...q,ref:legacy}),q.id);
+ const updated=await f.admin.request('/api/quotations/'+q.id,'PATCH',{version:created.version,data:{subject:'Historical edit',ref:''}});
+ assert.equal(updated.data.ref,legacy);
+ const next=await f.admin.request('/api/quotations','POST',f.draft,201);
+ assert.equal(next.data.ref,legacy+'-2');assert.notEqual(next.data.ref,updated.data.ref);
+});
+
 test('quotation private notes roundtrip in existing JSON without changing numbering, status or pricing',async t=>{
  const f=await fixture(t),created=await f.admin.request('/api/quotations','POST',f.draft,201),q=created.data;
  assert.equal(q.internalNotes,f.draft.internalNotes);assert.equal(q.status,'Draft');assert.match(q.no,/\/2026\/\d+$/);

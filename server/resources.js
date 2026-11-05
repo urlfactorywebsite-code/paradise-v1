@@ -4,8 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { backupDatabase } = require('./backup');
 const { fail, id, date, cfg, validateState } = require('./validation');
-const { listing, report, csvExport, integer } = require('./queries');
-const { dashboard, search } = require('./dashboard');
+const { listing, report, reportExport, csvExport, integer } = require('./queries');
+const { dashboard, search, workspaceTimezone } = require('./dashboard');
+const { productPerformance } = require('./product-analytics');
 const { quotationPdf } = require('./pdf');
 const DP = require('../shared/domain');
 const { requirePermission, hasPermission, requireQuoteAccess, scopeState, scopeCatalogData, authorizeChanges } = require('./access');
@@ -21,8 +22,10 @@ const names = Object.freeze({
 const previewFields = (value, keys) => Object.fromEntries(keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]));
 function customerPreview(q) {
   return {
-    ...previewFields(q, ['id','no','cid','date','valid','status','sales','ref','project','subject','req','chargeTax','chargeTaxMode','taxDisplay','disc','del','oth','terms']),
-    customerSnapshot: previewFields(q.customerSnapshot, ['name','co','person','mob','wa','email','addr','gstin']),
+    ...previewFields(q, ['id','no','cid','date','valid','status','sales','ref','project','subject','req','chargeTax','chargeTaxMode','taxDisplay','calculationVersion','disc','discountSource','categoryDiscountAmount','del','oth','terms']),
+    customerSnapshot: previewFields(q.customerSnapshot, ['name','co','person','contactPersonPhone','mob','wa','email','addr','gstin']),
+    ...(q.deliveryAddressSnapshot ? {deliveryAddressSnapshot:previewFields(q.deliveryAddressSnapshot,['label','line1','line2','city','state','postalCode','country'])} : {}),
+    ...(q.categorySnapshot ? {categorySnapshot:previewFields(q.categorySnapshot,['id','name','discountPercentage','highlightMessage','highlightEnabled'])} : {}),
     companySnapshot: previewFields(q.companySnapshot, ['name','tag','addr','phone','email','web','gstin','logo','signature','footer','customerNotes','terms','taxDisplay']),
     items: q.items.map(item => ({...previewFields(item, ['id','pid','name','code','unit','qty','base','sub','tax','taxMode']), sp: DP.customerSpecifications(item)})),
   };
@@ -108,12 +111,15 @@ function duplicateCustomer(state, data, existingId) {
   return state.customers.find(
     (c) =>
       c.id !== existingId &&
-      ['mob', 'email', 'gstin'].some(
+      ['mob', 'wa', 'email', 'gstin'].some(
         (k) => normalize(data[k]) && normalize(data[k]) === normalize(c[k]),
       ),
   );
 }
 function createResources({ store, body, json, publicUser, backupDir }) {
+  const customerApi = require('./customer-api').createCustomerApi({store,body,json});
+  const dynamicFields = require('./dynamic-fields').createDynamicFields({store,body,json});
+  const quotationExport = require('./quotation-export').createQuotationExport({store,body,json});
   const whatsapp = createWhatsApp({ store, body, json });
   const pricingImports = require('./pricing-import').createPricingImports({store,body,json});
   const requireCatalogRead = (user) => {
@@ -146,6 +152,13 @@ function createResources({ store, body, json, publicUser, backupDir }) {
     };
     const stateResponse = (result) => ({ ...scopeState(result, user), user: publicUser(user) });
     if(await pricingImports(req,res,url,user))return true;
+    if(await customerApi(req,res,url,user))return true;
+    if(await dynamicFields(req,res,url,user))return true;
+    if(await quotationExport(req,res,url,user))return true;
+    if(route==='/api/quotation-list'){
+      if(method!=='GET')fail('Method not allowed.',405);
+      return send(200,await require('./quotation-list').quotationPage(store,url.searchParams,user));
+    }
     if (await whatsapp(req, res, url, user)) return true;
     if (route === '/api/changes' && method === 'POST') {
       const input = await body(req);
@@ -188,6 +201,8 @@ function createResources({ store, body, json, publicUser, backupDir }) {
             } else {
               if (!change.record || change.record.id !== recordId)
                 fail('Record ID does not match operation.');
+              if (change.collection === 'customers' && change.allowDuplicate !== true && duplicateCustomer(s,change.record,recordId))
+                fail('A customer already uses that mobile, WhatsApp number, email, or GSTIN. Review the match before saving a separate customer.',409);
               if (index < 0) s[change.collection].unshift(change.record);
               else s[change.collection][index] = change.record;
             }
@@ -279,13 +294,17 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       if (index >= 0)
         candidate.quotes[index] = { ...candidate.quotes[index], ...q };
       else candidate.quotes.unshift(q);
+      if(index>=0&&q.cid!==state.quotes[index].cid&&!Object.hasOwn(input,'discountSource'))delete candidate.quotes[index].discountSource;
       authorizeChanges(candidate, state, user);
-      const checked = validateState(
+      const checkedState = validateState(
         candidate,
         state,
         user,
         () => 'UNSAVED',
-      ).quotes.find((x) => x.id === q.id);
+      );
+      await require('./field-values').normalizeState(store.db,checkedState,state);
+      await require('./product-field-values').normalizeItems(store.db,checkedState,state,{refreshQuoteIds:new Set(candidate.quotes.filter(q=>q._refreshPrices).map(q=>q.id))});
+      const checked=checkedState.quotes.find((x)=>x.id===q.id);
       return send(200, {
         quotation: customerPreview(checked),
         totals: DP.totals(checked),
@@ -332,6 +351,8 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         });
       }
     }
+    if (route === '/api/reports/product-performance' && method === 'GET')
+      return send(200, await productPerformance(store, url.searchParams, user));
     if (route === '/api/dashboard' && method === 'GET')
       return send(200, await dashboard(store, url.searchParams, user));
     if (route === '/api/search' && method === 'GET')
@@ -343,7 +364,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
       ].includes(route) &&
       method === 'GET'
     ) {
-      const data = await report(store, url.searchParams, user);
+      const data = await (route.endsWith('.csv') ? reportExport : report)(store, url.searchParams, user);
       if (route.endsWith('.csv')) {
         await store.audit(user, 'reports.exported', 'reports', '', {
           count: data.count,
@@ -355,6 +376,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
         );
       }
       delete data.quotes;
+      data.timezone = workspaceTimezone();
       return send(200, data);
     }
     if (route === '/api/audit' && method === 'GET') {
@@ -631,6 +653,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
           id: recordId,
         };
         if (key === 'quotes') {
+          if(updated.cid!==current.cid&&!Object.hasOwn(clean(input),'discountSource'))delete updated.discountSource;
           if (
             !Array.isArray(updated.items) ||
             updated.items.some((i) => !i || typeof i !== 'object')

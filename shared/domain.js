@@ -1,9 +1,9 @@
 /* Shared quotation catalog and pricing. All calculated money is integer paise. */
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof module === 'object' && module.exports ? require('./customer-categories') : root.CustomerCategories);
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.DP = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (CategoryDiscounts) {
 'use strict';
 const ST=['Draft','Pending Internal Review','Approved Internally','Sent to Customer','Customer Approved','Customer Rejected','Expired','Cancelled'];
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -16,6 +16,23 @@ const nonnegative=value=>finite(value)&&value>=0;
 const integer=value=>Number.isSafeInteger(value)&&value>=0;
 function safeMoney(value){if(!Number.isSafeInteger(value)||value<0)throw new RangeError('Calculated amount exceeds the supported range.');return value}
 function R(value=0){const amount=Number(value);if(!Number.isFinite(amount))throw new TypeError('Enter a finite amount.');const paise=Math.round(amount*100);if(!Number.isSafeInteger(paise))throw new RangeError('Amount exceeds the supported range.');return paise}
+// Version 2 evaluates decimal input as a rational, rounding only at the existing
+// monetary boundaries. Unversioned quotations retain their historical arithmetic.
+function decimalRatio(value){
+ if(!nonnegative(value))throw new TypeError('Enter a finite nonnegative amount.');
+ const [mantissa,exponent='0']=String(value).toLowerCase().split('e'),[whole,fraction='']=mantissa.split('.'),scale=fraction.length-Number(exponent);
+ return scale>=0?[BigInt(whole+fraction),10n**BigInt(scale)]:[BigInt(whole+fraction)*10n**BigInt(-scale),1n];
+}
+function roundRatio(numerator,denominator){return safeMoney(Number((numerator*2n+denominator)/(denominator*2n)));}
+function money(value=0,version){if(version!==2)return R(value);const [n,d]=decimalRatio(value);return roundRatio(n*100n,d);}
+function percentageAmount(paise,value,version){if(version!==2)return Math.round(paise*value/100);const [n,d]=decimalRatio(value);return roundRatio(BigInt(paise)*n,d*100n);}
+function inclusiveNet(paise,rate,version){if(version!==2)return Math.round(paise*100/(100+rate));const [n,d]=decimalRatio(rate);return roundRatio(BigInt(paise)*100n*d,100n*d+n);}
+function dimensionRatio(config){
+ const [w,wd]=decimalRatio(config.w),[h,hd]=decimalRatio(config.h);
+ const [n,d]=config.u==='in'?[1n,144n]:config.u==='cm'?[10000n,9290304n]:config.u==='m'?[107639104n,10000000n]:[1n,1n];
+ return [w*h*n,wd*hd*d];
+}
+function areaAmount(rate,qty,ratio){return roundRatio(BigInt(rate)*BigInt(qty)*ratio[0],ratio[1]);}
 const nf=(paise,prefix)=>prefix+(paise/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 const inr=paise=>nf(paise,'\u20b9'),rs=paise=>nf(paise,'Rs. ');
 const o=(v,t,a)=>[v,t||'f',a||0],sel=(k,l,op)=>({k,l,t:'sel',o:op}),T=(k,l)=>({k,l,t:'txt'}),SZ=['S','M','L','XL','XXL'];
@@ -432,6 +449,11 @@ function customerSpecifications(item){
   const product={f:item.fieldSnapshot},config=normalizeConfig(product,item.cfg);
   values=item.fieldSnapshot.filter(field=>publicField(field)&&fieldVisible(field,config,product)).map(field=>formatField(field,config));
  }else values=(item.sp||[]).filter(value=>typeof value==='string'&&!internalName(value.split(':',1)[0])&&!/^\s*(?:notes|design requirements|additional requirements)\s*:/i.test(value));
+ for(const [id,value]of Object.entries(item.customFields||{})){
+  const field=item.customFieldSnapshots?.[id];if(!field||internalName(field.label)||/^(?:notes|design requirements|additional requirements)$/i.test(field.label)||empty(value))continue;
+  const selected=Array.isArray(value)?value:[value],text=selected.map(key=>field.options?.find(option=>option.value===key)?.label??(typeof key==='boolean'?(key?'Yes':'No'):String(key))).join(', ');
+  values.push(field.label+': '+text);
+ }
  return [...new Set(values.filter(value=>value&&value.trim()&&!/:\s*$/.test(value)))];
 }
 function defCfg(product){
@@ -527,12 +549,14 @@ function pricingError(product){
  if(product.compatibility!==undefined&&(!Array.isArray(product.compatibility)||product.compatibility.some(rule=>!rule||typeof rule.field!=='string'||!Array.isArray(rule.allowed)||!rule.allowed.length)))return 'Invalid option compatibility rules.';
  return null;
 }
-function chargeAmount(type,amount,base,qty,area){
+function chargeAmount(type,amount,base,qty,area,version,ratio){
  if(type==='a'&&!area&&amount)throw new TypeError('Area-based charges require valid dimensions.');
+ if(version===2)return type==='f'?money(amount,2):['u','q'].includes(type)?safeMoney(money(amount,2)*qty):type==='p'?percentageAmount(base,amount,2):areaAmount(money(amount,2),qty,ratio);
  return safeMoney(type==='f'?R(amount):['u','q'].includes(type)?Math.round(R(amount)*qty):type==='p'?Math.round(base*amount/100):Math.round(R(amount)*area*qty));
 }
-function calc(product,configuration){
+function calc(product,configuration,version){
  const L=[],sp=[],computed={};
+ const toMoney=value=>money(value,version);
  let err=pricingError(product)||sizeQuantityError(product,configuration),qty=0,base=0,area=0;
  let config=err?{}:normalizeConfig(product,configuration);
  const sizeField=err?null:sizeFields(product).find(field=>fieldVisible(field,config,product));
@@ -553,18 +577,19 @@ function calc(product,configuration){
   else if(!Object.prototype.hasOwnProperty.call(AF,config.u))err='Select a valid dimension unit.';
   else area=config.w*config.h*AF[config.u];
  }
+ const ratio=version===2&&needsArea&&!err?dimensionRatio(config):[0n,1n];
  const {available}=visibility(product,config);
  if(!err)for(const rule of product.compatibility||[])if(available(rule.field)&&matches(rule.when,config,available)&&!rule.allowed.includes(config[rule.field])){err=rule.message||'Selected product options are not compatible.';break;}
  if(!err){try{
   if(product.m==='tier'||(product.m==='unit'&&product.tiers?.length)){
-   const tier=[...product.tiers].reverse().find(row=>qty>=row[0]),rate=R(tier[1]);
+   const tier=[...product.tiers].reverse().find(row=>qty>=row[0]),rate=toMoney(tier[1]);
    base=safeMoney(rate*qty);L.push([`Base: ${qty} \u00d7 ${inr(rate)} (tier from ${tier[0]})`,base]);
   }else if(product.m==='unit'){
-   const rate=R(product.rate);base=safeMoney(rate*qty);L.push([`Unit: ${qty} \u00d7 ${inr(rate)}`,base]);
+   const rate=toMoney(product.rate);base=safeMoney(rate*qty);L.push([`Unit: ${qty} \u00d7 ${inr(rate)}`,base]);
   }else if(product.m==='area'){
-   const rate=R(product.rate);base=safeMoney(Math.round(rate*area*qty));L.push([`Area: ${area.toFixed(2)} sq ft \u00d7 ${qty} \u00d7 ${inr(rate)}`,base]);
-  }else{base=safeMoney(R(product.rate));if(base)L.push([product.m==='package'?'Package fee':'Base fee',base]);}
-  const minimumCharge=safeMoney(R(product.min??0));
+   const rate=toMoney(product.rate);base=version===2?areaAmount(rate,qty,ratio):safeMoney(Math.round(rate*area*qty));L.push([`Area: ${area.toFixed(2)} sq ft \u00d7 ${qty} \u00d7 ${inr(rate)}`,base]);
+  }else{base=safeMoney(toMoney(product.rate));if(base)L.push([product.m==='package'?'Package fee':'Base fee',base]);}
+  const minimumCharge=safeMoney(toMoney(product.min??0));
   if(base<minimumCharge){L.push([`Minimum order charge adjustment (min ${inr(minimumCharge)})`,minimumCharge-base]);base=minimumCharge;}
   if(needsArea&&!product.f.some(field=>field.t==='dim'))sp.push(`Size: ${config.w} \u00d7 ${config.h} ${config.u}`);
   if(sizeField?.legacy)sp.push(formatField(sizeField,config));
@@ -581,26 +606,26 @@ function calc(product,configuration){
     if(!Array.isArray(values)||values.length>100||new Set(values).size!==values.length||values.some(value=>!activeOptions(field).some(option=>option[0]===value))&&!custom){err='Invalid option for '+field.l+': select an active option with approved pricing.';break;}
     if(field.t==='multi'&&(values.length<(field.minSelections??0)||values.length>(field.maxSelections??100))){err=field.l+' must contain between '+(field.minSelections??0)+' and '+(field.maxSelections??100)+' selections.';break;}
     if(custom&&(!field.customCharge?.approved||!nonnegative(field.customCharge.amount))){err=field.l+' custom values require an explicitly approved configured rate.';break;}
-    for(const value of values){const option=custom?[value,field.customCharge.type,field.customCharge.amount]:field.o.find(option=>option[0]===value),meta=custom?{}:optionMeta(field,value);let chargeQty=qty,label=field.l+': '+optionLabel(field,value);if(field.quantityRule==='eyelets'){const perPiece=eyeletCount(field,config),total=perPiece*qty;if(!integer(total))throw new TypeError('Invalid eyelet quantity.');computed[field.k]={perPiece,total};chargeQty=total;label+=' ('+total+' eyelets)';}else if(meta.quantityKey&&['u','q'].includes(option[1])){if(!integer(config[meta.quantityKey])||config[meta.quantityKey]<1||config[meta.quantityKey]>MAX_QUANTITY)throw new TypeError('Enter a valid accessory quantity.');chargeQty=qty*config[meta.quantityKey];}if(option[2])L.push([label+(option[1]==='p'?` (${option[2]}% of base)`:''),chargeAmount(option[1],option[2],base,chargeQty,area)]);}
+    for(const value of values){const option=custom?[value,field.customCharge.type,field.customCharge.amount]:field.o.find(option=>option[0]===value),meta=custom?{}:optionMeta(field,value);let chargeQty=qty,label=field.l+': '+optionLabel(field,value);if(field.quantityRule==='eyelets'){const perPiece=eyeletCount(field,config),total=perPiece*qty;if(!integer(total))throw new TypeError('Invalid eyelet quantity.');computed[field.k]={perPiece,total};chargeQty=total;label+=' ('+total+' eyelets)';}else if(meta.quantityKey&&['u','q'].includes(option[1])){if(!integer(config[meta.quantityKey])||config[meta.quantityKey]<1||config[meta.quantityKey]>MAX_QUANTITY)throw new TypeError('Enter a valid accessory quantity.');chargeQty=qty*config[meta.quantityKey];}if(option[2])L.push([label+(option[1]==='p'?` (${option[2]}% of base)`:''),chargeAmount(option[1],option[2],base,chargeQty,area,version,ratio)]);}
    }else if(field.t==='txt'){
     if(typeof value!=='string'||value.length>(field.maxLength??4000)||(field.required&&!value.trim())){err='Invalid text for '+field.l+'.';break;}
    }else if(field.t==='num'){
     if(!finite(value)||(field.min!==undefined&&value<field.min)||(field.max!==undefined&&value>field.max)||(field.integer&&!Number.isSafeInteger(value))){err='Invalid numeric value for '+field.l+'.';break;}
    }else if(field.t==='SIZE_BREAKDOWN'){
-    for(const size of field.sizes)if(size.enabled!==false&&size.price&&sizeCount(value,size.key))L.push([field.l+': '+size.label,chargeAmount('u',size.price,base,sizeCount(value,size.key),area)]);
+    for(const size of field.sizes)if(size.enabled!==false&&size.price&&sizeCount(value,size.key))L.push([field.l+': '+size.label,chargeAmount('u',size.price,base,sizeCount(value,size.key),area,version,ratio)]);
    }
    if(publicField(field)){const specification=formatField(field,config);if(specification)sp.push(specification);}
   }
-  if(!err)for(const charge of product.charges||[])if(matches(charge.when,config,available))L.push([charge.label,chargeAmount(charge.type,charge.amount,base,qty,area)]);
+  if(!err)for(const charge of product.charges||[])if(matches(charge.when,config,available))L.push([charge.label,chargeAmount(charge.type,charge.amount,base,qty,area,version,ratio)]);
   const sub=err?0:safeMoney(L.reduce((sum,row)=>sum+row[1],0)),tax=product.taxMode==='exempt'?0:product.tax;
-  const gst=err?0:safeMoney(product.taxMode==='inclusive'?sub-Math.round(sub*100/(100+tax)):Math.round(sub*tax/100));
+  const gst=err?0:safeMoney(product.taxMode==='inclusive'?sub-inclusiveNet(sub,tax,version):percentageAmount(sub,tax,version));
   const taxable=product.taxMode==='inclusive'?sub-gst:sub,grand=product.taxMode==='inclusive'?sub:safeMoney(sub+gst);
   return{err,qty,L,sp,computed,base,sub,tax,taxMode:product.taxMode??'exclusive',eff:qty?Math.round(sub/qty):0,gst,taxable,grand};
  }catch(error){err=error.message;}}
  return{err,qty:Number.isSafeInteger(qty)?qty:0,L:[],sp:[],base:0,sub:0,tax:product?.tax??0,eff:0,gst:0,taxable:0,grand:0};
 }
-function mkItem(product,config,id,notes){
- const result=calc(product,config);if(result.err)return null;
+function mkItem(product,config,id,notes,version){
+ const result=calc(product,config,version);if(result.err)return null;
  const normalized=normalizeConfig(product,config);if(sizeFields(product).some(field=>fieldVisible(field,normalized,product)))normalized.qty=result.qty;
  const snapshot=[...product.f,...sizeFields(product).filter(field=>field.legacy)];
  if(product.m==='area'&&!snapshot.some(field=>field.t==='dim'))snapshot.push({k:'dim',l:'Size',t:'dim'});
@@ -622,13 +647,14 @@ function totals(quote,settings={}){
  for(const item of items)if(!item||!integer(item.sub)||!integer(item.base)||item.base>item.sub||!integer(item.qty)||item.qty<1||!nonnegative(item.tax)||item.tax>100)throw new TypeError('Invalid quotation item amount, quantity, or tax.');
  const isub=safeMoney(items.reduce((sum,item)=>sum+item.sub,0)),ib=safeMoney(items.reduce((sum,item)=>sum+item.base,0));
  const discount=quote.disc||{t:'f',v:0};if(!['p','f'].includes(discount.t)||!finite(discount.v))throw new TypeError('Invalid discount.');
- let disc=discount.t==='p'?Math.round(isub*discount.v/100):R(discount.v);
+ const version=quote.calculationVersion;
+ let disc=discount.t==='p'?(quote.discountSource==='category'?CategoryDiscounts.amount(isub,discount.v):percentageAmount(isub,discount.v,version)):money(discount.v,version);
  if(!Number.isSafeInteger(disc))throw new RangeError('Discount exceeds the supported range.');
  const warn=disc>isub||disc<0;disc=Math.min(Math.max(disc,0),isub);
  const allocations=allocateDiscount(items,disc,isub);
  const rows=items.map((item,index)=>({r:item.taxMode==='exempt'?0:item.tax,t:item.sub-allocations[index],mode:item.taxMode??'exclusive'}));
  if(!nonnegative(quote.del??0)||!nonnegative(quote.oth??0))throw new TypeError('Additional charges must be finite, nonnegative values.');
- const qc=safeMoney(R(quote.del??0)+R(quote.oth??0));
+ const qc=safeMoney(money(quote.del??0,version)+money(quote.oth??0,version));
  if(qc){const chargeTax=quote.chargeTax??settings.tax??0;if(!nonnegative(chargeTax)||chargeTax>100)throw new TypeError('Invalid tax on additional charges.');rows.push({r:quote.chargeTaxMode==='exempt'?0:chargeTax,t:qc,mode:quote.chargeTaxMode??'exclusive'});}
  const groups=new Map();
  for(const row of rows){
@@ -637,8 +663,8 @@ function totals(quote,settings={}){
  }
  const brackets=new Map();
  for(const row of groups.values()){
-  const net=row.mode==='inclusive'?Math.round(row.t*100/(100+row.r)):row.t;
-  const tax=safeMoney(row.mode==='inclusive'?row.t-net:Math.round(net*row.r/100));
+  const net=row.mode==='inclusive'?inclusiveNet(row.t,row.r,version):row.t;
+  const tax=safeMoney(row.mode==='inclusive'?row.t-net:percentageAmount(net,row.r,version));
   const bracket=brackets.get(row.r)||{r:row.r,t:0,x:0};bracket.t=safeMoney(bracket.t+net);bracket.x=safeMoney(bracket.x+tax);brackets.set(row.r,bracket);
  }
  const br=[...brackets.values()].sort((a,b)=>a.r-b.r),gst=safeMoney(br.reduce((sum,row)=>sum+row.x,0)),taxable=safeMoney(br.reduce((sum,row)=>sum+row.t,0));
@@ -646,5 +672,37 @@ function totals(quote,settings={}){
  const cgst=taxDisplay==='igst'?0:br.reduce((sum,row)=>sum+Math.floor(row.x/2),0),sgst=taxDisplay==='igst'?0:gst-cgst,igst=taxDisplay==='igst'?gst:0;
  return{n:items.length,qty:safeMoney(items.reduce((sum,item)=>sum+item.qty,0)),isub,ib,ic:isub-ib,disc,warn,qc,taxable,gst,br,cgst,sgst,igst,taxDisplay,grand:safeMoney(taxable+gst)};
 }
-return{ST:Object.freeze(ST),TERMS:Object.freeze(TERMS),AF,SZ:Object.freeze(SZ),METHODS,TAX_MODES,seed,companyDetails,defCfg,calc,mkItem,totals,fieldVisible,sizeFields,normalizeConfig,sizeQuantityError,customerSpecifications,isInternalField,publicField,fieldDefinitionError,pricingError,optionDefinitionError,optionMeta,optionLabel,activeOptions,availableOptions,reconcileConfig,phase2Product,syncPhase2Rules,eyeletCount,GIFT_KEYS,CATALOG_TEMPLATE_IDS,catalogTemplate,catalogTemplateError,catalogAssignmentError,templateAssignment,productTemplate,resolveProduct,stripProduct,assignProductTemplate,giftTemplate,giftTemplateError,giftAssignmentError,resolveGiftProduct,stripGiftProduct,assignGiftProduct,phase3Product,R,inr,rs};
+// Product reporting shares the canonical discount/tax helpers and policy.
+// Inclusive quotation charges participate in rounding, but are not products.
+function itemQuotedValues(quote,settings={}){
+ const summary=totals(quote,settings),discounts=allocateDiscount(quote.items,summary.disc,summary.isub);
+ const rows=quote.items.map((item,index)=>({index,sub:item.sub-discounts[index],rate:item.taxMode==='exempt'?0:item.tax,mode:item.taxMode??'exclusive'}));
+ if(summary.qc)rows.push({index:null,sub:summary.qc,rate:quote.chargeTaxMode==='exempt'?0:quote.chargeTax??settings.tax??0,mode:quote.chargeTaxMode??'exclusive'});
+ const values=rows.slice(0,quote.items.length).map(row=>row.sub),groups=new Map();
+ for(const row of rows)if(row.mode==='inclusive'){
+  const key=String(row.rate),group=groups.get(key)||[];group.push(row);groups.set(key,group);
+ }
+ for(const group of groups.values()){
+  const gross=safeMoney(group.reduce((sum,row)=>sum+row.sub,0)),tax=gross-inclusiveNet(gross,group[0].rate,quote.calculationVersion);
+  const taxes=allocateDiscount(group,tax,gross);
+  group.forEach((row,index)=>{if(row.index!==null)values[row.index]-=taxes[index];});
+ }
+ return values;
+}
+// GST-inclusive product reporting. Allocate each exclusive tax group's rounded
+// GST across its products and separate charges, then omit the charge row.
+// Inclusive prices already contain GST; exempt prices do not receive GST.
+function itemQuotedGrossValues(quote,settings={}){
+ const summary=totals(quote,settings),discounts=allocateDiscount(quote.items,summary.disc,summary.isub);
+ const rows=quote.items.map((item,index)=>({index,sub:item.sub-discounts[index],rate:item.taxMode==='exempt'?0:item.tax,mode:item.taxMode??'exclusive'}));
+ if(summary.qc)rows.push({index:null,sub:summary.qc,rate:quote.chargeTaxMode==='exempt'?0:quote.chargeTax??settings.tax??0,mode:quote.chargeTaxMode??'exclusive'});
+ const values=quote.items.map((_,index)=>rows[index].sub),groups=new Map();
+ for(const row of rows)if(row.mode==='exclusive'){const key=String(row.rate),group=groups.get(key)||[];group.push(row);groups.set(key,group);}
+ for(const group of groups.values()){
+  const subtotal=safeMoney(group.reduce((sum,row)=>sum+row.sub,0)),tax=percentageAmount(subtotal,group[0].rate,quote.calculationVersion),taxes=allocateDiscount(group,tax,subtotal);
+  group.forEach((row,index)=>{if(row.index!==null)values[row.index]=safeMoney(values[row.index]+taxes[index]);});
+ }
+ return values;
+}
+return{ST:Object.freeze(ST),TERMS:Object.freeze(TERMS),AF,SZ:Object.freeze(SZ),METHODS,TAX_MODES,seed,companyDetails,defCfg,calc,mkItem,totals,itemQuotedValues,itemQuotedGrossValues,fieldVisible,sizeFields,normalizeConfig,sizeQuantityError,customerSpecifications,isInternalField,publicField,fieldDefinitionError,pricingError,optionDefinitionError,optionMeta,optionLabel,activeOptions,availableOptions,reconcileConfig,phase2Product,syncPhase2Rules,eyeletCount,GIFT_KEYS,CATALOG_TEMPLATE_IDS,catalogTemplate,catalogTemplateError,catalogAssignmentError,templateAssignment,productTemplate,resolveProduct,stripProduct,assignProductTemplate,giftTemplate,giftTemplateError,giftAssignmentError,resolveGiftProduct,stripGiftProduct,assignGiftProduct,phase3Product,R,money,percentageAmount,inr,rs};
 });

@@ -3,12 +3,13 @@
 const permissionDefaults = ['quotation.create','quotation.view_own','quotation.edit_own','quotation.download_pdf','quotation.share_whatsapp','quotation.status','quotation.additional_charges','customer.view','customer.create','customer.edit','product.view','pricing.view','reports.view_own'];
 function can(permission) { return admin() || (AUTH?.permissions || permissionDefaults).includes(permission); }
 function allowedView(view) {
-  const requirements = { new:['quotation.create'], list:['quotation.view_own','quotation.view_all'], cust:['customer.view'], prod:['product.view','product.manage'], catalog:['product.manage','pricing.manage'], cat:['product.manage'], price:['pricing.manage'], rep:['reports.view_own','reports.view_all'], team:['users.manage'], set:['settings.manage'], wa:['quotation.share_whatsapp'] };
+  const requirements = { 'customer-categories':['customer_categories.view','customer_categories.manage'], new:['quotation.create'], list:['quotation.view_own','quotation.view_all'], cust:['customer.view'], prod:['product.view','product.manage'], catalog:['product.manage','pricing.manage'], cat:['product.manage'], price:['pricing.manage'], rep:['reports.view_own','reports.view_all'], team:['users.manage'], set:['settings.manage'], wa:['quotation.share_whatsapp'] };
   return !requirements[view] || requirements[view].some(can);
 }
 NAV.splice(NAV.findIndex(n=>n[0]==='rep'),0,['wa','WhatsApp Sharing History']);
 NAV.splice(NAV.findIndex(n=>n[0]==='prod')+1,0,['catalog','Catalog Verification']);
 NAV.splice(NAV.findIndex(n=>n[0]==='set'),0,['team','User Management']);
+NAV.splice(NAV.findIndex(n=>n[0]==='cust')+1,0,['customer-categories','Customer Category Management']);
 acts = q => `<button class="s b2" onclick="viewQ('${q.id}')">View</button> ${can('quotation.edit_all')||can('quotation.edit_own')?`<button class="s b2" onclick="editQ('${q.id}')">Edit</button>`:''} ${can('quotation.create')?`<button class="s b2" onclick="dupQ('${q.id}')">Duplicate</button>`:''} ${can('quotation.download_pdf')?`<button class="s b2" onclick="pdfQ('${q.id}')">PDF</button>`:''} ${shareButton(q.id)}`;
 function shareButton(id) { return can('quotation.share_whatsapp')?`<button class="s wa-button" onclick="shareQuotation('${id||''}')"><span aria-hidden="true">◉</span> Share on WhatsApp</button>`:''; }
 function canReadPricing(){return can('pricing.view')||can('pricing.manage');}
@@ -37,23 +38,6 @@ dashboardSummary = (qs) => {
 /* Separate customer WhatsApp contact and quotation-specific contact details. */
 const baseCustomerInfo=cinfo;
 cinfo=()=>baseCustomerInfo()+(Q.cid?`<div class="mu">WhatsApp: ${esc(cust(Q.cid).wa||'Not added — add an international number before sharing.')}</div><button class="s b2" onclick="contactForm()">Quotation contact details</button>${can('customer.edit')?` <button class="s b2" onclick="custForm('${Q.cid}')">Edit customer contact</button>`:''}`:'');
-function custForm(id,fromQ) {
-  if(!can(id?'customer.edit':'customer.create'))return;
-  const c=id?cust(id):{},field=(key,label,type='text')=>fld(label,`<input id="cf_${key}" type="${type}" value="${esc(c[key]||'')}">`);
-  modal(`<h2>${id?'Edit':'Add'} customer</h2><div class="grid">${field('name','Customer name *')}${field('co','Company name')}${field('person','Contact person')}${field('mob','Mobile number *')}${field('wa','WhatsApp number (with country code)')}${field('email','Email address','email')}${field('gstin','GSTIN')}${field('type','Customer type')}${field('addr','Billing address')}${field('notes','Internal notes')}${fld('Status',`<select id="cf_on">${selectOptions([[1,'Active'],[0,'Inactive']],c.on??1)}</select>`)}</div><p class="mu">Example WhatsApp format: +919876543210. A valid format does not confirm WhatsApp registration.</p><button onclick="custSave('${id||''}',${fromQ?1:0})">Save customer</button>`,760);
-}
-async function custSave(id,fromQ,force,pending) {
-  if(busy)return;
-  const data=pending||Object.fromEntries(['name','co','person','mob','wa','email','gstin','type','addr','notes'].map(k=>[k,$('#cf_'+k).value.trim()]));
-  if(!pending)data.on=Number($('#cf_on').value);if(data.wa)data.wa=data.wa.replace(/[ ()-]/g,'');
-  if(!data.name||!/^[0-9+ ()-]{10,20}$/.test(data.mob)){toast('Enter a customer name and a valid mobile number.','er');return}
-  if(data.wa&&!/^\+[1-9]\d{6,14}$/.test(data.wa.replace(/[ ()-]/g,''))){toast('Include + and the country code in the WhatsApp number.','er');return}
-  const duplicate=S.customers.find(c=>c.id!==id&&['mob','wa','email','gstin'].some(k=>data[k]&&String(c[k]).toLowerCase()===data[k].toLowerCase()));
-  if(duplicate&&!force){ask(`A matching customer already exists: ${esc(duplicate.name)}. Save a separate customer?`,()=>custSave(id,fromQ,true,data),'Save anyway');return}
-  if(id)Object.assign(cust(id),data);else{id='C'+uid();S.customers.push({id,date:today(),...data})}
-  if(!await persist())return;
-  if(fromQ&&Q)Q.cid=id;closeM();render();toast('Customer saved');
-}
 const originalCustomers=V.cust;
 V.cust=()=>{let html=originalCustomers();html=html.replace('<th>Email</th>','<th>WhatsApp</th><th>Email</th>');for(const c of S.customers)html=html.replace(`<td>${esc(c.email)}</td>`,`<td>${esc(c.wa||'—')}</td><td>${esc(c.email)}</td>`);if(!can('customer.create'))html=html.replace(/<button[^>]*onclick="custForm\(''\)">.*?<\/button>/,'');if(!can('customer.edit'))html=html.replace(/<button[^>]*onclick="custForm\('[^']+'\)">.*?<\/button>/g,'');if(!can('customer.delete'))html=html.replace(/<button[^>]*onclick="deleteCustomer\('[^']+'\)">.*?<\/button>/g,'');return html;};
 function custView(id) {
@@ -333,11 +317,11 @@ function clearUnavailableSizes(key){const p=effectiveProd(CF._p),f=DP.sizeFields
 function refCalc(){const p=effectiveProd(CF._p),r=calc(p,CF);$('#cc').innerHTML=r.err?`<div class="note">${esc(r.err)}</div>`:`<div class="card"><table class="tot"><tr><td>Quantity</td><td class="n">${r.qty}</td></tr>${r.L.map(l=>`<tr><td>${esc(l[0])}</td><td class="n">${inr(l[1])}</td></tr>`).join('')}<tr><td>Taxable item amount</td><td class="n">${inr(r.taxable)}</td></tr><tr><td>GST ${r.tax}% ${r.taxMode==='inclusive'?'(included in price)':r.taxMode==='exempt'?'(exempt)':''}</td><td class="n">${inr(r.gst)}</td></tr><tr class="g"><td>Item total incl. GST</td><td class="n">${inr(r.grand)}</td></tr></table><p class="mu">${r.sp.map(esc).join(' · ')}. Discount is applied at quotation level.</p></div>`;}
 function addItem(){const p=effectiveProd(CF._p),old=Q.items.find(x=>x.id===CF._i),it=mkItem(p,CF,CF._i,old&&old.notes);if(!it){toast(calc(p,CF).err,'er');return}if(old)Q.items[Q.items.indexOf(old)]=it;else Q.items.push(it);closeM();upd();toast('Item '+(old?'updated':'added'))}
 function refreshP(){ask('Recalculate every item using the CURRENT catalog prices? Original quoted prices on this quotation will be replaced.',()=>{Q._refreshPrices=true;Q.items=Q.items.map(i=>{const p=effectiveProd(i.pid);return(p&&mkItem(p,i.cfg,i.id,i.notes))||i});upd();toast('Prices refreshed from catalog','wa')})}
-function sumHTML(q){let t;try{t=tot(q)}catch(e){return `<div class="note">${esc(e.message)}</div>`}const row=(label,amount,cls='')=>`<tr class="${cls}"><td>${label}</td><td class="n">${amount}</td></tr>`;return `<div class="mu">Items: ${t.n} · Total quantity: ${t.qty}</div><table class="tot" style="max-width:480px;margin-left:auto">${row('Product base amounts',inr(t.ib))}${row('Item-level charges',inr(t.ic))}${row('Delivery and other charges',inr(t.qc))}${row('Discount','− '+inr(t.disc))}${row('Taxable amount',inr(t.taxable))}${t.br.map(b=>row(t.taxDisplay==='igst'?`IGST ${b.r}% on ${inr(b.t)}`:`CGST ${b.r/2}% + SGST ${b.r/2}% on ${inr(b.t)}`,inr(b.x))).join('')}${row('Grand total',inr(t.grand),'g')}</table>`;}
+function sumHTML(q){let t;try{t=tot(q)}catch(e){return `<div class="note">${esc(e.message)}</div>`}const row=(label,amount,cls='')=>`<tr class="${cls}"><td>${label}</td><td class="n">${amount}</td></tr>`;return `<div class="mu">Items: ${t.n} · Total quantity: ${t.qty}</div><table class="tot" style="max-width:480px;margin-left:auto">${row('Product base amounts',inr(t.ib))}${row('Item-level charges',inr(t.ic))}${row('Delivery and other charges',inr(t.qc))}${row(typeof CustomerCategories!=='undefined'?esc(CustomerCategories.discountLabel(q)||'Discount'):'Discount','− '+inr(t.disc))}${row('Taxable amount',inr(t.taxable))}${t.br.map(b=>row(t.taxDisplay==='igst'?`IGST ${b.r}% on ${inr(b.t)}`:`CGST ${b.r/2}% + SGST ${b.r/2}% on ${inr(b.t)}`,inr(b.x))).join('')}${row('Grand total',inr(t.grand),'g')}</table>`;}
 const basicItemRows=itemsHTML;
 itemsHTML=()=>{let html=basicItemRows();if(can('pricing.override'))for(const item of Q.items)html=html.replace(`onclick="noteItem('${item.id}')">Note</button>`,`onclick="noteItem('${item.id}')">Note</button> <button class="s b2" onclick="overrideItem('${item.id}')">Price override</button>`);return html;};
 function overrideItem(id){if(!can('pricing.override'))return;const item=Q.items.find(i=>i.id===id);modal(`<h2>Authorized price override</h2><p class="mu">${esc(item.name)}. This adjustment is recorded with your identity and reason when saved.</p>${fld('Item subtotal before tax treatment (₹)',`<input id="override_amount" type="number" min="0" step="0.01" value="${item.sub/100}">`)}${fld('Reason (required)',`<textarea id="override_reason">${esc(item.override?.reason||'')}</textarea>`)}<br><button onclick="applyOverride('${id}')">Apply override</button>`,550);}
-function applyOverride(id){const item=Q.items.find(i=>i.id===id),amount=Number($('#override_amount').value),reason=$('#override_reason').value.trim();if(!Number.isFinite(amount)||amount<0||!reason){toast('Enter a non-negative amount and a reason.','er');return}const originalSub=item.override?.originalSub??item.sub,originalBase=item.override?.originalBase??item.base,originalLines=clone(item.override?.originalLines??item.L);item.override={amount,reason,originalSub,originalBase,originalLines};item.sub=R(amount);item.base=Math.min(originalBase,item.sub);item.L=[...originalLines,['Authorized price adjustment',item.sub-originalSub]];closeM();upd();toast('Price override ready; save the quotation to record it.');}
+function applyOverride(id){const item=Q.items.find(i=>i.id===id),amount=Number($('#override_amount').value),reason=$('#override_reason').value.trim();if(!Number.isFinite(amount)||amount<0||!reason){toast('Enter a non-negative amount and a reason.','er');return}const originalSub=item.override?.originalSub??item.sub,originalBase=item.override?.originalBase??item.base,originalLines=clone(item.override?.originalLines??item.L);item.override={amount,reason,originalSub,originalBase,originalLines};item.sub=DP.money(amount,Q.calculationVersion);item.base=Math.min(originalBase,item.sub);item.L=[...originalLines,['Authorized price adjustment',item.sub-originalSub]];closeM();upd();toast('Price override ready; save the quotation to record it.');}
 
 /* Settings and dedicated user management. */
 const baseSettings=V.set;
@@ -363,12 +347,17 @@ saveUser = async function(id,version){
 }
 
 /* Quotation previews never expose internal notes. */
+// Only objects returned by the authorized preview endpoint may bypass the
+// legacy unflagged-specification filter. No serialized client flag is trusted.
+const customerDocumentProjections=new WeakSet();
 const baseDocHTML=docHTML;
 docHTML = function(q){
- const safe=clone(q);if(q.contact)safe.customerSnapshot={...(q.customerSnapshot||cust(q.cid)),...q.contact};for(const i of safe.items){i.notes='';i.sp=DP.customerSpecifications(i);}let html=baseDocHTML(safe);const company=DP.companyDetails(q.companySnapshot||S.set);
+ const safe=clone(q);if(q.contact)safe.customerSnapshot={...(q.customerSnapshot||cust(q.cid)),...q.contact};for(const i of safe.items){i.notes='';if(!customerDocumentProjections.has(q))i.sp=DP.customerSpecifications(i);}let html=baseDocHTML(safe);const company=DP.companyDetails(q.companySnapshot||S.set);
  if(company.logo&&/^data:image\/(png|jpeg);base64,/.test(company.logo))html=html.replace('<div class="hd">',`<div class="hd"><img alt="Company logo" src="${esc(company.logo)}" style="max-width:70px;max-height:55px;object-fit:contain">`);
  if(q.ref||q.req)html=html.replace('<div class="tw">',`<p>${q.ref?'Reference: '+esc(q.ref)+'<br>':''}${q.req?'Requirements: '+esc(q.req):''}</p><div class="tw">`);
+ if(q.deliveryAddressSnapshot){const a=q.deliveryAddressSnapshot;html=html.replace('<div class="tw">',`<p>Delivery (${esc(a.label)}): ${[a.line1,a.line2,a.city,a.state,a.postalCode,a.country].filter(Boolean).map(esc).join(', ')}</p><div class="tw">`);}
  html=html.replace('Authorized Signatory',esc(company.signature||'Authorized Signatory'));
+ if(typeof CustomerCategories!=='undefined'){const highlight=CustomerCategories.highlight(q);if(highlight)html=html.replace('<h3 style="font-size:13px">Terms and conditions</h3>',`<aside class="category-highlight" role="note"><strong>${esc(highlight.name)} member benefit</strong><p>${esc(highlight.message)}</p></aside><h3 style="font-size:13px">Terms and conditions</h3>`);}
  if(company.customerNotes||company.footer)html=html.replace('</ol>',`</ol><p>${esc(company.customerNotes||'')}</p><p class="mu">${esc(company.footer||'')}</p>`);
  return html;
 }

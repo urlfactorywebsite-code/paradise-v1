@@ -69,6 +69,7 @@ function productsRowMenu(anchor,id){const row=productsView.data?.data.find(p=>p.
  if(can('pricing.manage'))items.push(['Open Pricing Configuration',()=>productsPricing(id)]);
  if(productsManage())items.push(['View Catalog Verification',()=>{CATALOG_FILTER.q=row.code;CATALOG_FILTER.page=1;CATALOG_FILTER.category='';CATALOG_FILTER.status='';CATALOG_FILTER.template='';go('catalog');}]);
  if(can('product.manage'))items.push([row.on?'Deactivate':'Activate',()=>prodToggle(id)],['Remove product',()=>prodDel(id),true]);
+ if(AUTH?.role==='Administrator'&&can('fields.manage'))items.push(['Edit Fields',()=>ProductFields.open(id)]);
  productsMenu(anchor,items);
 }
 async function productsPricing(id){
