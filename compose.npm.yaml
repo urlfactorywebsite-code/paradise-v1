@@ -1,0 +1,17 @@
+# Use with: docker compose -f compose.yaml -f compose.npm.yaml up -d --no-deps app
+# Uses the VPS network already attached to nginx-proxy-npm-1.
+services:
+  app:
+    environment:
+      APP_ORIGIN: https://dpq.zeacrm.com
+      COOKIE_SECURE: 'true'
+    networks:
+      backend: {}
+      proxy:
+        aliases:
+          - dpq-app
+
+networks:
+  proxy:
+    external: true
+    name: nginx-proxy_default

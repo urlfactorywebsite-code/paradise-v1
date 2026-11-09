@@ -98,3 +98,5 @@ WhatsApp currently uses the explicit manual fallback: review the message and int
 `server.js` handles HTTP/authentication; `server/database.js` owns the PostgreSQL pool and transaction context; `server/store.js` and `server/schema.sql` own schema/storage; `server/validation.js` enforces business rules; `server/resources.js` and `server/accounts.js` implement business/account APIs. `shared/domain.js` is the shared pricing engine. Browser sources are in `public/`; builds create `dist/`.
 
 This setup is for local use. Remote hosting requires a separately configured HTTPS reverse proxy, exact `APP_ORIGIN`, `COOKIE_SECURE=true`, persistent volumes, supervised startup and off-machine backups. Public/VPS deployment was not performed.
+
+For `dpq.zeacrm.com` through Nginx Proxy Manager, see the [domain setup guide](docs/DPQ-DOMAIN-SETUP.md) and optional `compose.npm.yaml` override. Apply this override only on the VPS after connecting Proxy Manager to the documented Docker network.
