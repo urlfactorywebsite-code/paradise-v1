@@ -1,0 +1,213 @@
+PARADISE VPS RUN COMMANDS
+Prepared: 2026-11-09 (Asia/Calcutta)
+
+Server: 167.86.108.178
+Project: /opt/paradise-v1
+Website: https://dpq.zeacrm.com
+App: 127.0.0.1:6400 (internal container port 6400)
+Proxy Manager: nginx-proxy-npm-1
+Proxy network: nginx-proxy_default
+Proxy upstream: http://dpq-app:6400
+Database: PostgreSQL 17, internal Docker network; no host port required.
+
+Run the sections you need, rather than pasting this entire report into a shell.
+All operational commands below are Bash commands for this VPS unless stated otherwise.
+Always use BOTH Compose files when managing the deployed app.
+
+1. OBSERVED STATUS
+
+PASS (user-supplied VPS output): UFW allowed TCP 80 and 443; Proxy Manager
+publishes both ports and belongs to nginx-proxy_default. The app backup succeeded:
+/app/data/backups/paradise-1794228573052-fba28e74-eec6-4df3-8e4d-a9db52342e93.dump
+
+BLOCKED in the last supplied update output: git pull refused to replace the
+untracked compose.npm.yaml. No successful update after that error was supplied.
+The one-time fix is in section 3.
+
+NOT VERIFIED remotely: update completion, current container health, DNS correction,
+certificate issuance, public readiness, administrator setup and browser saves.
+Preparing this report did not execute commands on the VPS.
+
+2. CHECK CURRENT STATE
+
+cd /opt/paradise-v1
+git status --short
+git log -1 --oneline
+docker compose -f compose.yaml -f compose.npm.yaml config --quiet
+docker compose -f compose.yaml -f compose.npm.yaml ps
+docker inspect nginx-proxy-npm-1 --format '{{range $name, $config := .NetworkSettings.Networks}}{{println $name}}{{end}}'
+
+3. ONE-TIME FIX FOR THE UNTRACKED COMPOSE FILE
+
+Run only if git pull reports that untracked compose.npm.yaml would be overwritten.
+This moves the manually created file into a private backup directory. It leaves
+an already tracked file alone. The current repository supplies this configuration.
+
+(
+  set -e
+  cd /opt/paradise-v1
+  if [ -f compose.npm.yaml ] && ! git ls-files --error-unmatch compose.npm.yaml >/dev/null 2>&1; then
+    config_backup=$(mktemp -d /root/paradise-config-XXXXXX)
+    mv -- compose.npm.yaml "$config_backup/compose.npm.yaml"
+    echo "Previous configuration saved in: $config_backup"
+  fi
+  git pull --ff-only
+)
+
+4. NORMAL UPDATE: BACKUP, PULL, REBUILD AND CHECK
+
+Use section 3 first if the untracked-file conflict remains. This block stops at
+the first failure. Do not discard local tracked edits to make a pull succeed.
+
+(
+  set -e
+  cd /opt/paradise-v1
+  docker compose -f compose.yaml -f compose.npm.yaml exec -T app npm run backup
+  git pull --ff-only
+  docker compose -f compose.yaml -f compose.npm.yaml config --quiet
+  docker compose -f compose.yaml -f compose.npm.yaml up -d --build --wait
+  docker compose -f compose.yaml -f compose.npm.yaml ps
+  curl --fail --show-error --max-time 15 http://127.0.0.1:6400/api/ready
+)
+
+5. START, STOP OR RESTART
+
+Run from /opt/paradise-v1. Pick one operation.
+
+Start existing containers without rebuilding:
+docker compose -f compose.yaml -f compose.npm.yaml up -d --wait
+
+Restart only the app using its existing configuration/image:
+docker compose -f compose.yaml -f compose.npm.yaml restart app
+
+Apply configuration changes to the app without rebuilding or recreating the DB:
+docker compose -f compose.yaml -f compose.npm.yaml up -d --no-deps --wait app
+
+Stop the app and database, preserving containers and data:
+docker compose -f compose.yaml -f compose.npm.yaml stop
+
+Restart does not apply changed environment variables. Use up for those changes.
+Do not run down -v: it deletes the project's database and backup volumes.
+
+6. LOGS AND RESOURCE USE
+
+cd /opt/paradise-v1
+docker compose -f compose.yaml -f compose.npm.yaml logs --tail 100 app db
+
+Follow app logs; press Ctrl+C to stop following:
+docker compose -f compose.yaml -f compose.npm.yaml logs -f --tail 100 app
+
+Host resources:
+df -h
+free -h
+
+Logs may contain private operational details. Redact secrets before sharing.
+
+7. DATABASE BACKUP AND COPY OUT
+
+cd /opt/paradise-v1
+docker compose -f compose.yaml -f compose.npm.yaml exec -T app npm run backup
+docker compose -f compose.yaml -f compose.npm.yaml exec -T app ls -lh /app/data/backups
+
+Replace REPLACE_WITH_ACTUAL_FILENAME.dump with the filename printed by backup:
+install -d -m 700 /root/paradise-backups
+docker compose -f compose.yaml -f compose.npm.yaml cp app:/app/data/backups/REPLACE_WITH_ACTUAL_FILENAME.dump /root/paradise-backups/
+chmod 600 /root/paradise-backups/*.dump
+
+Keep an off-server copy of important backups. Dumps contain private account and
+business data. The backup volume is persistent, but is on the same VPS.
+
+The container message '.env not found. Continuing without it.' is expected:
+Compose injects database environment variables without mounting the host .env.
+Check the command exit status and 'Backup saved' message for the backup result.
+
+8. ADMINISTRATOR PASSWORD RECOVERY (ONLY WHEN NEEDED)
+
+Replace EXISTING_ADMIN_USERNAME with the existing administrator username.
+The tool prompts for a hidden 12-128 character password, makes a database backup,
+reactivates that administrator and revokes their existing sessions.
+
+cd /opt/paradise-v1
+docker compose -f compose.yaml -f compose.npm.yaml exec app npm run recover-admin -- EXISTING_ADMIN_USERNAME
+
+9. DATABASE RESTORE INTO A NEW DATABASE (ONLY WHEN NEEDED)
+
+Replace the backup filename and choose an unused lowercase database name.
+This restores a separate database; it does not overwrite or switch the live one.
+
+cd /opt/paradise-v1
+docker compose -f compose.yaml -f compose.npm.yaml exec -T app npm run backup
+docker compose -f compose.yaml -f compose.npm.yaml exec -T app npm run restore -- /app/data/backups/REPLACE_WITH_ACTUAL_FILENAME.dump paradise_restored_20261109
+
+After restore succeeds, validate it before changing the app's target database.
+For an intentional cutover, preserve .env privately, edit POSTGRES_DB to the
+restored name, then recreate the services with both Compose files. Keep the
+previous database. Changing POSTGRES_DB alone does not copy or restore data.
+
+10. DOMAIN, HTTPS AND PROXY CHECKS
+
+From the VPS:
+getent ahosts dpq.zeacrm.com
+curl --fail --show-error --max-time 15 http://127.0.0.1:6400/api/ready
+curl --fail --show-error --max-time 20 https://dpq.zeacrm.com/api/ready
+curl -I --max-time 20 http://dpq.zeacrm.com
+
+Expect successful JSON readiness locally and publicly, and an HTTP redirect
+to HTTPS. curl must validate the certificate; do not bypass validation with -k.
+
+Proxy Manager > Hosts > Proxy Hosts:
+  Domain: dpq.zeacrm.com
+  Scheme: http
+  Forward hostname: dpq-app
+  Forward port: 6400
+  Cache Assets: off
+  SSL: valid Let's Encrypt certificate, Force SSL enabled
+
+DNS: dpq A should point to 167.86.108.178. Earlier lookups also returned
+62.72.14.24 and an IPv6 address. Remove the extra IPv4 for this hostname if
+only this VPS serves Paradise. Keep AAAA only if that IPv6 also serves this VPS.
+
+For a 502 when local readiness works, check the shared network and upstream:
+docker network inspect nginx-proxy_default --format '{{range .Containers}}{{println .Name}}{{end}}'
+docker logs --tail 100 nginx-proxy-npm-1
+
+The network should contain Proxy Manager and the Paradise app. Both Compose
+files attach the app automatically. Do not use 127.0.0.1 as the upstream in a
+Dockerized Proxy Manager: it refers to that proxy container.
+
+11. FRESH INSTALL ONLY
+
+Skip this section on the existing installation. It is for a new server/path.
+First verify Docker, Compose v2, Git, the proxy network and free host port 6400.
+The repository now includes compose.npm.yaml; do not recreate it manually.
+
+git clone https://github.com/urlfactorywebsite-code/paradise-v1.git /opt/paradise-v1
+
+Only after the clone succeeds:
+(
+  set -e
+  cd /opt/paradise-v1
+  docker run --rm -v "$PWD:/workspace" -w /workspace node:24-alpine node scripts/setup-docker.js
+  docker compose -f compose.yaml -f compose.npm.yaml config --quiet
+  docker compose -f compose.yaml -f compose.npm.yaml up -d --build --wait
+  curl --fail --show-error --max-time 15 http://127.0.0.1:6400/api/ready
+)
+
+Ensure TCP 80 and 443 are allowed through the VPS and provider firewalls, create
+the proxy host, verify HTTPS, then complete the first administrator setup in the
+browser. Port 6400 need not be opened publicly. Preserve .env and named volumes.
+
+12. OPTIONAL DEVELOPMENT VERIFICATION
+
+Run on a development machine with Node 24.14+, dependencies installed and Docker.
+These are verification commands, not the normal VPS update procedure:
+
+npm run check
+npm run build
+npm run test:docker
+
+The Docker tests use compose.test.yaml, a separate paradise-test project and a
+tmpfs PostgreSQL database. Do not point tests at the live database. Full test
+execution and browser verification were not performed while preparing this report.
+
+

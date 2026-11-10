@@ -27,8 +27,8 @@ function editorSaveLabel(){return quotationEditorSaving?'Saving…':Q?.id&&Q.sta
 function editorSaveButton(){return `<button type="button" class="editor-save-button" data-editor-save ${quotationEditorSaving||!editorCanSave()?'disabled':''} onclick="saveQ(true)">${ei('save')}<span>${editorSaveLabel()}</span></button>`;}
 function editorPreviewButton(){return `<button type="button" class="b2 editor-preview-button" onclick="prevQ()">${ei('eye')} Preview</button>`;}
 function editorField(key,label,control){return `<label class="f editor-field" data-editor-field="${key}"><span>${esc(label)}</span>${control}<small id="editor-error-${key}" class="editor-field-error" ${quotationEditorErrors[key]?'':'hidden'}>${esc(quotationEditorErrors[key]||'')}</small></label>`;}
-function editorInput(key,label,type='text',max=500){return editorField(key,label,`<input id="editor-${key}" aria-label="${esc(label)}" aria-describedby="editor-error-${key}" type="${type}" ${type==='text'?`maxlength="${max}"`:''} value="${esc(Q[key]??'')}" ${type==='date'?'required':''} oninput="editorSet('${key}',this.value)">`);}
-function editorSet(key,value){if(!Q)return;Q[key]=value;if(quotationEditorErrors[key])delete quotationEditorErrors[key];editorChanged(false);}
+function editorInput(key,label,type='text',max=500){return editorField(key,label,`<input id="editor-${key}" aria-label="${esc(label)}" aria-describedby="editor-error-${key}" type="${type}" ${type==='text'?`maxlength="${max}"`:''} value="${esc(Q[key]??'')}" ${type==='date'?'required':''} ${key==='valid'?'readonly':`oninput="editorSet('${key}',this.value)"`}>`);}
+function editorSet(key,value){if(!Q||key==='valid')return;if(key==='date'){setQuotationDate(value);delete quotationEditorErrors.valid;}else Q[key]=value;if(quotationEditorErrors[key])delete quotationEditorErrors[key];editorChanged(false);}
 function editorCharge(key,value){Q[key]=Number(value);delete quotationEditorErrors[key];editorChanged();}
 function editorDiscount(key,value){Q.disc[key]=key==='v'?Number(value):value;delete quotationEditorErrors.disc;editorChanged();}
 function editorSelectedCustomer(){const saved=Q.id?getQ(Q.id):null,c=saved?.cid===Q.cid?(saved.customerSnapshot||cust(Q.cid)):cust(Q.cid);return {...c,...(Q.contact||{})};}
@@ -99,11 +99,20 @@ prevQ=async function(){
  finally{if(Q===draft&&AUTH?.id===userId&&$('#quotation-editor')&&typeof categoryQueuePreview==='function')categoryQueuePreview();}
 };
 saveContact=function(){editorOriginalContactSave();if($('#quotation-editor')){$('#ci').innerHTML=editorCustomerInfo();editorChanged();}};
+function editorShowSaveSuccess(quotation){
+ const popup=document.createElement('dialog');
+ popup.className='editor-save-success';
+ popup.setAttribute('aria-labelledby','editor-save-success-title');
+ popup.setAttribute('aria-describedby','editor-save-success-description');
+ popup.innerHTML=`<div class="editor-save-success-icon" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></div><h2 id="editor-save-success-title">${quotation.status==='Draft'?'Draft saved successfully':'Quotation saved successfully'}</h2><p id="editor-save-success-description">Your quotation has been saved.</p><button type="button" autofocus onclick="this.closest('dialog').close()">OK</button>`;
+ popup.addEventListener('close',()=>{popup.remove();document.querySelector('[data-editor-save]')?.focus();},{once:true});
+ document.body.append(popup);popup.showModal();
+}
 saveQ=async function(show){
  if(!$('#quotation-editor'))return editorOriginalSave(show);
  if(quotationEditorSaving||busy||!editorCanSave()||!editorValidate(false))return false;
  quotationEditorSaving=true;$('#editor-save-error').hidden=true;editorChanged();let saved=false;
- try{saved=await editorOriginalSave(show);if(saved&&Q){editorBegin();quotationEditorSession.lastSavedAt=new Date().toISOString();quotationEditorSession.initial=editorFingerprint(Q);}else if($('#editor-save-error')){$('#editor-save-error').hidden=false;$('#editor-save-error').textContent=connection.text||'The quotation could not be saved. Your changes are preserved.';}return saved;}
+ try{saved=await editorOriginalSave(false);if(saved&&Q){editorBegin();quotationEditorSession.lastSavedAt=new Date().toISOString();quotationEditorSession.initial=editorFingerprint(Q);if(show){const quotation=Q;if(typeof categorySuspendPreview==='function')categorySuspendPreview();Q=null;quotationEditorSession=null;render();window.scrollTo(0,0);editorShowSaveSuccess(quotation);}}else if($('#editor-save-error')){$('#editor-save-error').hidden=false;$('#editor-save-error').textContent=connection.text||'The quotation could not be saved. Your changes are preserved.';}return saved;}
  finally{quotationEditorSaving=false;editorChanged();}
 };
 function editorCancel(){if(quotationEditorDirty()&&!confirm('Discard the unsaved changes to this quotation?'))return;Q=null;quotationEditorSession=null;quotationEditorLeaving=true;go('dash');}

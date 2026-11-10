@@ -26,7 +26,7 @@ cd /opt/paradise-v1
 docker run --rm -v "$PWD:/workspace" -w /workspace node:24-alpine node scripts/setup-docker.js
 ```
 
-The setup script creates a private `.env` with a random database password using Node in Docker. Copy the prepared `compose.npm.yaml` alongside `compose.yaml`; this override has not been pushed to GitHub. Then run:
+The setup script creates a private `.env` with a random database password using Node in Docker. The repository now includes `compose.npm.yaml` alongside `compose.yaml`; do not create a separate copy. If an earlier manually created copy blocks `git pull`, use the one-time fix in the [VPS command report](VPS-RUN-COMMANDS.txt). Then run:
 
 ```bash
 docker compose -f compose.yaml -f compose.npm.yaml config --quiet

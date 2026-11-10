@@ -82,11 +82,9 @@ function defaults(key, input, state, user) {
       ...data,
       id: data.id || crypto.randomUUID(),
     };
-  const until = new Date(today + 'T00:00:00Z');
-  until.setUTCDate(until.getUTCDate() + state.set.valid);
   return {
     date: today,
-    valid: until.toISOString().slice(0, 10),
+    valid: DP.quotationValidUntil(data.date ?? today),
     cid: '',
     sales: user.name,
     ref: '',
@@ -557,9 +555,7 @@ function createResources({ store, body, json, publicUser, backupDir }) {
               copy.id = savedId;
               copy.status = 'Draft';
               copy.date = new Date().toISOString().slice(0, 10);
-              const until = new Date(copy.date);
-              until.setUTCDate(until.getUTCDate() + s.set.valid);
-              copy.valid = until.toISOString().slice(0, 10);
+              copy.valid = DP.quotationValidUntil(copy.date);
               copies.set(copy.id, source);
               s.quotes.unshift(copy);
             }

@@ -100,3 +100,5 @@ WhatsApp currently uses the explicit manual fallback: review the message and int
 This setup is for local use. Remote hosting requires a separately configured HTTPS reverse proxy, exact `APP_ORIGIN`, `COOKIE_SECURE=true`, persistent volumes, supervised startup and off-machine backups. Public/VPS deployment was not performed.
 
 For `dpq.zeacrm.com` through Nginx Proxy Manager, see the [domain setup guide](docs/DPQ-DOMAIN-SETUP.md) and optional `compose.npm.yaml` override. Apply this override only on the VPS after connecting Proxy Manager to the documented Docker network.
+
+The [VPS command report](docs/VPS-RUN-COMMANDS.txt) covers installation, updates, the one-time untracked Compose conflict, start/stop, logs, backups, recovery, restore and domain checks for `/opt/paradise-v1`.

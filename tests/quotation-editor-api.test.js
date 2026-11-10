@@ -27,7 +27,7 @@ test('customer references are automatic, stable on edits and renewed on duplicat
  const concurrent=await Promise.all([1,2,3].map(()=>f.admin.request('/api/quotations','POST',f.draft,201)));
  assert.equal(new Set([q.ref,copy.data.ref,...concurrent.map(r=>r.data.ref)]).size,5);
  const before=await f.admin.request('/api/state');
- await f.admin.request('/api/quotations','POST',{...f.draft,valid:'2000-01-01'},422);
+ await f.admin.request('/api/quotations','POST',{...f.draft,valid:'2000-02-30'},422);
  assert.equal((await f.admin.request('/api/state')).revision,before.revision);
  const current=await f.admin.request('/api/state'),id='reference-batch-quote';
  const batch=await f.admin.request('/api/changes','POST',{revision:current.revision,changes:[{collection:'quotes',action:'upsert',id,record:{...q,id,ref:'BATCH-SUPPLIED'}}]});
@@ -82,4 +82,36 @@ test('private notes inherit existing staff quotation ownership and edit permissi
  const own=await employee.request('/api/quotations','POST',{...f.draft,internalNotes:'Own private note'},201);assert.equal(own.data.internalNotes,'Own private note');
  await f.client().request('/api/quotations/'+own.data.id,'GET',undefined,401);
  assert.equal((await f.admin.request('/api/quotations/'+created.data.id)).data.internalNotes,f.draft.internalNotes);
+});
+
+
+test('quotation validity is fixed at seven calendar days across create, preview, edit, duplicate and batch saves',async t=>{
+ const f=await fixture(t);
+ // Stored legacy settings cannot override the fixed policy.
+ const settings=await f.admin.request('/api/state');
+ await f.admin.request('/api/changes','POST',{revision:settings.revision,changes:[{collection:'set',action:'upsert',record:{...settings.state.set,valid:30}}]});
+ for(const [date,valid] of [['2026-11-09','2026-11-16'],['2026-12-28','2027-01-04'],['2028-02-25','2028-03-03']]){
+  const created=await f.admin.request('/api/quotations','POST',{...f.draft,date,valid:'2030-01-01'},201);
+  assert.equal(created.data.valid,valid);
+  const preview=await f.admin.request('/api/quotations/preview','POST',{...f.draft,date,valid:'2030-01-01'});
+  assert.equal(preview.quotation.valid,valid);
+ }
+ const {valid:ignored,...withoutExpiry}=f.draft;
+ const created=await f.admin.request('/api/quotations','POST',withoutExpiry,201);
+ assert.equal(created.data.valid,'2026-11-04');
+ // Date-only PATCH recalculates expiry even when the saved expiry is earlier.
+ const edited=await f.admin.request('/api/quotations/'+created.data.id,'PATCH',{version:created.version,data:{date:'2027-01-01'}});
+ assert.equal(edited.data.valid,'2027-01-08');
+ const tampered=await f.admin.request('/api/quotations/'+created.data.id,'PATCH',{version:edited.version,data:{valid:'2027-12-31'}});
+ assert.equal(tampered.data.valid,'2027-01-08');
+ const copy=await f.admin.request('/api/quotations/'+created.data.id+'/duplicate','POST',{version:tampered.version},201);
+ assert.equal(copy.data.valid,DP.quotationValidUntil(copy.data.date));
+ // Simulate a historical quotation without retroactively changing its validity.
+ const legacy={...tampered.data,valid:'2027-01-31'};
+ await f.app.db.prepare('UPDATE quotations SET body=?,valid_until=? WHERE id=?').run(JSON.stringify(legacy),legacy.valid,legacy.id);
+ const unchanged=await f.admin.request('/api/quotations/'+legacy.id,'PATCH',{version:tampered.version,data:{project:'Preserve historical dates'}});
+ assert.equal(unchanged.data.valid,legacy.valid);
+ const current=await f.admin.request('/api/state'),id='seven-day-batch-quote';
+ const batch=await f.admin.request('/api/changes','POST',{revision:current.revision,changes:[{collection:'quotes',action:'upsert',id,record:{...created.data,id,valid:'2030-01-01'}}]});
+ assert.equal(batch.state.quotes.find(q=>q.id===id).valid,'2026-11-04');
 });

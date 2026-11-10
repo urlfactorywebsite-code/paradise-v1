@@ -121,7 +121,7 @@ test('empty-item search and canonical validity dates agree with the visible quot
  assert.equal((await f.admin.request('/api/quotation-export/preview','POST',{filters})).rows,0);
  // The relational validity column remains authoritative for legacy bodies.
  await f.app.db.prepare("UPDATE quotations SET body=(body::jsonb-'valid')::text WHERE id=?").run(q.id);
- const rows=parseCSV(await f.admin.request('/api/quotation-export/csv','POST',{columns:['number','validUntil']}));assert.deepEqual(rows[1],[q.no,'01/12/2026']);
+ const rows=parseCSV(await f.admin.request('/api/quotation-export/csv','POST',{columns:['number','validUntil']}));assert.deepEqual(rows[1],[q.no,'08/11/2026']);
 });
 
 test('optional export settings reject non-object filters and non-array selections rather than silently defaulting',async t=>{
@@ -164,7 +164,7 @@ test('all approved customer mappings preserve historical quote labels and exact 
  const columns=['number','date','validUntil','reference','customer','company','total','status','salesperson','customerName','companyName','contactPerson','contactPersonNumber','mobile','whatsapp','email','gstin','customerCategory','billingAddress','deliveryAddress'];
  const response=await f.admin.raw('/api/quotation-export/csv','POST',{type:'custom',scope:'all',columns},true);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'text/csv; charset=utf-8');assert.equal(response.headers.get('cache-control'),'no-store');
  const bytes=Buffer.from(await response.arrayBuffer());assert.deepEqual([...bytes.subarray(0,3)],[239,187,191]);assert.equal(Number(response.headers.get('content-length')),bytes.length);assert.equal(bytes.subarray(-2).toString(),'\r\n');
- const csv=parseCSV(bytes.toString('utf8'));assert.equal(csv.length,2);assert.deepEqual(csv[1],[q.no,'01/11/2026','01/12/2026',q.ref,f.c1.name,f.c1.co,'212.40','Draft','Export sales',"'"+changed.data.name,changed.data.co,'New buyer',"'+33123456789",'9876543222',"'+919876543222",'new@example.test','33ABCDE1234F1Z5','新协会',changed.data.addr,'Store, Second street, India']);
+ const csv=parseCSV(bytes.toString('utf8'));assert.equal(csv.length,2);assert.deepEqual(csv[1],[q.no,'01/11/2026','08/11/2026',q.ref,f.c1.name,f.c1.co,'212.40','Draft','Export sales',"'"+changed.data.name,changed.data.co,'New buyer',"'+33123456789",'9876543222',"'+919876543222",'new@example.test','33ABCDE1234F1Z5','新协会',changed.data.addr,'Store, Second street, India']);
 });
 
 test('concurrent exports are bounded, duplicate user exports are rejected, and capacity is released',async t=>{

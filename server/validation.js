@@ -319,6 +319,9 @@ function validateState(input, previous, user, allocateNumber, options = {}) {
     // Server-owned: new records (including duplicates) use exact arithmetic.
     // Existing records keep their calculation policy, even on category refresh.
     if (!old || old.calculationVersion === 2) r.calculationVersion = 2;
+    // Preserve historical dates until either date is edited; all new dates use
+    // the fixed policy, including previews, duplicates and batch state writes.
+    if (!old || r.date !== old.date || r.valid !== old.valid) r.valid = date(DP.quotationValidUntil(r.date));
     if (r.valid < r.date) fail('Valid-until date must be on or after quotation date.');
     r.no = old ? old.no : allocateNumber(r.date, state.set.prefix, state.set.sequenceStart);
     for (const k of ['sales', 'project', 'subject', 'req']) r[k] = text(q[k], k, k === 'req' ? 4000 : 500);

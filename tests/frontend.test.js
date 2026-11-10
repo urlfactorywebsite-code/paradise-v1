@@ -197,3 +197,16 @@ test('a quotation deleted during conflict recovery is not silently recreated by 
   assert.equal(app.run('Q.project'), 'Preserved employee project');
   assert.match(app.node('#app').innerHTML, /Save as new Draft/);
 });
+
+
+test('new quotation expiry ignores old settings and follows quotation date by seven days',()=>{
+ const h=harness();h.run('S.set.valid=30;Q=newQ()');
+ assert.equal(h.run('Q.valid'),DP.quotationValidUntil(h.run('Q.date')));
+ for(const date of ['2026-11-09','2026-12-28','2028-02-25']){
+  h.run(`setQuotationDate('${date}')`);assert.equal(h.run('Q.valid'),DP.quotationValidUntil(date));
+ }
+ h.run("setQuotationDate('')");assert.equal(h.run('Q.valid'),'');
+ assert.equal(DP.quotationValidUntil('2026-02-30'),'');
+ assert.equal(DP.quotationValidUntil('9999-12-31'),'');
+ assert.equal(DP.seed().set.valid,7);
+});

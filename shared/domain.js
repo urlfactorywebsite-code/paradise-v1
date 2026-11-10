@@ -5,6 +5,15 @@
   else root.DP = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (CategoryDiscounts) {
 'use strict';
+const QUOTATION_VALIDITY_DAYS=7;
+function quotationValidUntil(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return '';
+ const date=new Date(value+'T00:00:00Z');
+ if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==value)return '';
+ date.setUTCDate(date.getUTCDate()+QUOTATION_VALIDITY_DAYS);
+ const result=date.toISOString().slice(0,10);
+ return /^\d{4}-\d{2}-\d{2}$/.test(result)?result:'';
+}
 const ST=['Draft','Pending Internal Review','Approved Internally','Sent to Customer','Customer Approved','Customer Rejected','Expired','Cancelled'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const uid=()=>globalThis.crypto?.randomUUID?.() || ('item-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
@@ -94,13 +103,13 @@ function seed({demo=true}={}){
  const cust=[cu(1,'Ravi Kumar','Kumar Traders','Ravi Kumar','9000000001','ravi@demo.example','24 Market Road, Shevapet, Salem, Tamil Nadu 636002','33DEMO0001A1Z1'),cu(2,'Meena S','Meena Boutique','Meena S','9000000002','meena@demo.example','18 Sarada College Road, Salem, Tamil Nadu 636016',''),cu(3,'Arun Textiles','Arun Textiles','Arun Prakash','9000000003','arun@demo.example','8 Textile Market Road, Ammapet, Salem, Tamil Nadu 636003','33DEMO0003C1Z3'),cu(4,'Lakshmi N','Lakshmi Bakery','Lakshmi N','9000000004','lakshmi@demo.example','42 Cherry Road, Salem, Tamil Nadu 636007',''),cu(5,'Sunrise School','Sunrise School','Anitha Raman','9000000005','office@demo.example','15 School Road, Fairlands, Salem, Tamil Nadu 636016','')];
  const mk=(pid,c)=>mkItem(prods.find(p=>p.id===pid),Object.assign(defCfg(prods.find(p=>p.id===pid)),c));
  const projects=[['Kumar Traders stationery','Visiting cards and letterheads'],['Meena Boutique storefront','Flex signage and vinyl printing'],['Arun Textiles team uniforms','Custom printed T-shirts'],['Lakshmi Bakery brand identity','Logo design package'],['Sunrise School annual day','Printed mugs and paper bags']];
- const qd=(i,cid,st,items,n,by)=>({id:'Q'+i,no:`DP/QTN/2026/${String(i).padStart(4,'0')}`,date:addD(today(),-n),valid:addD(today(),15-n),cid,sales:by,ref:'DEMO-'+String(i).padStart(3,'0'),project:projects[i-1][0],subject:projects[i-1][1],req:'',items,chargeTax:18,disc:{t:'p',v:i==1?5:0},del:i==2?500:0,oth:0,status:st,terms:clone(TERMS),by,hist:[{f:'—',t:'Draft',d:now(),u:by}].concat(st=='Draft'?[]:[{f:'Draft',t:st,d:now(),u:by}])});
+ const qd=(i,cid,st,items,n,by)=>({id:'Q'+i,no:`DP/QTN/2026/${String(i).padStart(4,'0')}`,date:addD(today(),-n),valid:quotationValidUntil(addD(today(),-n)),cid,sales:by,ref:'DEMO-'+String(i).padStart(3,'0'),project:projects[i-1][0],subject:projects[i-1][1],req:'',items,chargeTax:18,disc:{t:'p',v:i==1?5:0},del:i==2?500:0,oth:0,status:st,terms:clone(TERMS),by,hist:[{f:'—',t:'Draft',d:now(),u:by}].concat(st=='Draft'?[]:[{f:'Draft',t:st,d:now(),u:by}])});
  const qs=[qd(1,'C1','Sent to Customer',[mk('p1',{qty:500,mat:'Textured Paper',sides:'Double Side',edge:'Rounded Edge'}),mk('p3',{qty:500})],0,'Priya'),
  qd(2,'C2','Customer Approved',[mk('p5',{w:10,h:4,u:'ft',qty:2,inst:'Required'}),mk('p6',{w:3,h:2,u:'ft',qty:5})],2,'Karthik'),
  qd(3,'C3','Draft',[mk('p7',{sz:{S:10,M:20,L:30,XL:25,XXL:15},meth:'DTF'})],4,'Priya'),
  qd(4,'C4','Customer Rejected',[mk('p2',{pkg:'Standard'})],9,'Karthik'),
  qd(5,'C5','Expired',[mk('p10',{qty:50}),mk('p8',{qty:200,size:'Medium'})],25,'Priya')];
- return clone({cats,products:prods,customers:demo?cust:[],quotes:demo?qs:[],log:demo?[{t:now(),x:'Demo data loaded',u:'System'}]:[],set:{...SAMPLE_COMPANY,tax:18,prefix:'DP/QTN',valid:15,showNotes:false,terms:clone(TERMS),employeeDiscountLimit:10,employeeDiscountMax:0,allowAdditionalCharges:true,independentApproval:true,taxMode:'exclusive',taxDisplay:'split',currency:'INR',sequenceStart:1,logo:'',signature:'',footer:'',customerNotes:''}});
+ return clone({cats,products:prods,customers:demo?cust:[],quotes:demo?qs:[],log:demo?[{t:now(),x:'Demo data loaded',u:'System'}]:[],set:{...SAMPLE_COMPANY,tax:18,prefix:'DP/QTN',valid:QUOTATION_VALIDITY_DAYS,showNotes:false,terms:clone(TERMS),employeeDiscountLimit:10,employeeDiscountMax:0,allowAdditionalCharges:true,independentApproval:true,taxMode:'exclusive',taxDisplay:'split',currency:'INR',sequenceStart:1,logo:'',signature:'',footer:'',customerNotes:''}});
 }
 const TERMS=['This quotation is valid until the specified expiry date.','Prices and taxes are based on the specifications listed in this quotation.','Changes to approved specifications or quantities may change the quoted price.','Production timelines are subject to confirmation and approval of final artwork.','Any advance payment or payment schedule must be agreed upon before work begins.','Delivery and installation charges will be applied where applicable and as specified in the quotation.'];
 const AF=Object.freeze({ft:1,in:1/144,cm:1/929.0304,m:10.7639104});
@@ -704,5 +713,5 @@ function itemQuotedGrossValues(quote,settings={}){
  }
  return values;
 }
-return{ST:Object.freeze(ST),TERMS:Object.freeze(TERMS),AF,SZ:Object.freeze(SZ),METHODS,TAX_MODES,seed,companyDetails,defCfg,calc,mkItem,totals,itemQuotedValues,itemQuotedGrossValues,fieldVisible,sizeFields,normalizeConfig,sizeQuantityError,customerSpecifications,isInternalField,publicField,fieldDefinitionError,pricingError,optionDefinitionError,optionMeta,optionLabel,activeOptions,availableOptions,reconcileConfig,phase2Product,syncPhase2Rules,eyeletCount,GIFT_KEYS,CATALOG_TEMPLATE_IDS,catalogTemplate,catalogTemplateError,catalogAssignmentError,templateAssignment,productTemplate,resolveProduct,stripProduct,assignProductTemplate,giftTemplate,giftTemplateError,giftAssignmentError,resolveGiftProduct,stripGiftProduct,assignGiftProduct,phase3Product,R,money,percentageAmount,inr,rs};
+return{QUOTATION_VALIDITY_DAYS,quotationValidUntil,ST:Object.freeze(ST),TERMS:Object.freeze(TERMS),AF,SZ:Object.freeze(SZ),METHODS,TAX_MODES,seed,companyDetails,defCfg,calc,mkItem,totals,itemQuotedValues,itemQuotedGrossValues,fieldVisible,sizeFields,normalizeConfig,sizeQuantityError,customerSpecifications,isInternalField,publicField,fieldDefinitionError,pricingError,optionDefinitionError,optionMeta,optionLabel,activeOptions,availableOptions,reconcileConfig,phase2Product,syncPhase2Rules,eyeletCount,GIFT_KEYS,CATALOG_TEMPLATE_IDS,catalogTemplate,catalogTemplateError,catalogAssignmentError,templateAssignment,productTemplate,resolveProduct,stripProduct,assignProductTemplate,giftTemplate,giftTemplateError,giftAssignmentError,resolveGiftProduct,stripGiftProduct,assignGiftProduct,phase3Product,R,money,percentageAmount,inr,rs};
 });

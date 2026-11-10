@@ -153,7 +153,7 @@ test('attention is based on real pending history and expiry dates, deduplicates 
   expiring = await f.status(reviewer.account, expiring, 'Approved Internally');
   expiring = await f.status(staff.account, expiring, 'Sent to Customer');
   const excludedDraft = await f.quote(f.admin, { date: today, valid: today });
-  let future = await f.quote(staff.account, { date: today, valid: addDays(today, 8) });
+  let future = await f.quote(staff.account, { date: addDays(today, 1), valid: addDays(today, 8) });
   future = await f.status(staff.account, future, 'Pending Internal Review');
   future = await f.status(reviewer.account, future, 'Approved Internally');
   let terminal = await f.quote(staff.account, { date: today, valid: today });
