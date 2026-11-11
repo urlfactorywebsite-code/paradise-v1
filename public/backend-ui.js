@@ -76,12 +76,6 @@ async function loadServerReports() {
     element.innerHTML = `<div class="cards"><div class="card"><b>${data.count}</b><span>Quotations</span></div><div class="card"><b>${inr(data.quotedValue)}</b><span>Quoted value</span></div></div>` + table('Quotations by status', rows(data.byStatus)) + table('Quotations created by date', rows(data.byDate)) + table('Quotations by employee', rows(data.byEmployee||data.bySalesperson)) + table('Most frequently quoted products', data.products.map(p => [p.name, p.timesQuoted, p.quantity]), ['Product', 'Times quoted', 'Total quantity']) + table('Customer-wise history', rows(data.byCustomer)) + table('Approved vs rejected', rows(data.byStatus.filter(s => ['Customer Approved', 'Customer Rejected'].includes(s.key)))) + table('Expired quotations', data.expired.map(q=>[q.number,q.customer,inr(q.quotedValue)]), ['Quotation','Customer','Quoted value']);
   } catch (error) { const element = $('#server-reports'); if (element) element.textContent = error.message; }
 }
-const customersView = V.cust;
-V.cust = () => {
-  let html = customersView();
-  for (const c of S.customers) { const edit = `onclick="custForm('${c.id}')">Edit</button>`; html = html.replace(edit, edit + ` <button class="s bd" onclick="deleteCustomer('${c.id}')">Delete</button>`); }
-  return html;
-};
 function deleteCustomer(id) {
   if (S.quotes.some(q => q.cid === id)) { toast('Customers with quotations cannot be deleted.', 'er'); return; }
   ask(`Delete ${esc(cust(id).name)}?`, async () => {

@@ -1,4 +1,12 @@
 'use strict';
+function customerRowMenu(anchor,id) {
+ if(!can('customer.view')||busy)return;
+ const items=[['View',()=>custView(id)]];
+ if(can('customer.edit'))items.push(['Edit',()=>custForm(id)]);
+ if(can('customer.delete'))items.push(['Delete',()=>deleteCustomer(id),true]);
+ // Reuse the existing row menu's positioning, dismissal and keyboard handling.
+ productsMenu(anchor,items);
+}
 let CUSTOMER_FORM=null;
 const customerFieldLabels={name:'Customer name',co:'Company name',person:'Contact person',contactPersonPhone:'Contact person number',mob:'Mobile number',wa:'WhatsApp number (with country code)',email:'Email address',gstin:'GSTIN',type:'Customer type',addr:'Billing address',notes:'Internal notes'};
 function customerInput(key,value,required=false,type='text') {

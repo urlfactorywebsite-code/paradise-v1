@@ -1,0 +1,16 @@
+{
+  "xlsx_integrity": "PASS",
+  "sheets": 6,
+  "case_rows": 872,
+  "unique_ids": "PASS",
+  "all_cases_not_run": "PASS",
+  "temporary_evidence_cleared": "PASS",
+  "steps_and_expected_results_present": "PASS",
+  "summary_and_area_counts": "PASS",
+  "status_validation": "PASS",
+  "frozen_headers_and_ids": "PASS",
+  "native_tables": 7,
+  "formula_error_cells": 0,
+  "automation_rows": 557,
+  "bytes": 257558
+}

@@ -1,0 +1,24 @@
+{
+  "cases": 872,
+  "areas": 36,
+  "p0": 173,
+  "products": 40,
+  "permissions": 30,
+  "automatedDefinitions": 526,
+  "browserSuiteFiles": 31,
+  "sourceFiles": 98,
+  "status": "All NOT RUN",
+  "summaryStatusMutationCheck": "PASS",
+  "caseRequiredFields": "PASS",
+  "uniqueIds": "PASS",
+  "sourceReferencesExist": "PASS",
+  "rendered": [
+    "summary",
+    "test-steps",
+    "test-execution",
+    "coverage",
+    "automation",
+    "fixtures",
+    "acceptance"
+  ]
+}

@@ -2,3 +2,23 @@
 .ql-dialog-footer{position:sticky;bottom:0;z-index:2;background:#fff;padding:12px 0;box-shadow:0 -8px 10px #ffffffed}.ql-dialog-footer .ql-actions{padding:0;margin-top:12px}@media(max-width:600px){.ql-columns{max-height:min(260px,30dvh)}}
 /* Bounded server-side page controls; native selects reuse the shared control. */
 .ql-page .quote-pagination{justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.ql-pagination-controls,.ql-pagination-controls>label,.ql-page-choice,.ql-jump{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0}.ql-pagination-controls{gap:12px}.ql-pagination-controls label{font-size:13px;color:#58727a}.ql-pagination-controls select,.ql-pagination-controls .dp-select{width:76px}.ql-pagination-controls input{width:90px}.ql-pagination-controls .dp-select-trigger{min-width:0}.ql-page-choice{font-size:13px;white-space:nowrap}.ql-page #tb[aria-busy=true]{color:#58727a}@media(max-width:600px){.ql-page .quote-pagination{align-items:flex-start}.ql-pagination-controls{width:100%;gap:12px}.ql-pagination-controls>label{flex-basis:100%}.ql-pagination-controls>button{flex:1}.ql-page-choice{flex-basis:100%}}
+/* Keep native table sizing; flex is limited to the action group inside its cell. */
+.ql-table-scroll{max-width:100%;min-width:0;overflow-x:auto}
+.ql-table-scroll:focus-visible{outline:2px solid var(--t);outline-offset:3px}
+.ql-table{width:100%;min-width:1440px;table-layout:fixed}
+.ql-table .ql-col-select{width:44px}
+.ql-table .ql-col-number{width:150px}
+.ql-table .ql-col-date{width:100px}
+.ql-table .ql-col-customer,.ql-table .ql-col-company{width:120px}
+.ql-table .ql-col-total{width:100px}
+.ql-table .ql-col-by{width:80px}
+.ql-table .ql-col-status{width:135px}
+.ql-table .ql-col-valid{width:101px}
+.ql-table .ql-col-actions{width:490px}
+.ql-table th,.ql-table td{padding:12px 10px;vertical-align:middle;overflow-wrap:anywhere}
+.ql-table .ql-selection-cell{padding:12px 8px;text-align:center}
+.ql-table .ql-check{display:block;height:18px;min-height:18px;margin:0 auto;padding:0}
+.ql-table .n{white-space:normal;font-variant-numeric:tabular-nums}
+.ql-table .bg{display:block;width:fit-content;max-width:100%;white-space:normal}
+.ql-row-actions{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.ql-table .ql-row-actions>button{flex:none;margin:0;white-space:nowrap}

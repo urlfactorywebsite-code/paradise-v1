@@ -1,0 +1,5218 @@
+{
+  "commit": "038c7137b8e3769d2f4bfcf12f1db75c4d550927",
+  "date": "2026-11-10",
+  "statuses": [
+    "Draft",
+    "Pending Internal Review",
+    "Approved Internally",
+    "Sent to Customer",
+    "Customer Approved",
+    "Customer Rejected",
+    "Expired",
+    "Cancelled"
+  ],
+  "permissions": [
+    "quotation.create",
+    "quotation.view_own",
+    "quotation.view_all",
+    "quotation.edit_own",
+    "quotation.edit_all",
+    "quotation.approve",
+    "quotation.delete",
+    "quotation.download_pdf",
+    "quotation.share_whatsapp",
+    "quotation.status",
+    "quotation.additional_charges",
+    "quotation.discount_unlimited",
+    "customer.view",
+    "customer.create",
+    "customer.edit",
+    "customer.delete",
+    "customer_categories.view",
+    "customer_categories.manage",
+    "fields.view",
+    "fields.manage",
+    "product.view",
+    "product.manage",
+    "pricing.view",
+    "pricing.manage",
+    "pricing.override",
+    "reports.view_own",
+    "reports.view_all",
+    "users.manage",
+    "settings.manage",
+    "audit.view"
+  ],
+  "defaults": [
+    "quotation.create",
+    "quotation.view_own",
+    "quotation.edit_own",
+    "quotation.download_pdf",
+    "quotation.share_whatsapp",
+    "quotation.status",
+    "quotation.additional_charges",
+    "customer.view",
+    "customer.create",
+    "customer.edit",
+    "product.view",
+    "pricing.view",
+    "reports.view_own"
+  ],
+  "products": [
+    {
+      "code": "GD-VC",
+      "name": "Visiting Card",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Visiting Card"
+      ]
+    },
+    {
+      "code": "GD-LG",
+      "name": "Logo Design",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "fixed",
+      "aliases": [
+        "Logo Design"
+      ]
+    },
+    {
+      "code": "GD-LH",
+      "name": "Letterhead",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Letterhead"
+      ]
+    },
+    {
+      "code": "GD-BR",
+      "name": "Flyer & Brochure",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Flyer & Brochure",
+        "Brochure"
+      ]
+    },
+    {
+      "code": "PR-FX",
+      "name": "Flex Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "area",
+      "aliases": [
+        "Flex Printing"
+      ]
+    },
+    {
+      "code": "PR-VN",
+      "name": "Vinyl Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "area",
+      "aliases": [
+        "Vinyl Printing"
+      ]
+    },
+    {
+      "code": "PG-TS",
+      "name": "T-Shirt Printing",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "T-Shirt Printing"
+      ]
+    },
+    {
+      "code": "PG-PB",
+      "name": "Paper Bag",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Paper Bag"
+      ]
+    },
+    {
+      "code": "PG-KC",
+      "name": "Key Chain",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Key Chain"
+      ]
+    },
+    {
+      "code": "PG-MG",
+      "name": "Mug Printing",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Mug Printing"
+      ]
+    },
+    {
+      "code": "PG-TC",
+      "name": "Table Calendar",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Table Calendar"
+      ]
+    },
+    {
+      "code": "PG-ST",
+      "name": "Shield & Trophy",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": null,
+      "additionalFields": [],
+      "reason": "Existing documented catalog product; previous phase configuration retained.",
+      "placeholder": false,
+      "method": "unit",
+      "aliases": [
+        "Shield & Trophy"
+      ]
+    },
+    {
+      "code": "GD-EN",
+      "name": "Envelope",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Envelope"
+      ]
+    },
+    {
+      "code": "GD-ID",
+      "name": "ID Card & Lanyard",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [
+        "lanyardType",
+        "lanyardCustomization"
+      ],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "ID Card & Lanyard"
+      ]
+    },
+    {
+      "code": "GD-BB",
+      "name": "Bill Book",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [
+        "copies",
+        "carbonSets"
+      ],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Bill Book"
+      ]
+    },
+    {
+      "code": "GD-CT",
+      "name": "Catalogue",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [
+        "pageCount"
+      ],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Catalogue"
+      ]
+    },
+    {
+      "code": "GD-IN",
+      "name": "Invitation",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Invitation"
+      ]
+    },
+    {
+      "code": "GD-DG",
+      "name": "Danglers",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Danglers"
+      ]
+    },
+    {
+      "code": "GD-MN",
+      "name": "Menu Card",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Menu Card"
+      ]
+    },
+    {
+      "code": "GD-SM",
+      "name": "Social Media Poster",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [
+        "designRequirements",
+        "outputSpecifications"
+      ],
+      "reason": "Digital artwork service: physical print fields disabled; actual deliverables and commercial requirements require business confirmation.",
+      "placeholder": true,
+      "method": "fixed",
+      "aliases": [
+        "Social Media Poster"
+      ]
+    },
+    {
+      "code": "GD-CG",
+      "name": "Custom Graphic Designs",
+      "categoryId": "c1",
+      "categoryName": "Graphic Designing",
+      "templateId": "print_product",
+      "additionalFields": [
+        "designRequirements",
+        "outputSpecifications"
+      ],
+      "reason": "Design service: physical print fields disabled; actual deliverables and commercial requirements require business confirmation.",
+      "placeholder": true,
+      "method": "base",
+      "aliases": [
+        "Custom Graphic Designs"
+      ]
+    },
+    {
+      "code": "PR-OF",
+      "name": "Offset Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "stationery_product",
+      "additionalFields": [],
+      "reason": "Paper/size/sides reuse Stationery; binding remains optional. Confirm actual production choices.",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Offset Printing"
+      ]
+    },
+    {
+      "code": "PR-DG",
+      "name": "Digital Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "stationery_product",
+      "additionalFields": [],
+      "reason": "Paper/size/sides reuse Stationery; binding remains optional. Confirm actual production choices.",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Digital Printing"
+      ]
+    },
+    {
+      "code": "PR-LED",
+      "name": "LED Board",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "LED Board"
+      ]
+    },
+    {
+      "code": "PR-ECO",
+      "name": "Eco Solvent Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "Eco Solvent Printing"
+      ]
+    },
+    {
+      "code": "PR-DTF",
+      "name": "DTF Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "DTF Printing",
+        "DTF Printing for Fabric & Leather"
+      ]
+    },
+    {
+      "code": "PR-UV",
+      "name": "UV Direct Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "UV Direct Printing"
+      ]
+    },
+    {
+      "code": "PR-WV",
+      "name": "Waterproof Vinyl Wall Posters",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "Waterproof Vinyl Wall Posters"
+      ]
+    },
+    {
+      "code": "PR-SC",
+      "name": "Screen & Canvas Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "Screen & Canvas Printing"
+      ]
+    },
+    {
+      "code": "PR-GF",
+      "name": "Foil & Emboss Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Foil & Emboss Printing",
+        "Gold / Silver Foil & Emboss Printing"
+      ]
+    },
+    {
+      "code": "PR-HS",
+      "name": "Hologram Stickers",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Hologram Stickers"
+      ]
+    },
+    {
+      "code": "PR-SP",
+      "name": "Sunpack Sheet Printing",
+      "categoryId": "c2",
+      "categoryName": "Printing Services",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "area",
+      "aliases": [
+        "Sunpack Sheet Printing"
+      ]
+    },
+    {
+      "code": "PG-IT",
+      "name": "Ink-Transfer Sticker",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "print_product",
+      "additionalFields": [],
+      "reason": "Print template with product-specific material/transfer options still requiring confirmation.",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Ink-Transfer Sticker"
+      ]
+    },
+    {
+      "code": "PG-UM",
+      "name": "Umbrella",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Umbrella"
+      ]
+    },
+    {
+      "code": "PG-PF",
+      "name": "Photo Frame",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Photo Frame"
+      ]
+    },
+    {
+      "code": "PG-GK",
+      "name": "Gazebo / Kiosk",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "area_product",
+      "additionalFields": [],
+      "reason": "Area dimensions and optional installation reuse the Area template. Existing unit pricing is retained; construction scope, measurement and commercial pricing basis require business confirmation.",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Gazebo / Kiosk"
+      ]
+    },
+    {
+      "code": "PG-PN",
+      "name": "Pen",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Pen",
+        "Pen Printing"
+      ]
+    },
+    {
+      "code": "PG-CP",
+      "name": "Cap",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Cap"
+      ]
+    },
+    {
+      "code": "PG-BD",
+      "name": "Badges",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Badges"
+      ]
+    },
+    {
+      "code": "PG-SG",
+      "name": "Sublimation Gift Printing",
+      "categoryId": "c3",
+      "categoryName": "Promotional Gifts",
+      "templateId": "promotional_gift",
+      "additionalFields": [],
+      "reason": "",
+      "placeholder": true,
+      "method": "unit",
+      "aliases": [
+        "Sublimation Gift Printing"
+      ]
+    }
+  ],
+  "coverage": {
+    "documentedRequired": 40,
+    "placeholderRequired": 28,
+    "fullSrsVerified": false,
+    "source": "28 products explicitly supplied for Phase 4 plus 12 existing documented seed products. Original complete SRS product-list artifact is not available in this repository."
+  },
+  "controls": [
+    {
+      "id": "system_dashboard_period_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "period_caption",
+      "label": "Date range",
+      "selector": "select[onchange^=\"D.r=\"]",
+      "source": "Canonical dashboard periods",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_employee_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "employee_caption",
+      "label": "Employee",
+      "selector": "select[onchange^=\"D.sp=\"]",
+      "source": "employeeOptions(): permitted quotation creators",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_customer_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "customer_caption",
+      "label": "Customer",
+      "selector": "select[onchange^=\"D.cu=\"]",
+      "source": "S.customers from scoped API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_dashboard_status_caption",
+      "pageKey": "dashboard",
+      "fieldKey": "status_caption",
+      "label": "Quotation status",
+      "selector": "select[onchange^=\"D.st=\"]",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotation_list_status_caption",
+      "pageKey": "quotation_list",
+      "fieldKey": "status_caption",
+      "label": "Quotation status",
+      "selector": "select[onchange^=\"F.st=\"]",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotation_list_sales_caption",
+      "pageKey": "quotation_list",
+      "fieldKey": "sales_caption",
+      "label": "Salesperson filter",
+      "selector": "select[onchange^=\"F.sp=\"],#ql-sp",
+      "source": "Salespeople on permitted quotations",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_quotations_customer",
+      "pageKey": "quotations",
+      "fieldKey": "customer",
+      "label": "Customer",
+      "selector": "#editor-customer",
+      "source": "Scoped customer records",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Customer contact/category/delivery snapshot"
+      ],
+      "backend": "Customer existence/access, address ownership, quotation validation",
+      "storage": "quotations.customer_id and saved JSON",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_delivery_address",
+      "pageKey": "quotations",
+      "fieldKey": "delivery_address",
+      "label": "Delivery address",
+      "selector": "select[onchange^=\"Q.deliveryAddressId=\"]",
+      "source": "Selected customer delivery addresses",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Selected customer"
+      ],
+      "backend": "Customer/address ownership and active state",
+      "storage": "Quotation delivery address ID/snapshot",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_discount_type",
+      "pageKey": "quotations",
+      "fieldKey": "discount_type",
+      "label": "Discount type",
+      "selector": "select[onchange^=\"editorDiscount(\"]",
+      "source": "Canonical p/f discount types",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_status",
+      "pageKey": "quotations",
+      "fieldKey": "status",
+      "label": "Quotation status",
+      "selector": "#ns",
+      "source": "DP.ST and permitted status workflow",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_quotations_catalog_category_caption",
+      "pageKey": "quotations",
+      "fieldKey": "catalog_category_caption",
+      "label": "Product category",
+      "selector": "#cc2",
+      "source": "S.cats active product categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customers_category",
+      "pageKey": "customers",
+      "fieldKey": "category",
+      "label": "Customer category",
+      "selector": "#cf_categoryId",
+      "source": "Managed customer category API",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [
+        "Other custom value; category association"
+      ],
+      "backend": "Active category/reference validation",
+      "storage": "customers.category_id and custom category text",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_customers_delivery_caption",
+      "pageKey": "customers",
+      "fieldKey": "delivery_caption",
+      "label": "Delivery address",
+      "selector": "#cf_deliveryAddressId",
+      "source": "This customer saved delivery addresses",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Customer form selected address; address editor"
+      ],
+      "backend": "Customer/address ownership",
+      "storage": "customer_delivery_addresses IDs and selected default",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_reports_month_caption",
+      "pageKey": "reports",
+      "fieldKey": "month_caption",
+      "label": "Month",
+      "selector": "#pa-month",
+      "source": "Calendar months",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_customer_caption",
+      "pageKey": "reports",
+      "fieldKey": "customer_caption",
+      "label": "Customer",
+      "selector": "#pa-customer",
+      "source": "Report filter-options customers",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_employee_caption",
+      "pageKey": "reports",
+      "fieldKey": "employee_caption",
+      "label": "Employee",
+      "selector": "#pa-employee",
+      "source": "Report filter-options users",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_status_caption",
+      "pageKey": "reports",
+      "fieldKey": "status_caption",
+      "label": "Status",
+      "selector": "#pa-status",
+      "source": "DP.ST",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_category_caption",
+      "pageKey": "reports",
+      "fieldKey": "category_caption",
+      "label": "Product category",
+      "selector": "#pa-category",
+      "source": "Report filter-options categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_metric_caption",
+      "pageKey": "reports",
+      "fieldKey": "metric_caption",
+      "label": "Analytics metric",
+      "selector": "#pa-metric",
+      "source": "Canonical analytics metrics",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_mode_caption",
+      "pageKey": "reports",
+      "fieldKey": "mode_caption",
+      "label": "Chart mode",
+      "selector": "#pa-mode",
+      "source": "Supported renderer modes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_period_caption",
+      "pageKey": "reports",
+      "fieldKey": "period_caption",
+      "label": "Date range",
+      "selector": "#rd-range",
+      "source": "Canonical date presets",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_products_caption",
+      "pageKey": "reports",
+      "fieldKey": "products_caption",
+      "label": "Compare products",
+      "selector": "#pa-products",
+      "source": "Real product/historical IDs from report API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string[]",
+      "dependencies": [
+        "All Products checkbox; up to 50 stable product IDs"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_reports_employee_metric_caption",
+      "pageKey": "reports",
+      "fieldKey": "employee_metric_caption",
+      "label": "Employee metric",
+      "selector": "#rd-employee-metric",
+      "source": "Canonical employee metrics",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_category_caption",
+      "pageKey": "products",
+      "fieldKey": "category_caption",
+      "label": "Category",
+      "selector": "#products-category",
+      "source": "Product categories API",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_status_caption",
+      "pageKey": "products",
+      "fieldKey": "status_caption",
+      "label": "Status",
+      "selector": "select[onchange^=\"productsFilter('active'\"]",
+      "source": "Canonical active/inactive filter",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_readiness_caption",
+      "pageKey": "products",
+      "fieldKey": "readiness_caption",
+      "label": "Readiness",
+      "selector": "select[onchange^=\"productsFilter('readiness'\"]",
+      "source": "Canonical readiness filters",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_page_size_caption",
+      "pageKey": "products",
+      "fieldKey": "page_size_caption",
+      "label": "Products per page",
+      "selector": "select[onchange^=\"productsFilter('pageSize'\"]",
+      "source": "Bounded catalog page sizes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_products_category",
+      "pageKey": "products",
+      "fieldKey": "category",
+      "label": "Product category",
+      "selector": "#pe_cat",
+      "source": "Real product categories",
+      "classification": "entity_selector",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "products.category_id",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_pricing_method",
+      "pageKey": "products",
+      "fieldKey": "pricing_method",
+      "label": "Pricing method",
+      "selector": "#pe_m",
+      "source": "Canonical pricing methods",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_tax_classification",
+      "pageKey": "products",
+      "fieldKey": "tax_classification",
+      "label": "Tax classification",
+      "selector": "#pe_taxMode",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_products_catalog_template",
+      "pageKey": "products",
+      "fieldKey": "catalog_template",
+      "label": "Catalog template",
+      "selector": "#catalog-template-choice",
+      "source": "Canonical template IDs",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_product_categories_name_caption",
+      "pageKey": "product_categories",
+      "fieldKey": "name_caption",
+      "label": "Category name",
+      "selector": "input[onchange^=\"catName(\"]",
+      "source": "Existing category name input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing category validation",
+      "storage": "categories body/name",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_pricing_tax_classification",
+      "pageKey": "pricing",
+      "fieldKey": "tax_classification",
+      "label": "Tax classification",
+      "selector": "#pricing-editor select[onchange^=\"pcSet('taxMode'\"]",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_pricing_option_charges",
+      "pageKey": "pricing",
+      "fieldKey": "option_charges",
+      "label": "Priced options and compatibility",
+      "selector": "#pricing-editor select[data-charge-kind]",
+      "source": "Canonical charge bases f/u/p/a/q",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_catalog_category_caption",
+      "pageKey": "catalog",
+      "fieldKey": "category_caption",
+      "label": "Catalog category",
+      "selector": "select[onchange^=\"setCatalogFilter('category'\"]",
+      "source": "Real product categories",
+      "classification": "entity_selector",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_status_caption",
+      "pageKey": "catalog",
+      "fieldKey": "status_caption",
+      "label": "Catalog status",
+      "selector": "select[onchange^=\"setCatalogFilter('status'\"]",
+      "source": "Catalog readiness states",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_page_size_caption",
+      "pageKey": "catalog",
+      "fieldKey": "page_size_caption",
+      "label": "Products per page",
+      "selector": "select[onchange^=\"setCatalogFilter('pageSize'\"]",
+      "source": "Bounded checklist page sizes",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_catalog_template_caption",
+      "pageKey": "catalog",
+      "fieldKey": "template_caption",
+      "label": "Assigned template",
+      "selector": "select[onchange^=\"setCatalogFilter('template'\"]",
+      "source": "Canonical catalog template definitions",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_users_role",
+      "pageKey": "users",
+      "fieldKey": "role",
+      "label": "System role",
+      "selector": "#team_role,#edit_user_role",
+      "source": "Administrator/Employee",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "User management authorization and last-administrator protection",
+      "storage": "users.role",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_users_member_name_caption",
+      "pageKey": "users",
+      "fieldKey": "member_name_caption",
+      "label": "Name",
+      "selector": "#team_name,#edit_user_name",
+      "source": "Account display name input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "users.name",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_tax_display",
+      "pageKey": "settings",
+      "fieldKey": "tax_display",
+      "label": "Tax display",
+      "selector": "select[onchange^=\"SETD.taxDisplay=\"]",
+      "source": "Canonical split/igst",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_tax_classification",
+      "pageKey": "settings",
+      "fieldKey": "tax_classification",
+      "label": "Default tax treatment",
+      "selector": "select[onchange^=\"SETD.taxMode=\"]",
+      "source": "DP.TAX_MODES",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_settings_signature_caption",
+      "pageKey": "settings",
+      "fieldKey": "signature_caption",
+      "label": "Authorized signatory",
+      "selector": "input[oninput=\"SETD.signature=this.value\"]",
+      "source": "Existing settings input",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "text",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "workspace.settings.signature",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    },
+    {
+      "id": "system_whatsapp_status_caption",
+      "pageKey": "whatsapp",
+      "fieldKey": "status_caption",
+      "label": "Sharing status",
+      "selector": "select[onchange^=\"WF.status=\"]",
+      "source": "Prepared/Manually Confirmed/Failed",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customer_categories_status_caption",
+      "pageKey": "customer_categories",
+      "fieldKey": "status_caption",
+      "label": "Category status",
+      "selector": "select[onchange^=\"CATEGORY_PAGE.status=\"]",
+      "source": "all/active/inactive/archived",
+      "classification": "label_only",
+      "policy": "label_only",
+      "dataType": "string",
+      "dependencies": [
+        "Existing filters and pagination"
+      ],
+      "backend": "Existing reporting/list query whitelist and authorization",
+      "storage": "Transient filter state; canonical IDs/values sent to existing API",
+      "businessRules": "Only the caption is configurable; filter values and semantics are protected"
+    },
+    {
+      "id": "system_customer_categories_status",
+      "pageKey": "customer_categories",
+      "fieldKey": "status",
+      "label": "Category status",
+      "selector": "#ce_active",
+      "source": "Canonical active boolean",
+      "classification": "protected",
+      "policy": "protected",
+      "dataType": "string",
+      "dependencies": [],
+      "backend": "Existing canonical API validation",
+      "storage": "Existing business records or transient filter state",
+      "businessRules": "Caption only; canonical values and handlers are immutable"
+    }
+  ],
+  "automated": [
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 41,
+      "title": "immutable quote ownership scopes state, search, reports, history, PDF, preview and all write paths",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 67,
+      "title": "configurable permissions are enforced and changes revoke sessions; managers cannot elevate administrator access",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 88,
+      "title": "catalog and pricing managers can read their catalogs and update only their permitted product fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 99,
+      "title": "independent approval, draft-only editing and deletion permission are enforced by the backend",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 111,
+      "title": "WhatsApp manual sharing stores a protected immutable PDF and truthful separate history, failure and retry",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 147,
+      "title": "saving a WhatsApp recipient is atomic with preparation and enforces version and edit permission",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 168,
+      "title": "WhatsApp settings reject unconfigured providers and secrets and templates are resolved only on server",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 183,
+      "title": "a sharing-only employee uses saved contact data and needs customer edit permission to override the recipient",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/access-whatsapp.test.js",
+      "line": 193,
+      "title": "additive schema upgrade resolves only unambiguous legacy owners and preserves unknown historical ownership",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 207,
+      "title": "initial setup is single-use, uses secure session attributes, and protects private data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 253,
+      "title": "bad credentials fail and logout invalidates a copied session cookie",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 282,
+      "title": "authenticated writes require CSRF and reject a foreign Origin without changing state",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 326,
+      "title": "simultaneous writes reject stale revisions and cannot overwrite the winning change",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 351,
+      "title": "new quotes receive server prices, identity, numbering, and status history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 396,
+      "title": "saved item snapshots resist tampering and catalog changes until explicit refresh",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 444,
+      "title": "invalid state is rejected atomically for negative, non-finite, invalid IDs and missing references",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 503,
+      "title": "employee role can save customers but cannot administer users, catalog, settings or approvals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 566,
+      "title": "password changes verify the current password and reject the old password",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/api.test.js",
+      "line": 608,
+      "title": "PostgreSQL preserves saved quotations, revisions and credentials across application restart",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 105,
+      "title": "dedicated customer CRUD supports duplicate review, versions, search, paging, and dependencies",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 170,
+      "title": "catalog/category APIs validate pricing, dependencies, inactive choices, and admin access",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 239,
+      "title": "quotation CRUD, preview, status, copy, repricing and historical document snapshots are authoritative",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 317,
+      "title": "record versions permit unrelated concurrent edits and reject lost updates on the same record",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 351,
+      "title": "atomic change API rolls back all operations and keeps a durable audit trail",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 408,
+      "title": "reports use persisted prices, apply date/customer filters, and produce escaped CSV",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 440,
+      "title": "employee restrictions cover resources, approval, audits, backups, settings and exports",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 479,
+      "title": "team lifecycle protects the last administrator, revokes sessions and requires temporary-password replacement",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 541,
+      "title": "users can inspect and revoke only their own sessions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 562,
+      "title": "PostgreSQL backups restore to a new database, preserve records, revoke sessions, and refuse overwrite",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 604,
+      "title": "OpenAPI enumerates working resources and rejects unauthenticated documentation requests",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 619,
+      "title": "expiry action is selective and does not add repeated status history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 646,
+      "title": "login throttling persists across a separately started server connection",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 688,
+      "title": "audit history outlives the recent-activity window and rejects forged client events",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/backend.test.js",
+      "line": 721,
+      "title": "request limits, private files, unknown routes and header-based deletion fail safely",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/company-content.test.js",
+      "line": 6,
+      "title": "sample records use contextual customer addresses and quotation descriptions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/company-content.test.js",
+      "line": 21,
+      "title": "legacy company labels render as contextual examples without modifying saved settings",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/company-content.test.js",
+      "line": 40,
+      "title": "legacy markers are removed while customized company content and intentional blanks survive",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 14,
+      "title": "category CRUD, exact decimals, unique names, literal search, pagination and Other protection",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 33,
+      "title": "category management requires explicit backend permission and isolates separate company databases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 48,
+      "title": "logos are decoded and normalized, replaced immutably, removable, size-limited and ownership constrained",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 63,
+      "title": "archive preserves customer associations and immutable quotation highlights without changing totals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 80,
+      "title": "migration 8 upgrades populated schema 7 atomically, preserves bodies and does not reset configuration",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 91,
+      "title": "schema 8 backup and restore retain private logo bytes, configuration and snapshot references",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 98,
+      "title": "failed logo writes roll back category, audit and revision together; stale IDs cannot overwrite",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 106,
+      "title": "legacy quotations keep absent highlights and client forgery cannot add them during editing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 114,
+      "title": "category permissions are rechecked inside the transaction after a concurrent revocation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 121,
+      "title": "configured highlight limits are returned to the editor and enforced on API input",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 127,
+      "title": "review: malformed explicit category IDs and slug types fail without inserting records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 134,
+      "title": "review: reducing the message limit permits preservation, disabling and restoring existing long messages",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 144,
+      "title": "review: identical category IDs remain company-local and foreign sessions and logo objects cannot cross databases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 156,
+      "title": "review: CSRF, concurrent updates and constraint failures leave category and logo integrity intact",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 168,
+      "title": "review: hostile raster containers and metadata cannot become executable or oversized stored objects",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-categories-api.test.js",
+      "line": 179,
+      "title": "review: category settings cannot be forged through legacy workspace writes and archives still permit PDF rendering",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 5,
+      "title": "review: versioned decimal calculations round tax, manual discounts and currency half-paise exactly",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 17,
+      "title": "review: versioned product pricing avoids floating point money and dimension multiplication",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 27,
+      "title": "review: full versioned totals reconcile with an independent integer oracle across mixed tax treatments",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 61,
+      "title": "category money uses exact basis points and half-up paise rounding over its full range",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 69,
+      "title": "category discount shares allocation and existing exclusive, inclusive, exempt and split/IGST rules",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 75,
+      "title": "BNI and YES defaults use one authoritative discount and preview, save and PDF agree",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 83,
+      "title": "uncategorized, Other, inactive and archived categories preserve manual quotation discounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 89,
+      "title": "zero and maximum category percentages are applied without discounting delivery or other charges",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 93,
+      "title": "changing customer updates the category default, clears automatic discounts and never stacks manual discounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 102,
+      "title": "category settings and customer category changes do not silently reprice existing drafts or finalized quotes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 112,
+      "title": "legacy category quotations retain manual discounts and absent discount snapshots until explicit draft refresh",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 118,
+      "title": "automatic defaults and manual overrides respect existing employee caps and cannot forge discounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 126,
+      "title": "delivery addresses stay customer-owned and historical while the independent contact number is snapshotted",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 133,
+      "title": "review: server owns calculation policy, exact persisted totals and historical rounding",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 157,
+      "title": "review: changing customers clears inherited contact overrides without changing either customer",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-category-quotation.test.js",
+      "line": 167,
+      "title": "review: finalized category snapshots and private logo references survive replacement, removal and archive",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 25,
+      "title": "refinement: an explicitly cleared delivery address stays cleared during later edits",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 34,
+      "title": "refinement: reference IDs have strict types and client category metadata cannot create managed categories",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 45,
+      "title": "refinement: SQL failure after customer insertion rolls back customer, addresses, audit and revision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 54,
+      "title": "refinement: users without customer access cannot enumerate or mutate known or missing address paths",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 70,
+      "title": "refinement: separate company databases isolate customer and delivery address records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 80,
+      "title": "refinement: duplicating a historical quotation preserves its archived delivery snapshot without allowing new selection",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 89,
+      "title": "customers can be created without status and managed categories use relational IDs",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 101,
+      "title": "Other custom text and contact person number roundtrip independently and category edits clear custom text",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 111,
+      "title": "invalid categories, malformed optional phone numbers and incomplete addresses fail without partial customers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 119,
+      "title": "new customer and addresses persist together; legacy PUT preserves metadata, addresses, billing and inactive status",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 130,
+      "title": "address CRUD paginates per customer, switches default atomically, archives and preserves omitted rows",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 146,
+      "title": "address IDs cannot be read, reassigned, edited or selected through a different customer",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 160,
+      "title": "address/customer writes enforce permissions, authentication, version conflicts and duplicate review",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 179,
+      "title": "delivery selection in quotations is customer-scoped and snapshots survive address edits and archives",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 193,
+      "title": "migration 7 preserves legacy customer bodies, versions and statuses, repeats safely and rolls back on failure",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-details-api.test.js",
+      "line": 213,
+      "title": "schema 7 backups restore category relations, phone numbers, delivery addresses and selections",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-migration.test.js",
+      "line": 6,
+      "title": "release: populated schema 6 upgrade, failure rollback and backup restore preserve every legacy business row",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 13,
+      "title": "release: hostile listing search/filter controls fail validation before PostgreSQL",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 18,
+      "title": "release: SQL injection stays literal and invalid sort/pagination cannot execute SQL",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 28,
+      "title": "release: complete category/customer/address/quotation pipeline freezes one discount and all snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 43,
+      "title": "release: concurrent customer/address and quotation updates have one winner and preserve integrity",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 52,
+      "title": "release: customer and quotation CRUD preserve references and only cascade the deleted customer addresses",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 63,
+      "title": "release: revoked customer permissions cannot commit an in-flight address update",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 70,
+      "title": "final review: quote-only roles keep document access without enumerating live delivery addresses",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 83,
+      "title": "release: failed quotation write rolls back a batch containing a customer and multiple delivery addresses",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/customer-release-readiness.test.js",
+      "line": 93,
+      "title": "release: errors and audit records exclude passwords, cookies, CSRF tokens and SQL internals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dashboard-api.test.js",
+      "line": 70,
+      "title": "dashboard aggregates use stored paise, share filters with listing, keep real stable recent records and preserve report fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dashboard-api.test.js",
+      "line": 123,
+      "title": "dashboard quote scope cannot be widened by report grants or employee filters and does not require report access",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dashboard-api.test.js",
+      "line": 142,
+      "title": "attention is based on real pending history and expiry dates, deduplicates and enforces independent review permissions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dashboard-api.test.js",
+      "line": 189,
+      "title": "global search is bounded, escaped, scoped and returns only minimal permitted customer fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dashboard-api.test.js",
+      "line": 220,
+      "title": "dashboard and search reject invalid filters, return real empty states and honor workspace timezone boundaries",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 13,
+      "title": "currency formatting uses the rupee sign and Indian digit grouping",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 19,
+      "title": "demo catalog retains the original five quotation totals and no authentication state",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 33,
+      "title": "the same module loads without Node or a DOM as the browser DP global",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 42,
+      "title": "quantity tiers, base-only percentage supplements, and minimum orders are preserved",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 53,
+      "title": "area units accept decimal dimensions and apply the minimum charge before percentages",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 66,
+      "title": "invalid whole quantities, dimensions, size counts, and selected options are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 81,
+      "title": "invalid catalog pricing and integer overflow cannot produce billable items",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 98,
+      "title": "size quantity drives pricing while item config remains an independent snapshot",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 109,
+      "title": "largest remainder discounts never create a negative taxable final row",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 122,
+      "title": "discount clamps and mixed tax brackets retain integer-paise accounting",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/domain.test.js",
+      "line": 131,
+      "title": "additional charges use the saved quotation tax including zero, then current settings",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 38,
+      "title": "fields: registry identifies canonical workflows/relationships and label-only integrations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 60,
+      "title": "fields: create, rename, configure, order, archive and audit preserve immutable option keys",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 88,
+      "title": "fields: product > page > global resolution is explicit, whole-field and namespace-safe",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 108,
+      "title": "fields: duplicate field/option writes and stale versions cannot partially commit",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 124,
+      "title": "fields: empty required dropdowns, unsafe keys, unknown metadata and ownership input fail validation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 139,
+      "title": "fields: RBAC, CSRF, page access and separate company isolation cover all operations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 167,
+      "title": "fields: conditional batch retrieval revalidates per scope and invalidates across application instances",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 182,
+      "title": "fields: batched resolution has bounded queries, stable ordering and safe plain text",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 199,
+      "title": "fields: option IDs cannot be enumerated or modified through a different field",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 207,
+      "title": "fields: mandatory audit failures roll back configuration, options, versions and cache revision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 216,
+      "title": "fields: schema-10 migration is atomic, idempotent, data preserving and enforces stable IDs",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 239,
+      "title": "fields: configuration writes leave existing customers, quotations and priced product definitions unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 252,
+      "title": "fields: workspace/option limits and indexed lookups remain bounded at the configured maximum",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 269,
+      "title": "fields: scoped product references remain valid on deactivation and reject destructive removal cleanly",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 279,
+      "title": "review: page identities reject coercible values without persisting unreachable fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 288,
+      "title": "review: mutation envelopes reject irrelevant properties, empty patches and unsupported operations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 307,
+      "title": "review: saved references retain original IDs, values and label snapshots after rename, reorder and archive",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 332,
+      "title": "review: conflicting option edits and duplicate product scopes commit exactly one winner",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 352,
+      "title": "review: a mid-reorder failure rolls back every option position, field version, audit and cache revision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 368,
+      "title": "review: permission revocation while a write body is streaming is rechecked before any mutation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 401,
+      "title": "review: cached reads cannot bypass revoked access, another company or product scope",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-fields.test.js",
+      "line": 416,
+      "title": "review: protected fields reject every option mutation family and retain canonical data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 14,
+      "title": "inline: one editor save atomically renames, adds, archives and reorders without changing business records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 22,
+      "title": "inline: the shared typed validator is served in built and source-asset modes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 30,
+      "title": "inline: immutable keys, omitted/foreign IDs, duplicates, protected fields and stale saves fail atomically",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 40,
+      "title": "inline: database failure during a full editor save rolls back label, options, audit and cache revision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 48,
+      "title": "inline: schema 11 upgrade preserves existing records and failed type expansion rolls back safely",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 62,
+      "title": "inline: all seven custom types persist and validate through customer record creation and editing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 77,
+      "title": "inline: required and typed values reject invalid or foreign input without partial records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 85,
+      "title": "inline: quotation values do not affect money or customer output and finalized snapshots cannot change",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 97,
+      "title": "inline: duplicating a quotation retains archived custom selections and trusted label snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-inline.test.js",
+      "line": 108,
+      "title": "review: multi-select edits retain saved choices removed by a later scope override without accepting forged history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-pages.test.js",
+      "line": 5,
+      "title": "pages: registry classifies every integrated control without making canonical values editable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-pages.test.js",
+      "line": 6,
+      "title": "pages: caption changes preserve all customer/product/quotation/settings data and retain canonical source keys",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-pages.test.js",
+      "line": 7,
+      "title": "pages: schema-13 metadata seeding preserves existing captions and is transactional and idempotent",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-pages.test.js",
+      "line": 8,
+      "title": "pages: management filters are server-side, composable and validate values safely",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-pages.test.js",
+      "line": 9,
+      "title": "pages: page permission, caption management authorization and company cache isolation are enforced",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-production.test.js",
+      "line": 14,
+      "title": "production fields: two administrators on separate app instances have one version winner and an accurate audit actor",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-production.test.js",
+      "line": 26,
+      "title": "production fields: an archived choice rejects a stale new selection without records or forged history, while saved references remain valid",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-production.test.js",
+      "line": 36,
+      "title": "production fields: concurrent archival and customer creation serialize to one of the two safe outcomes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/dynamic-production.test.js",
+      "line": 44,
+      "title": "production fields: schema-13 backup and restore preserve definitions, options, bindings, audit and finalized quotation snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 118,
+      "title": "conflict reload preserves employee edits and cannot silently revert a newer internal approval",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 137,
+      "title": "signing in again as the same employee rebases approval metadata while keeping the draft",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 155,
+      "title": "duplicate username errors do not put unrelated workspace saves into revision-conflict mode",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 169,
+      "title": "area configurator exposes usable dimensions even when the catalog lacks a dimension field",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 187,
+      "title": "a quotation deleted during conflict recovery is not silently recreated by Save",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/frontend.test.js",
+      "line": 202,
+      "title": "new quotation expiry ignores old settings and follows quotation date by seven days",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/migration.test.js",
+      "line": 62,
+      "title": "SQLite import preserves credentials, business snapshots, numbering and revisions without changing source",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/migration.test.js",
+      "line": 100,
+      "title": "invalid SQLite import rolls back and leaves original source unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/migration.test.js",
+      "line": 112,
+      "title": "SQLite v2 imports preserve record versions and durable audit events",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-api.test.js",
+      "line": 51,
+      "title": "review: malformed catalog updates return 422 and size prices retain separate authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-api.test.js",
+      "line": 67,
+      "title": "review: HTTP PDF creation and unchanged saves cannot forge camel-case internal field visibility",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-api.test.js",
+      "line": 82,
+      "title": "Phase 1 HTTP catalog, pricing, preview, create, edit, snapshot, duplicate, PDF and reprice integration",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-api.test.js",
+      "line": 117,
+      "title": "Phase 1 HTTP rejects invalid definitions and sizes through all shared validation entry points",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-api.test.js",
+      "line": 149,
+      "title": "migration 005 preserves v4 bodies, credentials, revisions and quantities and can be reapplied",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 23,
+      "title": "Phase 1 legacy single conditions preserve Equals and array comparisons",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 32,
+      "title": "Phase 1 multiple ALL conditions require every Equals and Not Equals comparison",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 40,
+      "title": "Phase 1 ANY conditions match either branch and do not match absent references",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 49,
+      "title": "Phase 1 backend rejects invalid references, operators, empty groups and unavailable options",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 53,
+      "title": "Phase 1 backend rejects self cycles, multi-field cycles and calculated quantity cycles",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 60,
+      "title": "Phase 1 hidden fields cannot price, persist, or enable dependent fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 69,
+      "title": "Phase 1 condition changes preserve independent pricing and hidden invalid values are discarded",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 76,
+      "title": "Phase 1 reusable sizes sum quantities including custom labels, zero entries and approved surcharges",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 83,
+      "title": "Phase 1 reusable size validation rejects negatives, fractions, strings, overflow and unavailable sizes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 88,
+      "title": "Phase 1 size definitions reject duplicates, all disabled, wrong pricing method and multiple drivers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 94,
+      "title": "Phase 1 size breakdown works with tier pricing and quantity-driven conditions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 98,
+      "title": "Phase 1 existing T-Shirts retain legacy sizes and editable explicit sz conversion",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 104,
+      "title": "Phase 1 quotation editing persists size quantities and leaves untouched legacy snapshots operational",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 111,
+      "title": "Phase 1 product-specific maps and multi selections cannot bypass server validation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-domain.test.js",
+      "line": 118,
+      "title": "Phase 1 size prices require pricing permission while visibility remains catalog-only",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-migration-review.test.js",
+      "line": 10,
+      "title": "review: concurrent fresh startups apply Phase 1 migrations once",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-migration-review.test.js",
+      "line": 19,
+      "title": "review: failed Phase 1 migration rolls back DDL and version and permits safe retry",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 27,
+      "title": "Phase 1 PDFs include flagged text, dropdown and multiselect values with readable labels",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 42,
+      "title": "Phase 1 PDFs omit hidden, unflagged narrative, empty and conditionally hidden fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 57,
+      "title": "Phase 1 PDFs always exclude internal fields despite forged visibility flags",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 76,
+      "title": "Phase 1 PDFs format reusable size labels, omit zero entries and preserve their total price",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 98,
+      "title": "Phase 1 PDF field metadata remains a quotation snapshot and cannot change pricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-pdf.test.js",
+      "line": 115,
+      "title": "Phase 1 PDFs preserve legacy specifications while sanitizing internal narrative labels",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 10,
+      "title": "review: fixed and package quantity conditions use the actual item quantity",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 20,
+      "title": "review: malformed size definitions reach validation without authorization TypeErrors",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 29,
+      "title": "review: scalar condition values must match text and built-in numeric reference types",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 37,
+      "title": "review: hidden dimension values cannot activate conditions or charges",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 51,
+      "title": "review: configuration sanitization rejects malformed visible sizes and preserves hidden discard",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 58,
+      "title": "review: implicit dimension dependencies cannot create direct or transitive cycles",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 65,
+      "title": "review: zero size totals cannot activate a quantity condition using a stale submitted total",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 72,
+      "title": "review: legacy optional dropdown None conditions remain valid",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 79,
+      "title": "review: camel-case internal labels are excluded from new and legacy customer PDFs",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-review.test.js",
+      "line": 90,
+      "title": "review: ALL and ANY truth tables cover Equals and Not Equals with blank and missing references",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 29,
+      "title": "admin converts existing single conditions to ALL/ANY rules and edits Equals/Not Equals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 43,
+      "title": "admin customizes legacy T-shirt sizes, adds kids labels, reorders, disables and sets price adjustments",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 53,
+      "title": "conditional configurator clears hidden descendants while preserving visible required and multiselect values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 65,
+      "title": "reusable size quantities calculate prices, omit disabled sizes and restore saved quotation edits",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 78,
+      "title": "PDF toggles cannot enable internal fields and customer preview uses safe snapshot specifications",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 85,
+      "title": "conditional size breakdown switches to ordinary quantity while hidden and restores the size editor when shown",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 94,
+      "title": "review: conditional dropdowns restore their displayed defaults without restoring hidden selections",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 103,
+      "title": "review: initial hidden values are cleared and size edits initialize quantity-dependent dropdowns",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 112,
+      "title": "review: charge condition choices exclude size maps while retaining scalar fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase1-ui.test.js",
+      "line": 121,
+      "title": "review: zero-count disabled sizes can be cleared when editing historical quotations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-api.test.js",
+      "line": 15,
+      "title": "Phase 2 HTTP A/C: Visiting Card configuration, required details, structured rules, edit, PDF and server pricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-api.test.js",
+      "line": 29,
+      "title": "Phase 2 HTTP B/D: approved Flex components, computed counts, historical snapshots, unavailable choices and repricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-api.test.js",
+      "line": 50,
+      "title": "Phase 2 HTTP validation: malformed approval, geometry, policy, contradictions and invalid references are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-api.test.js",
+      "line": 67,
+      "title": "Phase 2 HTTP permissions: rate/policy approval and catalog labels retain independent authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 11,
+      "title": "A01-04: existing finishes remain and Custom requires saved customer-visible details without an automatic price",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 18,
+      "title": "A05-08: structured shape-size compatibility rejects invalid pairs and missing custom dimensions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 27,
+      "title": "A09/C21: frontend reconciliation preserves valid selections and resets incompatible sizes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 33,
+      "title": "B10-12: Admin material and printing rates use the shared billable area, quantity and base minimum",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 38,
+      "title": "B13-16: eyelet None, corners and perimeter quantities use approved per-piece rates and panel quantities",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 46,
+      "title": "B15/B20: unapproved eyelet policy, missing prices and disabled options fail closed",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 54,
+      "title": "B17: retained bundle keeps its existing price and cannot be combined with separately charged eyelets",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 60,
+      "title": "B18: accessory rates preserve Pipe Pockets and support quantities and existing charge bases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 68,
+      "title": "B19/C25: unknown options, invalid rates and client-derived quantities cannot bypass calculations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 73,
+      "title": "C23-24: explicit setup and managed rule synchronization are idempotent and retain manual rules/rates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 80,
+      "title": "C22/C26: existing rules remain valid and circular or contradictory rule references are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 86,
+      "title": "D27-30: legacy free-text selections, snapshots and prices survive product setup and PDF generation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 92,
+      "title": "D30: computed eyelet quantities and stable display names appear in safe customer specifications",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 95,
+      "title": "D31: unrelated products including existing T-Shirt fields remain untouched by Phase 2 setup",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 99,
+      "title": "C rules: higher-order intersections and multiselect controller contradictions are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 105,
+      "title": "B mandatory configuration cannot be weakened to optional prices or removed bundle protection",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-domain.test.js",
+      "line": 111,
+      "title": "C legacy self rules that preserve their triggering choice remain harmless and operational",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-ui.test.js",
+      "line": 29,
+      "title": "Phase 2 Admin setup stages a draft and exposes approval, availability, ordering and geometry controls",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-ui.test.js",
+      "line": 34,
+      "title": "Phase 2 managed options retain stable keys while labels, rates and ordering change",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-ui.test.js",
+      "line": 39,
+      "title": "Phase 2 card configurator filters invalid sizes, resets on shape change and requires finish details",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase2-ui.test.js",
+      "line": 46,
+      "title": "Phase 2 historical unmapped dropdown choices stay readable until an explicit valid selection",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 49,
+      "title": "Phase 3 HTTP A: dynamic T-shirt sizes and configured print locations are validated and backend-priced",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 95,
+      "title": "Phase 3 HTTP B: Logo additional requirements persist and do not change package prices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 111,
+      "title": "Phase 3 HTTP C/D: all five gifts inherit once, preserve existing rates and restore artwork selections",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 141,
+      "title": "Phase 3 HTTP D: shared definitions propagate, product overrides/disable persist and saved price snapshots remain stable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 179,
+      "title": "Phase 3 HTTP E: template/override conflicts, invalid definitions and stale updates are atomic",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 207,
+      "title": "Phase 3 HTTP E: product/template rates retain catalog and pricing authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-api.test.js",
+      "line": 241,
+      "title": "Phase 3 HTTP C/E: custom gift colour requires an Admin-approved explicit charge",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 10,
+      "title": "Phase 3 T-shirt setup is explicit/idempotent, uses the one reusable size engine and retains legacy print rates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 21,
+      "title": "Phase 3 dynamic custom/kids sizes, ordering, availability, quantities and configured surcharges use the shared engine",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 29,
+      "title": "Phase 3 multiple print locations honor each existing pricing basis once and reject inactive, duplicate and invalid choices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 37,
+      "title": "Phase 3 historical location/configuration and public requirements are immutable item snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 46,
+      "title": "Phase 3 Logo requirements reuse multiline validation, persistence and PDF visibility without changing package pricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 53,
+      "title": "Phase 3 five gifts reference one shared template, retain local definitions and preserve every existing default price",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 64,
+      "title": "Phase 3 inherited options are product-specific, charge once, preserve setup and require explicit configured rates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 73,
+      "title": "Phase 3 shared changes, full field overrides, disabled fields and additional product fields compose without duplication",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 81,
+      "title": "Phase 3 conditional inherited fields remap stable aliases and reject circular/conflicting inheritance",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 91,
+      "title": "Phase 3 custom dropdown values require an approved configured charge and reject disabled known options",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 97,
+      "title": "Phase 3 explicit future assignment works without changing the 28 inactive catalog products",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 102,
+      "title": "Phase 3 ambiguous pre-existing semantic fields require explicit Admin mapping without guessing or replacing prices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 109,
+      "title": "Phase 3 backend normalization and no-op saves retain shared references without copying inherited fields into overrides",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 117,
+      "title": "Phase 3 automatic Mug/Calendar model aliases keep live shared PDF metadata until Admin explicitly overrides it",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 125,
+      "title": "Phase 3 disabled configured overrides remain validated and require independent pricing authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 134,
+      "title": "Phase 3 archived legacy option names cannot mask active configuration price changes during authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 141,
+      "title": "Phase 3 overridden and disabled raw master rates remain protected and malformed latent definitions are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-domain.test.js",
+      "line": 150,
+      "title": "Phase 3 catalog-only visibility overrides on mapped priced fields retain independent pricing authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-pdf.test.js",
+      "line": 13,
+      "title": "Phase 3 PDF A: reusable T-shirt sizes, multiple locations and public requirements render once without internal notes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-pdf.test.js",
+      "line": 26,
+      "title": "Phase 3 PDF B/C: Logo and gift narratives respect visibility, empties and immutable snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-pdf.test.js",
+      "line": 47,
+      "title": "Phase 3 PDF D: legacy T-shirt and gift documents remain historically identical after explicit setup",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-preservation.test.js",
+      "line": 10,
+      "title": "Phase 3 gift assignment preserves all existing option prices across quantity tier boundaries",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-preservation.test.js",
+      "line": 41,
+      "title": "Phase 3 named print locations apply each supported configured basis and accessory quantity exactly once",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-preservation.test.js",
+      "line": 73,
+      "title": "Phase 3 preparation preserves Admin size definitions and historical snapshots after subsequent catalog changes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-quantity-ui.test.js",
+      "line": 35,
+      "title": "Phase 3 size totals reconcile quantity-based options and refresh dependent customer fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-quantity-ui.test.js",
+      "line": 45,
+      "title": "Phase 3 clearing unavailable historical sizes reconciles quantity-based choices without changing the saved item",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-quantity-ui.test.js",
+      "line": 57,
+      "title": "Phase 3 sparse custom sizes render zero for omitted keys that match Object prototype names",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-quantity-ui.test.js",
+      "line": 67,
+      "title": "Phase 3 displayed and edited size totals use only explicitly supplied quantities",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-api.test.js",
+      "line": 33,
+      "title": "Phase 3 readiness HTTP: sparse custom size quantities ignore Object prototype names and explicit entries price normally",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-api.test.js",
+      "line": 67,
+      "title": "Phase 3 readiness HTTP: inherited quantity references follow mapped keys and retain server pricing authority",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-domain.test.js",
+      "line": 15,
+      "title": "Phase 3 readiness: existing Print Locations aliases cannot create duplicate controls or charges during preparation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-domain.test.js",
+      "line": 27,
+      "title": "Phase 3 readiness: sparse custom sizes matching Object prototype names count only explicit quantities",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-domain.test.js",
+      "line": 37,
+      "title": "Phase 3 readiness: inherited size properties cannot create phantom quantities, charges or customer specifications",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-readiness-domain.test.js",
+      "line": 46,
+      "title": "Phase 3 readiness: shared option quantity references follow mapped field aliases and remain isolated from local references",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-api.test.js",
+      "line": 24,
+      "title": "Phase 3 review security: forged projection metadata cannot alter master rates, IDs or snapshots through any write path",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-api.test.js",
+      "line": 42,
+      "title": "Phase 3 review validation: unapproved custom rates and malformed inactive definitions are rejected atomically",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-api.test.js",
+      "line": 65,
+      "title": "Phase 3 review security: overridden, disabled and archived master rates retain HTTP authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 13,
+      "title": "review: external gift projection markers cannot change retained master rates or record identity",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 25,
+      "title": "review: private gift projection provenance survives sanctioned edits without exposing serializable markers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 33,
+      "title": "review: Phase 3 preparation blocks incompatible existing controls without replacing approved options",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 41,
+      "title": "review: compatible existing requirement fields become textareas and retain explicit customer visibility and required policy",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 48,
+      "title": "review: Phase 3 shared frontend and backend validation agree on explicit size-total mismatches",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 56,
+      "title": "review: deterministic shirt charges, discount, GST and paise rounding agree with hand-calculated totals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 67,
+      "title": "review: per-product gift overrides charge each semantic once and leave another product and shared template unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-domain.test.js",
+      "line": 81,
+      "title": "review: disabled inherited fields discard stale editable selections while historical item snapshots remain unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-performance.test.js",
+      "line": 6,
+      "title": "Phase 3 review: price and template reads use a consistent selective catalog snapshot without quotation history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 30,
+      "title": "review: changing a customer textarea to a choice clears incompatible metadata and leaves new rates pending",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 41,
+      "title": "review: customer text uses its configured reusable length and escapes markup while restoring long requirements",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 48,
+      "title": "review: unavailable saved named print locations remain readable until an explicit clearing action",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 57,
+      "title": "review: local additions get unique keys after another field is removed",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 62,
+      "title": "review: Admin can reset a product override to inheritance without changing shared or mapped master rates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-review-ui.test.js",
+      "line": 70,
+      "title": "review: disabling an inherited field clears its current edit value without changing historical item snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 29,
+      "title": "Phase 3 Admin stages T-shirt sizes, location charges and customer instructions without changing saved catalog",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 40,
+      "title": "Phase 3 shared gift fields render once, retain mapped model prices and preserve per-product edits as overrides",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 52,
+      "title": "Phase 3 inherited fields can be disabled, restored and combined with extra local specifications",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 61,
+      "title": "Phase 3 shared template editor protects stable fields and does not save draft changes automatically",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 70,
+      "title": "Phase 3 T-shirt location choices, size totals and multiline requirements survive item editing and public preview",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 81,
+      "title": "Phase 3 gift custom values use their configured rate and pending custom values stay unavailable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase3-ui.test.js",
+      "line": 89,
+      "title": "Phase 3 historical T-shirt location totals remain readable and explicit named-location editing clears the legacy key",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 22,
+      "title": "Phase 4 HTTP catalog: backend checklist counts, safe aliases, missing records, preview/apply and repeatability preserve data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 38,
+      "title": "Phase 4 HTTP templates: four definitions share the existing engine, overrides are isolated and invalid assignments reject atomically",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 53,
+      "title": "Phase 4 HTTP configuration: all seven print products validate, save, reopen and print approved fixture selections",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 66,
+      "title": "Phase 4 HTTP pricing: inactive and unconfigured products cannot bypass activation or null-price guards",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 74,
+      "title": "Phase 4 HTTP permissions: catalog verification/templates and price mutations retain independent authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 85,
+      "title": "Phase 4 HTTP selective reads: checklist/template/catalog do not load historical quotation state",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 91,
+      "title": "Phase 4 HTTP private pricing: catalog-only reads redact master prices and safe edits preserve them",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 123,
+      "title": "Phase 4 HTTP prepare validates stale and malformed requests without partial writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-api.test.js",
+      "line": 134,
+      "title": "Phase 4 HTTP new duplicate quotes cannot bypass inactive products or categories; historical edits keep snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 8,
+      "title": "Phase 4 catalog manifest accounts for all 28 supplied products with stable unique codes and documented scope",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 17,
+      "title": "Phase 4 preparation is idempotent and preserves all existing IDs, active approved records and quotation history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 30,
+      "title": "Phase 4 missing records are created once with explicitly unconfigured prices and existing category identifiers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 39,
+      "title": "Phase 4 documented naming aliases require matching category and pricing model and persist a stable link",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 49,
+      "title": "Phase 4 duplicate exact aliases are reported without creating or merging an additional required product",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 56,
+      "title": "Phase 4 canonical records win over duplicate aliases while warning without merging or counting twice",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 62,
+      "title": "Phase 4 conflicting stable code and manifest linkage cannot identify a single record as two required products",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 68,
+      "title": "Phase 4 the seven print products inherit the prescribed fields and only documented additional fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 79,
+      "title": "Phase 4 digital service exceptions disable physical inherited fields and preserve their original pricing method",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 89,
+      "title": "Phase 4 exceptional Gazebo mapping explains retained unit pricing and optional area installation without invented rates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 94,
+      "title": "Phase 4 Catalogue page count accepts positive integers and rejects missing, zero and fractional values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 101,
+      "title": "Phase 4 preparation preserves Admin custom field settings and source-like options on inactive approved products",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 110,
+      "title": "Phase 4 generic field cleanup retains existing Delivery and compatible extra fields with their rates across all 28 products",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 120,
+      "title": "Phase 4 preparing source-like generic fields retains definitions referenced by existing conditional or compatibility rules",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 127,
+      "title": "Phase 4 incompatible template assignments are blocked explicitly while informational exceptional mappings remain reviewable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 133,
+      "title": "Phase 4 preparation keeps inherited shared updates live and respects explicit Admin optional and disabled policies",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 141,
+      "title": "Phase 4 configuration readiness and pricing readiness remain independent for defined unapproved options",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 150,
+      "title": "Phase 4 readiness rejects invalid definitions, missing shared fields, missing category and cyclic dependencies",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 159,
+      "title": "Phase 4 status uses actual activation and explicit pending evidence while preserving approved inactive records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-catalog.test.js",
+      "line": 167,
+      "title": "Phase 4 checklist search matches exact documented aliases and actual business names without changing global counts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 8,
+      "title": "Phase 4 templates reuse one projection contract with three new canonical definitions and existing gift source",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 20,
+      "title": "Phase 4 mapped local definitions and approved rates are preserved and priced exactly once",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 27,
+      "title": "Phase 4 product overrides remain isolated and retain inactive definitions while disabling and restoring",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 36,
+      "title": "Phase 4 template field ordering persists as stable product ordering without copying shared definitions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 43,
+      "title": "Phase 4 shared conditions remap to local keys and existing compatibility validation remains authoritative",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 52,
+      "title": "Phase 4 malformed, circular, duplicate and forged assignments cannot impersonate internal template provenance",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 61,
+      "title": "Phase 4 area template uses the existing geometry engine across units and optional installation adds no unapproved charge",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 68,
+      "title": "Phase 4 new quotation snapshots preserve shared definitions and PDF policy across later catalog edits",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 75,
+      "title": "Phase 4 backend normalization keeps catalog template references idempotent without flattening shared fields",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 83,
+      "title": "Phase 4 known archived generic values are pruned only from current edits and never shadow live field keys",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 89,
+      "title": "Phase 4 assignment required policy persists without freezing inherited labels and explicit full overrides take precedence",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 98,
+      "title": "Phase 4 required semantic policy survives disabling and restoring with stable mapped identifiers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-domain.test.js",
+      "line": 105,
+      "title": "Phase 4 Area Dimensions cannot be remapped or overridden to an incompatible field type",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 37,
+      "title": "Phase 4 review: pricing rules on unassigned shared templates require pricing management",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 55,
+      "title": "Phase 4 review: reordering priced template fields is catalog work while actual rate policies remain protected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 80,
+      "title": "Phase 4 review: catalog mutations enforce CSRF, origin and atomic operation validation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 95,
+      "title": "Phase 4 review: forged quotation metadata and snapshots cannot expose internal PDF fields or alter calculated amounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 122,
+      "title": "Phase 4 review: template and pending-price tampering across batch and full-state APIs reject without writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 142,
+      "title": "Phase 4 review: product-specific required fields cannot be weakened through product or full-state writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-api.test.js",
+      "line": 163,
+      "title": "Phase 4 review: legacy invalid catalogue master data blocks new pricing and duplicates while historical snapshots remain editable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-domain.test.js",
+      "line": 8,
+      "title": "Phase 4 review: incompatible existing Catalogue Page Count is blocked without overwriting Admin data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-domain.test.js",
+      "line": 24,
+      "title": "Phase 4 review: an exact existing Page Count label reuses its stable key and keeps rules, rates and quotation input",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-domain.test.js",
+      "line": 37,
+      "title": "Phase 4 review: ambiguous product-specific fields are reported rather than duplicated or merged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-domain.test.js",
+      "line": 49,
+      "title": "Phase 4 review: Bill Book choices and mandatory copies cannot be silently bypassed by incompatible controls",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-domain.test.js",
+      "line": 59,
+      "title": "Phase 4 review: extra-field contracts follow persistent catalog identity and ignore unrelated custom products",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-performance.test.js",
+      "line": 5,
+      "title": "Phase 4 review: catalog pagination avoids per-product reads while preserving sort, filters and record metadata",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-ui.test.js",
+      "line": 14,
+      "title": "Phase 4 review UI: dimensional labels and required markers use saved product overrides",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-ui.test.js",
+      "line": 20,
+      "title": "Phase 4 review UI: focused numeric rows survive conditional sibling updates",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-ui.test.js",
+      "line": 29,
+      "title": "Phase 4 review UI: a numeric row that becomes hidden is removed rather than retained",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-ui.test.js",
+      "line": 35,
+      "title": "Phase 4 review UI: unchanged dependent containers avoid redundant DOM replacement",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-review-ui.test.js",
+      "line": 41,
+      "title": "Phase 4 review UI: typing a new search invalidates a response during the debounce interval",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 31,
+      "title": "Phase 4 UI: all four shared template editors reuse the existing field editor and stable keys",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 45,
+      "title": "Phase 4 UI: Print assignment preserves existing local IDs and maps Paper while field order and overrides stay product-specific",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 60,
+      "title": "Phase 4 UI: four template families render dynamically and restore approved fixture configuration values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 72,
+      "title": "Phase 4 UI: metadata save preserves unconfigured nullable pricing and inactive state",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 80,
+      "title": "Phase 4 UI: checklist displays backend global counts, actual statuses and readiness warnings while filtering",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 91,
+      "title": "Phase 4 UI: checklist errors and empty states are actionable and permission-limited",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 100,
+      "title": "Phase 4 UI: exceptional product mapping warnings permit preparation and existing assignments remain reviewable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 115,
+      "title": "Phase 4 UI: out-of-order catalog responses cannot replace the newest filter results",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 127,
+      "title": "Phase 4 UI: Admin preview identifies the record, template and unresolved business mapping before applying",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 134,
+      "title": "Phase 4 UI: catalog-only metadata edits preserve omitted private pricing rather than submitting blank replacement values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 143,
+      "title": "Phase 4 UI: option builders preserve private and pending rates through server validation roundtrips",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "line": 163,
+      "title": "Phase 4 UI: omitted catalog rates remain restricted and pricing readers see disabled price controls while editing catalog metadata",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 19,
+      "title": "Phase 5 HTTP download and preview: catalog workbook is authorized and preview leaves every business/audit table unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 26,
+      "title": "Phase 5 HTTP invalid upload/errors: MIME, extension, malformed packages, columns, formulas, unknown mappings and limits block all writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 36,
+      "title": "Phase 5 HTTP atomic UPSERT, omitted prices, repeated confirmation/file and confidential audit are durable without activation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 45,
+      "title": "Phase 5 HTTP failed persistence rolls back rates, revision, imports, audit, numbering and historical records together",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 52,
+      "title": "Phase 5 HTTP stale, tampered, extra-field, foreign-session and expired confirmations cannot overwrite masters",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 60,
+      "title": "Phase 5 HTTP permissions: catalog-only, pricing reader, importer, settings ceiling and revoked accounts are enforced",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 69,
+      "title": "Phase 5 HTTP activation cannot bypass the authoritative checklist through product, batch, state or creation paths",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 78,
+      "title": "Phase 5 HTTP staged pricing remains inactive until separately configured, approved and explicitly activated",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 86,
+      "title": "Phase 5 HTTP new quotations and duplicates use imported current rates/GST; existing approved snapshots, PDFs and history are immutable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 94,
+      "title": "Phase 5 HTTP discounts use imported company ceiling and existing fixed cap; active invalid products are flagged without deactivation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 101,
+      "title": "Phase 5 schema migration is repeatable, preserves private signing identity and accepts confirmations across app instances",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 107,
+      "title": "Phase 5 review simultaneous confirmations serialize and reject stale competing prices without partial writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-api.test.js",
+      "line": 111,
+      "title": "Phase 5 review deleting an importer account preserves immutable attribution and protected pricing history",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 9,
+      "title": "Phase 5 workbook uses all current catalog references, required columns, typed values, validation and blank pending prices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 19,
+      "title": "Phase 5 decimal conversion distinguishes zero, missing, fractions, Excel percentages and supported precision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 24,
+      "title": "Phase 5 literal mapping rejects unknown/cross-product options, changed bases/units, bad price/tier/GST/discount data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 30,
+      "title": "Phase 5 duplicate targets and conflicting product/global percentages reject every affected row",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 36,
+      "title": "Phase 5 rates upsert existing source of truth and retain omitted tiers, unrelated products, quotation snapshots and activation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 43,
+      "title": "Phase 5 staged import never approves an unconfigured legacy tax or automatically activates a product",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 49,
+      "title": "Phase 5 inherited option imports create isolated product overrides and retain shared template/sibling prices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 55,
+      "title": "Phase 5 eligibility covers all four templates, missing rates/options, inactive categories, invalid references and proper tier pricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 62,
+      "title": "Phase 5 fixed/unit/area/package/base and setup/size/custom charge imports use only existing calculation bases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 66,
+      "title": "Phase 5 formula cells reject literal import fields even when they contain a numeric cached result",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 70,
+      "title": "Phase 5 XLSX preflight rejects malformed packages, missing sheets/columns, macros and external relationships",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 78,
+      "title": "Phase 5 ZIP expansion, entry count, row and compressed size limits reject before workbook parsing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 86,
+      "title": "Phase 5 size surcharges, custom dropdown charges, percent/area/per-piece choices and conditional setup imports retain engine bases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 91,
+      "title": "Phase 5 true tier imports can complete staged pricing with an irrelevant null base and preserve inclusive GST",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-domain.test.js",
+      "line": 95,
+      "title": "Phase 5 review rejects corrupt XML, macro content declarations, unsupported columns and ambiguous catalog codes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 7,
+      "title": "Phase 5 UI integrates authorized pricing actions into existing catalog/product/pricing views",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 8,
+      "title": "Phase 5 UI file selection validates extension/size and clears stale previews",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 9,
+      "title": "Phase 5 UI row errors and names are escaped, blank differs from approved free and percentage bases are visible",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 10,
+      "title": "Phase 5 UI invalid preview disables whole import, paginates rows and offers invalid-row filtering",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 11,
+      "title": "Phase 5 UI authoritative activation checklist exposes real corrective actions and blocks activation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/phase5-ui.test.js",
+      "line": 12,
+      "title": "Phase 5 UI concurrent confirmation guard sends only one server token and clears the consumed preview",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/postgres.test.js",
+      "line": 13,
+      "title": "separate PostgreSQL app instances serialize revisions and quotation numbers; failed batches roll back",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/postgres.test.js",
+      "line": 135,
+      "title": "PostgreSQL offline recovery backs up, revokes sessions and preserves business records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 18,
+      "title": "product analytics distinguishes quotations, repeated lines, quantities and discounted values across zero-filled months",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 30,
+      "title": "product analytics filters compose consistently, include inclusive date boundaries, leap days and owner identity",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 42,
+      "title": "canonical product values conserve net taxable value, inclusive grouping and legacy/exact rounding without double discount",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 53,
+      "title": "product analytics preserves quoted names and category snapshots through rename, archival, recategorization and deletion",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 61,
+      "title": "new quotation snapshots retain historical names alongside later names under the same stable product ID",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 67,
+      "title": "report authorization and filter options cannot broaden own scope or cross company databases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 75,
+      "title": "analytics validates all parameters, product/month limits and unknown IDs without enumeration",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 80,
+      "title": "analytics projection updates atomically with discount edits and cascades with quotation deletion",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 89,
+      "title": "schema 8 analytics backfill and failure rollback preserve historical quotation bodies, versions and amounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 99,
+      "title": "large datasets aggregate in a constant number of queries without loading quotation records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 128,
+      "title": "All Products refuses excess chart series and selected missing-master products retain their quoted identity",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 167,
+      "title": "independent saved-record oracle reconciles every product/month and combined filter without reallocating discounts",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 216,
+      "title": "own-only filter metadata and guessed historical IDs never expose another owner records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 226,
+      "title": "per-line net and GST-inclusive reporting match an independent oracle over mixed modes, charges and rounding policies",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-analytics.test.js",
+      "line": 234,
+      "title": "GST-inclusive projection migration preserves historical documents and category snapshots and rolls back atomically",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 14,
+      "title": "Catalog readiness distinguishes approved free choices, partial approvals, disabled choices and inactive status",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 28,
+      "title": "Catalog projection uses all real products, canonical eligibility, unique attention and no writes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 36,
+      "title": "Catalog search is trimmed name/code only; filters AND together; paging and validation are bounded",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 45,
+      "title": "Catalog future products cross batch boundaries; zero approved prices stay ready; category state and pending rates stay distinct",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 54,
+      "title": "Catalog read permissions and price restrictions are enforced; forged edits fail independently of UI",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-catalog-api.test.js",
+      "line": 61,
+      "title": "Catalog read refresh reflects price/status/removal changes without changing saved quotation snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 13,
+      "title": "product fields: native initialization is idempotent and cannot change product, pricing or quotation records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 20,
+      "title": "product fields: product-owned roots share keys safely, keep immutable identities and enforce required values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 28,
+      "title": "product fields: native labels/order/archive preserve canonical price keys and reject new unpriced variants",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 35,
+      "title": "product fields: all seven types persist as line metadata and never enter canonical price configuration",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 40,
+      "title": "product fields: configuration changes, archival and current price changes cannot rewrite saved/finalized snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 50,
+      "title": "product fields: atomic field ordering, concurrent edits, deactivation and tenant/role isolation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 58,
+      "title": "product fields: explicit repricing and duplication use current canonical rates while retaining archived custom values",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 67,
+      "title": "product fields: failed field ordering rolls back all orders, versions, audit entries and configuration revision",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 75,
+      "title": "product fields: schema 13 upgrade is non-destructive, transactional and retryable from schema 12",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 84,
+      "title": "product fields: new priced variants synchronize stable bindings without resetting display customizations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 91,
+      "title": "product fields: every real catalog product supports a safe field-management initialization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/product-fields.test.js",
+      "line": 95,
+      "title": "product fields: native option ordering preserves catalog display order and central overrides take effect without changing prices",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 19,
+      "title": "customer references are automatic, stable on edits and renewed on duplicate",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 39,
+      "title": "historical references survive edits and automatic references avoid historical collisions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 50,
+      "title": "quotation private notes roundtrip in existing JSON without changing numbering, status or pricing",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 62,
+      "title": "private quotation notes are excluded from preview projection, PDFs and WhatsApp handoff",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 75,
+      "title": "private notes inherit existing staff quotation ownership and edit permissions",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-editor-api.test.js",
+      "line": 88,
+      "title": "quotation validity is fixed at seven calendar days across create, preview, edit, duplicate and batch saves",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 19,
+      "title": "quotation filters reject invalid dates, decimal precision, ranges and unknown/tenant parameters",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 23,
+      "title": "CSV cells protect formulas and preserve commas, quotes, newlines, Unicode and integer paise",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 28,
+      "title": "combined filters use saved GST-inclusive totals, category/product IDs, inclusive dates and literal search",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 37,
+      "title": "customer export deduplicates, combines active owned addresses, and explicitly supports quotation-wise/custom columns",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 45,
+      "title": "export scope spans all backend pages, selected records ignore active filters, all scope ignores filters",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 55,
+      "title": "authentication, own quotation scope, customer column permissions and selected-ID isolation fail closed",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 65,
+      "title": "separate company databases cannot enumerate or export foreign selected records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 69,
+      "title": "export validation rejects sensitive columns, duplicate IDs/columns, unknown filters and excessive selections",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 74,
+      "title": "bounded batch export preserves one read snapshot and rejects row limits before CSV headers",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 83,
+      "title": "50,000 actual database rows export in bounded batches; row 50,001 is rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 100,
+      "title": "archived categories/products keep associations and export historical quotation names with current customer details",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 111,
+      "title": "quotation list search predicate and backend match the same literal field combinations",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 118,
+      "title": "empty-item search and canonical validity dates agree with the visible quotation records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 127,
+      "title": "optional export settings reject non-object filters and non-array selections rather than silently defaulting",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 132,
+      "title": "authenticated export POSTs require CSRF; completed downloads audit only approved metadata without changing records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 140,
+      "title": "byte limit and database errors return JSON before headers and remove privately staged CSV files",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 149,
+      "title": "every export type/scope returns the exact intended quotation or deduplicated customer cohort",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 160,
+      "title": "all approved customer mappings preserve historical quote labels and exact UTF-8/BOM/CSV bytes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 170,
+      "title": "concurrent exports are bounded, duplicate user exports are rejected, and capacity is released",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 185,
+      "title": "a multi-batch export retains its database snapshot while customer and quotation records change",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 194,
+      "title": "compiled list predicates retain all filters without repeating normalization for each quotation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 201,
+      "title": "temporary storage creation failures release export capacity and a later request succeeds",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-export.test.js",
+      "line": 208,
+      "title": "completed response releases its slot before cleanup without releasing a newer job",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 22,
+      "title": "page sizes 10/20/30/40 preserve position ordering and report exact ranges",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 32,
+      "title": "invalid pages, sizes, duplicate keys, foreign scope parameters and invalid filters are rejected",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 37,
+      "title": "empty and single-page sets remain navigable and deleted last pages clamp safely",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 42,
+      "title": "all combined filters and stored GST totals match the export query across pages",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 48,
+      "title": "owner access is enforced before counts and rows, customer categories require permission",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 55,
+      "title": "company databases never share counts or records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 58,
+      "title": "equal positions use ID tie breakers without missing or repeating records between pages",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 64,
+      "title": "concurrent deletion cannot split the page count, records and child snapshots",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 73,
+      "title": "repeated product lines and archived/renamed products keep historical page records readable",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/quotation-pagination.test.js",
+      "line": 78,
+      "title": "10,001 actual records use one snapshot and four bounded queries",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 5,
+      "title": "report models zero-fill months, distinguish unique product counts and explain approval denominators",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 15,
+      "title": "sharing charts use permitted quotation cohorts, real event months and never treat Prepared as confirmation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 20,
+      "title": "reusable chart renderers escape hostile labels, format INR and keep colors stable by product ID",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 44,
+      "title": "summary and CSV share year/month intersections, preserve unique counts and retain owner authorization",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 55,
+      "title": "report-only and mixed roles never receive identifiers for quotations outside their document access",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 64,
+      "title": "report calendar filters reject malformed, duplicate and injection values in summaries and exports",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 69,
+      "title": "large charts bound keyboard stops, preserve exact zeros and distinguish current-status reporting",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-dashboard.test.js",
+      "line": 75,
+      "title": "report currency labels and product CSV decimals preserve every paise up to the safe integer limit",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 28,
+      "title": "hardening: every KPI, breakdown, monthly product cell and CSV row agrees with saved quotation records",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 42,
+      "title": "hardening: ambiguous/unsupported report filters fail closed while legacy listing parameters retain their behavior",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 47,
+      "title": "hardening: summary, CSV and product reads enforce roles and separate company databases",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 55,
+      "title": "hardening: report snapshots are read-only and coherent without holding the workspace writer lock",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 62,
+      "title": "hardening: WhatsApp attempt statuses, history records and ownership scope remain unchanged",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 70,
+      "title": "hardening: aggregation and export use bounded query counts without quotation hydration on 3001 documents",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 76,
+      "title": "hardening: high-volume reporting covers 50001 quotations and refuses oversized CSV without truncation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 80,
+      "title": "hardening: unsupported monetary aggregates fail clearly and CSV preserves safe-boundary paise",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/reports-hardening.test.js",
+      "line": 84,
+      "title": "hardening: same-day quoted name changes use the same latest snapshot across summary, chart and filter labels",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 22,
+      "title": "all SRS catalog groups are present and unapproved additions cannot be quoted",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 33,
+      "title": "all six pricing methods and all additional charge types use the shared engine",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 51,
+      "title": "required, optional, default, numeric, conditional and compatible fields work together",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 68,
+      "title": "inclusive and exempt tax treatments survive discounts and mixed-rate aggregation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 82,
+      "title": "employee discount limits, additional-charge restrictions and manual override auditing are enforced",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 100,
+      "title": "customer contacts, immutable creators, company settings, numbering and price snapshots persist",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 115,
+      "title": "independent approval blocks a creator and permits another authorized reviewer",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 122,
+      "title": "validating a legacy unassigned quotation never claims it for the editing user",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 129,
+      "title": "legacy quotation tax treatment and presentation stay fixed when global tax settings change",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-domain.test.js",
+      "line": 156,
+      "title": "catalog metadata and master pricing have independent permissions across authorization and validation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 16,
+      "title": "category highlight precedes terms, retains multiline text and never changes money or source data",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 22,
+      "title": "long category highlights paginate without losing their final message or terms",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 26,
+      "title": "customer PDFs include public quotation details and never internal notes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 37,
+      "title": "saved quotation company, customer and product snapshots survive catalog changes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 51,
+      "title": "IGST and split GST use the same saved financial totals",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 66,
+      "title": "long specifications and many items produce numbered multipage quotation PDFs",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 79,
+      "title": "missing optional terms and invalid legacy logos cannot prevent PDF downloads",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 86,
+      "title": "company logo is embedded as an image in the quotation PDF",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 92,
+      "title": "all standard sample quotations fit on one page with their complete terms and signatures",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 108,
+      "title": "dense quotations fit five fully specified items without dropping nonzero charges or notes",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 120,
+      "title": "legacy company and saved term labels are replaced in PDFs without changing the saved quotation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-pdf.test.js",
+      "line": 134,
+      "title": "lengthy notes and terms can continue beside totals without losing their final text",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 25,
+      "title": "all SRS screens render and explicit permissions govern navigation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 34,
+      "title": "customer preview excludes private item notes even for legacy showNotes setting",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 39,
+      "title": "configurator renders numeric and conditional fields and uses shared calculation validation",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 47,
+      "title": "manual WhatsApp preparation reviews recipient and message without changing quotation status",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 62,
+      "title": "report CSV and dashboard filters include the selected customer employee and status",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 68,
+      "title": "legacy company labels are replaced in settings branding and customer document previews",
+      "kind": "test",
+      "declared": "defined"
+    },
+    {
+      "file": "tests/srs-ui.test.js",
+      "line": 86,
+      "title": "saved legacy quotation terms use clean presentation while preserving the original record",
+      "kind": "test",
+      "declared": "defined"
+    }
+  ],
+  "browser": [
+    {
+      "file": "tests/browser-ui.cjs"
+    },
+    {
+      "file": "tests/customer-categories.browser.cjs"
+    },
+    {
+      "file": "tests/customer-category-quotation.browser.cjs"
+    },
+    {
+      "file": "tests/customer-details.browser.cjs"
+    },
+    {
+      "file": "tests/customer-release.browser.cjs"
+    },
+    {
+      "file": "tests/dashboard.browser.cjs"
+    },
+    {
+      "file": "tests/dropdowns.browser.cjs"
+    },
+    {
+      "file": "tests/dynamic-inline.browser.cjs"
+    },
+    {
+      "file": "tests/dynamic-pages.browser.cjs"
+    },
+    {
+      "file": "tests/dynamic-production.browser.cjs"
+    },
+    {
+      "file": "tests/phase1-review.browser.cjs"
+    },
+    {
+      "file": "tests/phase1.browser.cjs"
+    },
+    {
+      "file": "tests/phase2.browser.cjs"
+    },
+    {
+      "file": "tests/phase3-quantity.browser.cjs"
+    },
+    {
+      "file": "tests/phase3-readiness.browser.cjs"
+    },
+    {
+      "file": "tests/phase3-review.browser.cjs"
+    },
+    {
+      "file": "tests/phase3.browser.cjs"
+    },
+    {
+      "file": "tests/phase4-review.browser.cjs"
+    },
+    {
+      "file": "tests/phase4.browser.cjs"
+    },
+    {
+      "file": "tests/phase5.browser.cjs"
+    },
+    {
+      "file": "tests/pricing-editor.browser.cjs"
+    },
+    {
+      "file": "tests/pricing-refinement.browser.cjs"
+    },
+    {
+      "file": "tests/product-analytics.browser.cjs"
+    },
+    {
+      "file": "tests/product-fields-review.browser.cjs"
+    },
+    {
+      "file": "tests/product-fields.browser.cjs"
+    },
+    {
+      "file": "tests/products.browser.cjs"
+    },
+    {
+      "file": "tests/quotation-audit.browser.cjs"
+    },
+    {
+      "file": "tests/quotation-editor.browser.cjs"
+    },
+    {
+      "file": "tests/quotation-export.browser.cjs"
+    },
+    {
+      "file": "tests/quotation-pagination.browser.cjs"
+    },
+    {
+      "file": "tests/reports-dashboard.browser.cjs"
+    }
+  ],
+  "sourceFiles": [
+    "server/access.js",
+    "server/accounts.js",
+    "server/backup.js",
+    "server/customer-api.js",
+    "server/customer-categories.js",
+    "server/customer-category-logos.js",
+    "server/customer-details.js",
+    "server/dashboard.js",
+    "server/database.js",
+    "server/dynamic-fields.js",
+    "server/field-registry.js",
+    "server/field-values.js",
+    "server/import-sqlite.js",
+    "server/legacy-sqlite-store.js",
+    "server/openapi.js",
+    "server/pdf.js",
+    "server/pricing-import.js",
+    "server/product-analytics-projection.js",
+    "server/product-analytics.js",
+    "server/product-catalog.js",
+    "server/product-field-values.js",
+    "server/queries.js",
+    "server/quotation-export.js",
+    "server/quotation-list.js",
+    "server/resources.js",
+    "server/store.js",
+    "server/validation.js",
+    "server/whatsapp.js",
+    "shared/catalog.js",
+    "shared/customer-categories.js",
+    "shared/domain.js",
+    "shared/dynamic-values.js",
+    "shared/field-controls.js",
+    "shared/pricing-readiness.js",
+    "shared/product-fields.js",
+    "shared/quotation-filters.js"
+  ]
+}
