@@ -10,7 +10,18 @@
  function rows(){
   if(state.loading)return '<tr><td colspan="10" role="status">Loading quotations...</td></tr>';
   if(state.error)return '<tr><td colspan="10" role="alert">'+esc(state.error)+' <button type="button" class="s b2" onclick="QuotationList.retry()">Retry</button></td></tr>';
-  return state.matches.map(q=>{const d=state.display[q.id];return `<tr><td class="ql-selection-cell"><input class="ql-check" data-ql-id="${q.id}" type="checkbox" aria-label="Select ${esc(q.no)}" ${state.selected.has(q.id)?'checked':''} onchange="QuotationList.select('${q.id}',this.checked)"></td><td>${esc(q.no)}</td><td>${fd(q.date)}</td><td>${esc(d.customer.name)}</td><td>${esc(String(d.customer.co??'').trim()||'—')}</td><td class="n">${inr(d.total)}</td><td>${esc(q.by)}</td><td>${bg(q.status)}</td><td>${fd(q.valid)}</td><td><div class="ql-row-actions">${acts(q)} ${can('quotation.status')?`<button class="s b2" onclick="statusQ('${q.id}')">Status</button>`:''} ${can('quotation.delete')?`<button class="s bd" onclick="delQ('${q.id}')">Delete</button>`:''}</div></td></tr>`;}).join('')||'<tr><td colspan="10">No quotations match these filters.</td></tr>';
+  return state.matches.map(q=>{const d=state.display[q.id];return `<tr><td class="ql-selection-cell"><input class="ql-check" data-ql-id="${q.id}" type="checkbox" aria-label="Select ${esc(q.no)}" ${state.selected.has(q.id)?'checked':''} onchange="QuotationList.select('${q.id}',this.checked)"></td><td>${esc(q.no)}</td><td>${fd(q.date)}</td><td>${esc(d.customer.name)}</td><td>${esc(String(d.customer.co??'').trim()||'—')}</td><td class="n">${inr(d.total)}</td><td>${esc(q.by)}</td><td>${bg(q.status)}</td><td>${fd(q.valid)}</td><td><button type="button" class="s b2 ql-actions-trigger" aria-label="Actions for ${esc(q.no)}" aria-haspopup="menu" aria-expanded="false" onclick="QuotationList.rowMenu(this,'${q.id}')"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></button></td></tr>`;}).join('')||'<tr><td colspan="10">No quotations match these filters.</td></tr>';
+ }
+ function rowMenu(anchor,id){
+  if(busy||state.loading||!allowedView('list')||!state.matches.some(q=>q.id===id))return;
+  const items=[['View',()=>viewQ(id)]];
+  if(can('quotation.edit_all')||can('quotation.edit_own'))items.push(['Edit',()=>editQ(id)]);
+  if(can('quotation.create'))items.push(['Duplicate',()=>dupQ(id)]);
+  if(can('quotation.download_pdf'))items.push(['PDF',()=>pdfQ(id)]);
+  if(can('quotation.share_whatsapp'))items.push(['Share on WhatsApp',()=>shareQuotation(id)]);
+  if(can('quotation.status'))items.push(['Status',()=>statusQ(id)]);
+  if(can('quotation.delete'))items.push(['Delete',()=>delQ(id),true]);
+  productsMenu(anchor,items);
  }
  listPager=function(){
   const page=F.page||1,pages=state.pages,disabled=state.loading||!!state.error||!listTotal;
@@ -24,6 +35,7 @@
  }
  function paint(){
   if(location.hash!=='#list'||!$('#tb'))return;
+  productsCloseMenu(false);
   const focused=document.activeElement,focusId=focused?.id||focused?.closest('.dp-select')?.querySelector('select')?.id;
   if(focusId&&focused?.closest('#quote-pagination'))state.focusId=focusId;
   $('#tb').innerHTML=rows();$('#tb').setAttribute('aria-busy',String(state.loading));$('#quote-pagination').innerHTML=listPager();
@@ -104,7 +116,7 @@
   catch(error){if(state.export!==e||key!==owner())return;$('#ql-export-error').textContent=error.message;$('#ql-preview').textContent='Export failed. Review the error and retry.';if(error.status===401)failure(error);}
   finally{e.working=false;disabled.forEach(({node,disabled})=>{if(node.isConnected)node.disabled=disabled;});if(state.export===e)$('#ql-download').disabled=false;}
  }
- window.QuotationList={retry(){update();},page(value){const next=Number(value);if(!Number.isSafeInteger(next)||next<1||next>state.pages||next===(F.page||1))return;F.page=next;scheduleQuoteList(false);},size(value){const size=Number(value);if(![10,20,30,40].includes(size)||size===state.size)return;state.size=size;F.page=1;scheduleQuoteList(false);},openFilters,apply,reset,clear,select,selectPage,clearSelection(){state.selected.clear();updateSelection();},openExport,download,
+ window.QuotationList={rowMenu,retry(){update();},page(value){const next=Number(value);if(!Number.isSafeInteger(next)||next<1||next>state.pages||next===(F.page||1))return;F.page=next;scheduleQuoteList(false);},size(value){const size=Number(value);if(![10,20,30,40].includes(size)||size===state.size)return;state.size=size;F.page=1;scheduleQuoteList(false);},openFilters,apply,reset,clear,select,selectPage,clearSelection(){state.selected.clear();updateSelection();},openExport,download,
   exportType(type){const e=state.export;e.type=type;e.quotationWise=false;e.chosen=[...e.config.defaults[type]];drawExport();preview();},
   exportScope(scope){state.export.scope=scope;preview();},quotationWise(value){const e=state.export;e.quotationWise=value;e.chosen=e.chosen.filter(k=>k!=='number');if(value)e.chosen.unshift('number');drawExport();preview();},
   allColumns(checked){state.export.chosen=checked?allowedColumns().map(c=>c.key):[];refreshColumns();},column(key,checked){const e=state.export;e.chosen=e.chosen.filter(k=>k!==key);if(checked)e.chosen.push(key);refreshColumns();},move(key,delta){const e=state.export,index=e.chosen.indexOf(key),next=index+delta;if(index<0||next<0||next>=e.chosen.length)return;[e.chosen[index],e.chosen[next]]=[e.chosen[next],e.chosen[index]];refreshColumns();}
