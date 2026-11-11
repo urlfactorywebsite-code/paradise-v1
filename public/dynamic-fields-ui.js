@@ -6,6 +6,7 @@
  const owner=()=>AUTH?AUTH.id+':'+CSRF:'';
  const authorized=()=>AUTH?.role==='Administrator'&&can('fields.manage');
  const clone=value=>structuredClone(value);
+ const stepperFor=field=>typeof FieldControls==='undefined'?null:FieldControls.controls.find(control=>control.id===field?.id)?.stepper;
  function closeEditor(){const editor=state.editor;if(!editor)return;state.editor=null;editor.dialog.close();editor.dialog.remove();if(editor.trigger?.isConnected)editor.trigger.focus();}
  function dialogKeys(dialog,event){if(event.key==='Escape'||event.key==='Tab')event.stopPropagation();if(event.key!=='Tab')return;const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href],[tabindex]')].filter(node=>!node.disabled&&node.getAttribute('tabindex')!=='-1'&&node.getClientRects().length&&!node.closest('[hidden]'));const first=controls[0],last=controls.at(-1);if(first&&event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(first&&!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
  function sync(){
@@ -122,6 +123,8 @@
   const draft=editor.draft,configurable=!editor.field||editor.field.policy==='configurable';
   editor.dialog.innerHTML=`<form id="df-editor-form" novalidate><div class="df-editor-heading"><h2 id="df-editor-heading">${editor.field?'Edit field':'Add field'}</h2><button type="button" class="b2" data-action="cancel" aria-label="Close field editor">✕</button></div><p class="mu">Configuration changes are saved separately from the customer or quotation.</p><p id="df-editor-error" class="customer-error" role="alert" hidden></p><div class="df-editor-grid"><label>Field label<input id="df-field-label" aria-label="Field label" maxlength="150" value="${esc(draft.label)}"></label>${editor.field?`<p class="mu">Internal key: <code>${esc(editor.field.fieldKey)}</code><br>Scope: ${esc(editor.field.scopeType)}</p>`:`<label>Internal field key<input id="df-field-key" aria-label="Internal field key" maxlength="63" value="${esc(draft.fieldKey)}"></label><label>Field type<select id="df-field-type" aria-label="Field type">${DynamicValues.TYPES.map(type=>`<option value="${type}"${type===draft.fieldType?' selected':''}>${labels[type]}</option>`).join('')}</select></label>`}${configurable?`<label class="checkbox"><input id="df-required" type="checkbox"${draft.isRequired?' checked':''}> Required field</label>`:''}</div><section id="df-options" ${DynamicValues.choices(draft.fieldType)?'':'hidden'}><h3>Dropdown options</h3><p class="mu">Drag the handles or use Move up/Move down. Existing keys are permanent; archived options stay available to saved records.</p><div id="df-options-list" role="list" aria-label="Field options"></div><p id="df-order-status" class="sr-only" role="status" aria-live="polite"></p><button type="button" class="b2" data-action="add-option">+ Add New Option</button></section><div class="df-editor-actions"><button id="df-editor-save" type="submit">Save changes</button><button type="button" class="b2" data-action="cancel">Cancel</button><button type="button" class="b2" data-action="reset">Reset unsaved edits</button><button type="button" class="b2" data-action="reload" hidden>Reload latest configuration</button></div></form>`;
   updateOptionRows(editor);
+  const stepper=stepperFor(editor.field);
+  if(stepper){const label=document.createElement('label'),input=document.createElement('input'),help=document.createElement('p');label.textContent='Percentage cycle limit';input.type='number';input.id='df-cycle-max';input.min=String(stepper.min);input.max=String(stepper.max);input.step='1';input.value=draft.configuration?.cycleMax??stepper.cycleMax;label.append(input);editor.dialog.querySelector('.df-editor-grid').append(label);help.className='mu';help.textContent='Percentage arrows and scrolling cycle from 1 to this limit, then return to 1. Manual and saved discounts stay unchanged. Fixed-amount discounts step by ₹5.';editor.dialog.querySelector('.df-editor-grid').after(help);}
   if(configurable){const label=document.createElement('label'),input=document.createElement('input');label.textContent='Display order';input.type='number';input.id='df-display-order';input.min='0';input.max='10000';input.step='1';input.value=draft.displayOrder??editor.field?.displayOrder??0;label.append(input);editor.dialog.querySelector('.df-editor-grid').append(label);}
   if(editor.field?.native){editor.dialog.querySelector('#df-required')?.setAttribute('disabled','');editor.dialog.querySelector('[data-action=add-option]').disabled=true;const note=document.createElement('p');note.className='mu';note.textContent='Catalog keys and pricing requirements are protected. Add priced variants through Product/Pricing Configuration.';editor.dialog.querySelector('#df-options').append(note);}
   editor.dialog.querySelector('#df-editor-form').onsubmit=event=>{event.preventDefault();saveEditor(editor);};
@@ -131,6 +134,7 @@
    else if(input.id==='df-field-key')draft.fieldKey=input.value;
    else if(input.id==='df-required')draft.isRequired=input.checked;
    else if(input.id==='df-display-order')draft.displayOrder=input.valueAsNumber;
+   else if(input.id==='df-cycle-max')draft.configuration={cycleMax:input.valueAsNumber};
    else if(input.dataset.property)draft.options[Number(input.dataset.index)][input.dataset.property]=input.value;
   };
   editor.dialog.onchange=event=>{if(event.target.id==='df-field-type'){draft.fieldType=event.target.value;editor.dialog.querySelector('#df-options').hidden=!DynamicValues.choices(draft.fieldType);}};
@@ -149,7 +153,7 @@
   editor.dialog.ondrop=event=>{const row=event.target.closest('.df-option-row');if(!row||editor.dragIndex===undefined)return;event.preventDefault();moveOption(editor,editor.dragIndex,Number(row.dataset.index));delete editor.dragIndex;};
   editor.dialog.ondragend=()=>{delete editor.dragIndex;};
  }
- function fromField(field){return {label:field.label,fieldType:field.fieldType,isRequired:field.isRequired,options:field.options.map(option=>({id:option.id,value:option.value,label:option.label,isActive:option.isActive,archived:Boolean(option.archivedAt),savedArchived:Boolean(option.archivedAt)}))};}
+ function fromField(field){return {label:field.label,fieldType:field.fieldType,isRequired:field.isRequired,...(stepperFor(field)?{configuration:{cycleMax:field.configuration?.cycleMax??stepperFor(field).cycleMax}}:{}),options:field.options.map(option=>({id:option.id,value:option.value,label:option.label,isActive:option.isActive,archived:Boolean(option.archivedAt),savedArchived:Boolean(option.archivedAt)}))};}
  async function openEditor(fieldId,mount,trigger){
   if(!authorized()||!state.enabled||mount.readonly)return;closeEditor();
   const dialog=document.createElement('dialog');dialog.id='df-editor';dialog.className='df-editor';dialog.setAttribute('aria-labelledby','df-editor-heading');dialog.innerHTML='<h2 id="df-editor-heading">Loading field editor…</h2><button type="button" class="b2">Cancel</button>';dialog.querySelector('button').onclick=closeEditor;document.body.append(dialog);
@@ -178,7 +182,9 @@
   }
   const options=draft.options.map(option=>({...(option.id?{id:option.id}:{}),value:option.value,label:option.label,isActive:option.isActive,archived:option.archived||false}));
   const displayOrder=draft.displayOrder??editor.field?.displayOrder??0;if(!Number.isInteger(displayOrder)||displayOrder<0||displayOrder>10000){dialogError(editor,'Display order must be an integer from 0 to 10000.');return;}
-  const data={label:draft.label,...(!editor.field||editor.field.policy==='configurable'?{isRequired:draft.isRequired,displayOrder,...(DynamicValues.choices(draft.fieldType)?{options}:{})}:{})};
+  const stepper=stepperFor(editor.field);
+  if(stepper&&(!Number.isInteger(draft.configuration?.cycleMax)||draft.configuration.cycleMax<stepper.min||draft.configuration.cycleMax>stepper.max)){dialogError(editor,'Percentage cycle limit must be a whole number from '+stepper.min+' to '+stepper.max+'.');return;}
+  const data={label:draft.label,...(stepper?{configuration:draft.configuration}:{}),...(!editor.field||editor.field.policy==='configurable'?{isRequired:draft.isRequired,displayOrder,...(DynamicValues.choices(draft.fieldType)?{options}:{})}:{})};
   let route='/api/configurable-fields',payload,method;
   if(editor.field){route+='/'+editor.field.id+'/editor';method='PUT';payload={version:editor.field.version,data};}
   else{method='POST';payload={data:{...data,pageKey:editor.mount.page,...(editor.mount.productId?{scopeType:'product',scopeId:editor.mount.productId}:{}),fieldKey:draft.fieldKey,fieldType:draft.fieldType,...(DynamicValues.choices(draft.fieldType)?{options:options.map(({id,archived,...option},index)=>({...option,displayOrder:index}))}:{})}};}

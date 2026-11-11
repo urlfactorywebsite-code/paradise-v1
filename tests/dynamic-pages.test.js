@@ -1,6 +1,35 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {createApp}=require('../server'),{createStore}=require('../server/store'),{testDatabase}=require('./database-helper'),Controls=require('../shared/field-controls');
+const discountFieldId='system_quotations_discount_value';
+
+test('percentage stepper settings persist without changing quotation values, prices or other fields',async t=>{
+ const f=await fixture(t),route='/api/configurable-fields/'+discountFieldId,field=(await f.call(route)).data;
+ assert.deepEqual(field.configuration,{cycleMax:10});
+ const before=await f.call('/api/state');
+ const updated=(await f.call(route+'/editor','PUT',{version:field.version,data:{label:'Discount value',configuration:{cycleMax:7}}})).data;
+ assert.equal(updated.version,field.version+1);assert.deepEqual(updated.configuration,{cycleMax:7});
+ const resolved=await f.call('/api/field-configurations/resolve?pageKeys=quotations');
+ assert.equal(resolved.data.quotations.find(row=>row.id===discountFieldId).configuration.cycleMax,7);
+ const audit=await f.call(route+'/audit');assert.equal(audit.data[0].afterValue.configuration.cycleMax,7);
+ await createStore(f.app.db);assert.equal((await f.call(route)).data.configuration.cycleMax,7);
+ assert.deepEqual(await f.call('/api/state'),before);
+ await f.call(route+'/editor','PUT',{version:field.version,data:{configuration:{cycleMax:8}}},409);
+});
+
+test('percentage stepper configuration validates boundaries and retains administrator permissions',async t=>{
+ const f=await fixture(t),route='/api/configurable-fields/'+discountFieldId,field=(await f.call(route)).data;
+ for(const cycleMax of [0,-1,101,1.5,null,'10'])await f.call(route+'/editor','PUT',{version:field.version,data:{configuration:{cycleMax}}},422);
+ for(const configuration of [{},{cycleMax:10,step:100},null])await f.call(route,'PATCH',{version:field.version,data:{configuration}},422);
+ const ordinary=(await f.call('/api/configurable-fields/system_dashboard_customer_caption')).data;
+ await f.call('/api/configurable-fields/'+ordinary.id+'/editor','PUT',{version:ordinary.version,data:{configuration:{cycleMax:5}}},422);
+ let version=field.version;
+ for(const cycleMax of [1,100])version=(await f.call(route+'/editor','PUT',{version,data:{configuration:{cycleMax}}})).data.version;
+ await f.call('/api/users','POST',{name:'Quotation employee',username:'stepperstaff',password:f.password,role:'Employee',permissions:['quotation.create']},201);
+ const staff=f.client();await staff('/api/auth/login','POST',{username:'stepperstaff',password:f.password});
+ const resolved=await staff('/api/field-configurations/resolve?pageKeys=quotations');assert.equal(resolved.data.quotations.find(row=>row.id===discountFieldId).configuration.cycleMax,100);
+ await staff(route+'/editor','PUT',{version,data:{configuration:{cycleMax:7}}},403);
+});
 async function fixture(t){const database=await testDatabase(),app=await createApp(database);await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));t.after(async()=>{await app.close();await database.destroy();});const base='http://127.0.0.1:'+app.server.address().port,password=crypto.randomUUID()+'-Pages';function client(){let cookie='',csrf='';return async(route,method='GET',data,status=200)=>{const r=await fetch(base+route,{method,headers:{Cookie:cookie,'X-CSRF-Token':csrf,'Content-Type':'application/json'},...(data===undefined?{}:{body:JSON.stringify(data)})});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const body=await r.json();if(body.csrfToken)csrf=body.csrfToken;assert.equal(r.status,status,route+': '+JSON.stringify(body));return body;};}const call=client();await call('/api/auth/setup','POST',{name:'Page fields owner',username:'pagesowner',password,demo:true},201);return {app,call,client,password};}
 test('pages: registry classifies every integrated control without making canonical values editable',async t=>{const f=await fixture(t),r=await f.call('/api/field-configurations/registry');assert.deepEqual(r.controls,Controls.controls);for(const page of Object.keys(Controls.pages))assert.ok(r.pages.includes(page));for(const control of Controls.controls){const field=(await f.call('/api/configurable-fields/'+control.id)).data;assert.equal(field.policy,control.policy);if(control.policy==='label_only'){await f.call('/api/configurable-fields/'+field.id+'/options','POST',{version:field.version,data:{value:'injected',label:'Injected'}},405);await f.call('/api/configurable-fields/'+field.id,'PATCH',{version:field.version,data:{isRequired:true}},422);}else await f.call('/api/configurable-fields/'+field.id,'PATCH',{version:field.version,data:{label:'Changed protected'}},403);}});
 test('pages: caption changes preserve all customer/product/quotation/settings data and retain canonical source keys',async t=>{const f=await fixture(t),before=await f.call('/api/state');for(const control of Controls.controls.filter(c=>c.policy==='label_only')){const field=(await f.call('/api/configurable-fields/'+control.id)).data;await f.call('/api/configurable-fields/'+field.id+'/editor','PUT',{version:field.version,data:{label:'Customized '+control.label}});}assert.deepEqual(await f.call('/api/state'),before);const resolved=await f.call('/api/field-configurations/resolve?pageKeys=dashboard,reports,quotation_list');assert.equal(resolved.data.dashboard.find(field=>field.id==='system_dashboard_customer_caption').label,'Customized Customer');assert.deepEqual(require('../shared/domain').ST,require('../server/field-registry').REGISTRY.find(field=>field.id==='system_quotations_status').canonicalValues);});

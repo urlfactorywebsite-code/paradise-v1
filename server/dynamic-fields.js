@@ -35,7 +35,15 @@ function pageKey(value) {
   if (typeof value !== 'string' || !own(PAGES, value)) fail('Unsupported configuration page.');
   return value;
 }
-function configuration(value, global) {
+const stepperFor=field=>FIELD_CONTROLS.controls.find(control=>control.id===field?.id)?.stepper;
+const captionKeys=field=>stepperFor(field)?['label','configuration']:['label'];
+function configuration(value, global, field) {
+  const stepper=stepperFor(field);
+  if(stepper){
+    keys(value,['cycleMax']);
+    if(!Number.isInteger(value.cycleMax)||value.cycleMax<stepper.min||value.cycleMax>stepper.max)fail('Percentage cycle limit must be a whole number from '+stepper.min+' to '+stepper.max+'.');
+    return {cycleMax:value.cycleMax};
+  }
   keys(value, global ? ['placeholder', 'helpText', 'maxLength', 'pages'] : ['placeholder', 'helpText', 'maxLength']);
   const result = {};
   for (const [key, max] of [['placeholder', 150], ['helpText', 500]]) {
@@ -59,7 +67,7 @@ function settings(data, previous) {
     result[key] = data[key];
   }
   if (own(data, 'displayOrder')) result.displayOrder = integer(data.displayOrder);
-  if (own(data, 'configuration')) result.configuration = configuration(data.configuration, result.scopeType === 'global');
+  if (own(data, 'configuration')) result.configuration = configuration(data.configuration, result.scopeType === 'global',result);
   if (result.isRequired && !result.isVisible) fail('A hidden field cannot be required.');
   return result;
 }
@@ -231,7 +239,7 @@ function createDynamicFields({ store, body, json }) {
   }
   const resolve=(...args)=>resolveFields(db,...args);
   async function saveEditor(before,data){
-   keys(data,before.policy==='label_only'?['label']:['label','isRequired','isActive','isVisible','displayOrder','configuration','options']);
+   keys(data,before.policy==='label_only'?captionKeys(before):['label','isRequired','isActive','isVisible','displayOrder','configuration','options']);
    if(!Object.keys(data).length)fail('No field changes supplied.');
    const field=settings(data,before);
    let options=before.options;
@@ -359,7 +367,7 @@ function createDynamicFields({ store, body, json }) {
           await saveEditor(before,object(input.data));action='editor_saved';
         } else if (!child && req.method === 'PATCH') {
           const data = object(input.data);
-          keys(data, before.policy === 'label_only' ? ['label'] : ['label', 'isRequired', 'isActive', 'isVisible', 'displayOrder', 'configuration']);
+          keys(data, before.policy === 'label_only' ? captionKeys(before) : ['label', 'isRequired', 'isActive', 'isVisible', 'displayOrder', 'configuration']);
           if (!Object.keys(data).length) fail('No field changes supplied.');
           const field = settings(data, before); requiredOptions(field, before.options);
           await db.prepare(`UPDATE configurable_fields SET label=?,is_required=?,is_active=?,is_visible=?,display_order=?,configuration=?::jsonb WHERE id=?`)

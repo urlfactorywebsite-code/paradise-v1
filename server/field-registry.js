@@ -53,9 +53,9 @@ const REGISTRY = Object.freeze([...entries,...CONTROL_REGISTRY.controls.filter(c
 async function seed(db) {
   let inserted=0;
   for (const field of REGISTRY) inserted+=(await db.prepare(`INSERT INTO configurable_fields
-    (id,page_key,field_key,label,field_type,policy,scope_type,scope_id)
-    VALUES(?,?,?,?,?,?,'page',?) ON CONFLICT DO NOTHING`)
-    .run(field.id, field.pageKey, field.fieldKey, field.label, field.fieldType, field.policy, field.pageKey)).changes;
+    (id,page_key,field_key,label,field_type,policy,scope_type,scope_id,configuration)
+    VALUES(?,?,?,?,?,?,'page',?,?::jsonb) ON CONFLICT DO NOTHING`)
+    .run(field.id, field.pageKey, field.fieldKey, field.label, field.fieldType, field.policy, field.pageKey,JSON.stringify(field.stepper?{cycleMax:field.stepper.cycleMax}:{}))).changes;
   if(inserted)await db.exec('UPDATE field_configuration_state SET revision=revision+1 WHERE id=1');
   return inserted;
 }
