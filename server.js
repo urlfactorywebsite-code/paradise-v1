@@ -9,6 +9,7 @@ const DP = require('./shared/domain');
 const { createStore } = require('./server/store');
 const { createResources } = require('./server/resources');
 const { createAccounts } = require('./server/accounts');
+const { createDataReset } = require('./server/data-reset');
 const { fail, str } = require('./server/validation');
 const { PERMISSIONS, EMPLOYEE_PERMISSIONS, effectivePermissions, permissionOverrides, permissionInput,
   requirePermission, hasPermission, canViewQuote, scopeState } = require('./server/access');
@@ -233,6 +234,7 @@ async function createApp(options = {}) {
         path.join(__dirname, 'data', 'backups'),
     ),
   });
+  const dataReset = createDataReset({ store, body, json });
   const server = http.createServer(async (req, res) => {
     const requestId = crypto.randomUUID();
     res.setHeader('X-Request-ID', requestId);
@@ -424,6 +426,7 @@ async function createApp(options = {}) {
           !['GET', 'HEAD'].includes(req.method)
         )
           fail('Change your temporary password before making changes.', 403);
+        if (await dataReset(req, res, url, session)) return;
         if (route === '/api/state' && req.method === 'PUT') {
           const input = await body(req);
           if (!Number.isInteger(input.revision))

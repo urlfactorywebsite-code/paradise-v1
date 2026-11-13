@@ -220,6 +220,12 @@ add('/api/users/{id}', 'delete', 'Administrator: remove account, retain business
 add('/api/users/{id}/reset-password', 'post', 'Administrator: set temporary password and revoke sessions', { type: 'object', required: ['version', 'password'], properties: { version: { type: 'integer' }, password: { type: 'string', minLength: 12, maxLength: 128 } } });
 add('/api/audit', 'get', 'Administrator: paginated durable audit trail', null, { list: true });
 add('/api/data/export', 'get', 'Administrator: export business records without credentials');
+add('/api/data/reset/prepare', 'post', 'Administrator: begin three-warning data reset', {
+  type: 'object', required: ['revision'], properties: { revision: { type: 'integer' } },
+}, { description: 'Administrator role required; settings.manage delegation is insufficient. The Settings UI requires five unlock clicks first. No deletion occurs. Returns a signed token bound to this session and current workspace/field revisions, valid for five minutes.', response: { type: 'object', properties: { token: str } } });
+add('/api/data/reset/confirm', 'post', 'Administrator: acknowledge the next reset warning', {
+  type: 'object', required: ['token', 'step'], properties: { token: str, step: { type: 'integer', minimum: 1, maximum: 3 } },
+}, { description: 'Confirm steps 1, 2 and 3 in order, sending the token returned by the previous step. Only step 3 deletes business records, product/customer categories, product-owned field configuration, pricing imports, sharing PDFs/history and prior audit history, in one transaction. Retains users, saved company/WhatsApp/general field settings, schema metadata, authentication throttles, current session and backup files. Adds one reset audit receipt, resets quotation sequences, increments revisions, rotates the import/reset signing key and revokes other sign-ins. Never creates demo or sample data. Changed data returns 409; invalid/expired/foreign/reused completed tokens return 403.', response: { type: 'object', properties: { token: str, ok: { type: 'boolean' } } } });
 add('/api/backups', 'get', 'Administrator: list database backups');
 add('/api/backups', 'post', 'Administrator: create consistent online database backup', null, { created: true });
 add('/api/backups/{name}', 'get', 'Administrator: download private database backup', null, { mime: 'application/octet-stream', response: { type: 'string', format: 'binary' } });
