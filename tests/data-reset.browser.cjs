@@ -6,6 +6,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const { createApp } = require('../server');
 const { testDatabase } = require('./database-helper');
+const DP = require('../shared/domain');
 const target = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : null;
 if (process.env.TEST_DISPOSABLE !== '1' || !target || !['localhost', '127.0.0.1'].includes(target.hostname) || target.port !== '55429')
   throw Error('Use disposable PostgreSQL on loopback 55429 with TEST_DISPOSABLE=1.');
@@ -25,7 +26,18 @@ async function check(name, fn) {
 const idle = () => page.waitForFunction(() => !busy);
 async function unlock() { for (let n = 0; n < 5; n++) await page.locator('#reset-unlock').click(); }
 async function warning(step) { await page.getByRole('dialog', { name: 'Warning ' + step + ' of 3', exact: true }).waitFor(); await idle(); }
-async function start() { await unlock(); await page.locator('#reset-data').click(); await warning(1); }
+async function chooseSelection(selection) {
+  for (const key of selection) {
+    const checkbox = page.locator('#data-reset-dialog input[value="' + key + '"]');
+    if (!await checkbox.isChecked()) await checkbox.check();
+  }
+}
+async function start(selection = ['quotations', 'customers', 'deliveryAddresses']) {
+  await unlock(); await page.locator('#reset-data').click();
+  await page.getByRole('dialog', { name: 'Choose data to reset', exact: true }).waitFor();
+  await chooseSelection(selection);
+  await page.locator('#reset-review').click(); await warning(1);
+}
 
 (async () => {
   try {
@@ -40,6 +52,9 @@ async function start() { await unlock(); await page.locator('#reset-data').click
     const password = 'Reset-browser-' + crypto.randomUUID();
     const setup = await context.request.post(base + '/api/auth/setup', { data: { name: 'Reset browser owner', username: 'resetbrowser', password, demo: true } });
     assert.equal(setup.status(), 201); csrf = (await setup.json()).csrfToken;
+    const catalog = (await request('/api/state')).state;
+    const customer = (await request('/api/customers', 'POST', { name: 'Created reset customer', mob: '9876500090', deliveryAddresses: [{ label: 'Office', line1: 'Customer street', country: 'India', isDefault: true }] }, 201)).data;
+    const quote = await request('/api/quotations', 'POST', { cid: customer.id, items: [{ pid: 'p2', cfg: DP.defCfg(DP.resolveProduct(catalog.products.find(p => p.id === 'p2'), catalog.set)) }] }, 201);
     await page.goto(base + '/#set');
     await page.locator('#data-reset').waitFor(); await idle();
     const original = await request('/api/state');
@@ -55,6 +70,25 @@ async function start() { await unlock(); await page.locator('#reset-data').click
       await page.locator('#data-reset').screenshot({ path: path.join(output, 'data-reset-desktop.png') });
       await page.reload(); await page.locator('#data-reset').waitFor();
       assert.equal(await page.locator('#reset-data').isDisabled(), true);
+    });
+    await check('Selection opens unchecked, requires a checkbox and makes address dependency visible', async () => {
+      await unlock(); await page.locator('#reset-data').click();
+      await page.getByRole('dialog', { name: 'Choose data to reset', exact: true }).waitFor();
+      assert.equal(await page.locator('#data-reset-dialog input:checked').count(), 0);
+      assert.equal(await page.locator('#reset-review').isDisabled(), true);
+      await page.locator('#data-reset-dialog').screenshot({ path: path.join(output, 'data-reset-selection-desktop.png') });
+      await chooseSelection(['customers']);
+      assert.equal(await page.locator('#data-reset-dialog input[value="deliveryAddresses"]').isChecked(), true);
+      assert.equal(await page.locator('#data-reset-dialog input[value="deliveryAddresses"]').isDisabled(), true);
+      await page.getByRole('button', { name: 'Cancel reset', exact: true }).click();
+      assert.deepEqual((await request('/api/state')).state, original.state);
+    });
+    await check('Customer-only selection cannot delete customers with retained quotations', async () => {
+      await unlock(); await page.locator('#reset-data').click(); await chooseSelection(['customers']);
+      await page.locator('#reset-review').click(); await idle();
+      assert.equal(await page.locator('#data-reset-dialog').count(), 0);
+      assert.equal(await page.locator('#reset-data').isDisabled(), true);
+      assert.ok((await request('/api/state')).state.customers.some(c => c.id === customer.id));
     });
     await check('Cancel at any of the three warnings retains data and relocks reset', async () => {
       for (const stopAt of [1, 2, 3]) {
@@ -93,34 +127,62 @@ async function start() { await unlock(); await page.locator('#reset-data').click
       await page.locator('#data-reset').scrollIntoViewIfNeeded();
       assert.ok(await page.locator('#data-reset').evaluate(node => node.getBoundingClientRect().right <= innerWidth));
       await page.locator('#data-reset').screenshot({ path: path.join(output, 'data-reset-mobile.png') });
-      await start();
+      await unlock(); await page.locator('#reset-data').click();
+      await page.getByRole('dialog', { name: 'Choose data to reset', exact: true }).waitFor();
+      await page.locator('#data-reset-dialog').screenshot({ path: path.join(output, 'data-reset-selection-mobile.png') });
+      await chooseSelection(['quotations', 'customers', 'deliveryAddresses']);
+      await page.locator('#reset-review').click(); await warning(1);
       assert.ok(await page.locator('#data-reset-dialog').evaluate(node => { const r = node.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; }));
       await page.locator('#data-reset-dialog').screenshot({ path: path.join(output, 'data-reset-warning-mobile.png') });
       await page.keyboard.press('Escape');
       await page.setViewportSize({ width: 1440, height: 1000 });
     });
-    await check('Only the third confirmation clears data, reloads empty and preserves login/settings', async () => {
-      const savedSettings = (await request('/api/state')).state.set;
+    await check('Only the third confirmation deletes selected created data and preserves seed records, catalog and settings', async () => {
+      const savedState = (await request('/api/state')).state, savedSettings = savedState.set;
+      const seeds = DP.seed({ demo: true });
+      const seededCustomers = savedState.customers.filter(c => seeds.customers.some(seed => seed.id === c.id));
+      const seededQuotes = savedState.quotes.filter(q => seeds.quotes.some(seed => seed.id === q.id));
       await page.evaluate(() => { Q = { id: 'stale-draft', items: [] }; });
       await start();
       await page.locator('#reset-confirm').click(); await warning(2);
-      assert.ok((await request('/api/state')).state.products.length);
+      assert.ok((await request('/api/state')).state.quotes.some(q => q.id === quote.data.id));
       await page.locator('#reset-confirm').click(); await warning(3);
-      assert.ok((await request('/api/state')).state.products.length);
-      assert.equal(await page.locator('#reset-confirm').textContent(), 'Delete all data permanently');
+      assert.ok((await request('/api/state')).state.quotes.some(q => q.id === quote.data.id));
+      assert.equal(await page.locator('#reset-confirm').textContent(), 'Delete selected data permanently');
       await page.locator('#data-reset-dialog').screenshot({ path: path.join(output, 'data-reset-final-warning.png') });
       await page.locator('#reset-confirm').click();
-      await page.waitForFunction(() => typeof S !== 'undefined' && S !== null && S.products.length === 0 && S.quotes.length === 0);
+      await page.waitForFunction(id => typeof S !== 'undefined' && S !== null && !S.quotes.some(q => q.id === id) && Q === null, quote.data.id);
       await page.locator('#data-reset').waitFor(); await idle();
       assert.equal(await page.locator('#data-reset-dialog').count(), 0);
       assert.equal(await page.locator('#reset-data').isDisabled(), true);
       assert.equal(await page.evaluate(() => Q), null);
       const clean = await request('/api/state');
-      for (const key of ['cats', 'products', 'customers', 'quotes', 'customerCategories']) assert.deepEqual(clean.state[key], [], key);
+      assert.deepEqual(clean.state.customers, seededCustomers);
+      assert.deepEqual(clean.state.quotes, seededQuotes);
+      for (const key of ['cats', 'products', 'customerCategories']) assert.deepEqual(clean.state[key], savedState[key], key);
       assert.deepEqual(clean.state.set, savedSettings);
       assert.equal((await request('/api/auth/status')).user.username, 'resetbrowser');
       await page.reload(); await page.locator('#data-reset').waitFor();
-      assert.equal((await request('/api/state')).state.products.length, 0);
+      assert.deepEqual((await request('/api/state')).state.quotes, seededQuotes);
+    });
+    await check('Address-only checkbox resets addresses while retaining created customers and quotations', async () => {
+      const added = (await request('/api/customers', 'POST', { name: 'Address-only customer', mob: '9876500080', deliveryAddresses: [{ label: 'Home', line1: 'Address street', country: 'India', isDefault: true }] }, 201)).data;
+      const saved = await request('/api/quotations', 'POST', { cid: added.id, items: [{ pid: 'p2', cfg: DP.defCfg(DP.resolveProduct(catalog.products.find(p => p.id === 'p2'), catalog.set)) }] }, 201);
+      const before = await request('/api/state');
+      await page.reload(); await page.locator('#data-reset').waitFor();
+      await start(['deliveryAddresses']);
+      const payload = await page.locator('#data-reset-dialog').textContent();
+      assert.match(payload, /Delivery addresses: 1/);
+      assert.doesNotMatch(payload, /Created customers:|Created quotations:/);
+      await page.locator('#reset-confirm').click(); await warning(2);
+      await page.locator('#reset-confirm').click(); await warning(3);
+      await page.locator('#reset-confirm').click();
+      await page.waitForFunction(id => S?.customers.some(c => c.id === id && !c.deliveryAddressId && !c.deliveryAddresses?.length), added.id);
+      await page.locator('#data-reset').waitFor(); await idle();
+      const after = await request('/api/state');
+      assert.deepEqual(after.state.quotes, before.state.quotes);
+      assert.ok(after.state.quotes.some(q => q.id === saved.data.id && q.deliveryAddressSnapshot));
+      assert.ok(after.state.customers.some(c => c.id === added.id));
     });
     await check('Delegated employees cannot see the reset section in Settings', async () => {
       await request('/api/users', 'POST', { name: 'Settings employee', username: 'resetstaff', password, role: 'Employee', permissions: ['settings.manage'] }, 201);

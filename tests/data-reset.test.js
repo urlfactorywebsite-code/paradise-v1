@@ -34,10 +34,33 @@ async function fixture(t) {
   }
   const admin = client(), password = 'Reset-test-' + crypto.randomUUID();
   const auth = await admin.call('/api/auth/setup', 'POST', { name: 'Reset owner', username: 'resetowner', password, demo: true }, 201);
-  const prepare = async () => admin.call('/api/data/reset/prepare', 'POST', { revision: (await admin.call('/api/state')).revision });
+  const prepare = async (selection = ['quotations', 'customers', 'deliveryAddresses']) => admin.call('/api/data/reset/prepare', 'POST', { revision: (await admin.call('/api/state')).revision, selection });
   const confirm = (token, step, status = 200) => admin.call('/api/data/reset/confirm', 'POST', { token, step }, status);
   return { get app() { return app; }, database, admin, auth, password, client, prepare, confirm, backupDir,
     async restart() { await app.close(); app = await createApp({ ...database, backupDir }); await listen(); } };
+}
+
+async function createdRecords(f, { quotation = true, sharing = false } = {}) {
+  const state = (await f.admin.call('/api/state')).state;
+  const customer = (await f.admin.call('/api/customers', 'POST', {
+    name: 'Created customer', mob: '9876500003', categoryId: 'cc_bni',
+    deliveryAddresses: [{ label: 'Delivery', line1: 'Test street', country: 'India', isDefault: true }],
+  }, 201)).data;
+  let quote;
+  if (quotation) quote = await f.admin.call('/api/quotations', 'POST', {
+    cid: customer.id, items: [{ pid: 'p2', cfg: { ...DP.defCfg(DP.resolveProduct(state.products.find(p => p.id === 'p2'), state.set)), qty: 3 } }],
+  }, 201);
+  if (sharing) await f.admin.call('/api/quotations/' + quote.data.id + '/whatsapp', 'POST', {
+    version: quote.version, number: '+919876500003', message: 'Reset test sharing PDF',
+  }, 201);
+  return { customer, quote };
+}
+async function complete(f, selection) {
+  let challenge = await f.prepare(selection);
+  challenge = await f.confirm(challenge.token, 1);
+  challenge = await f.confirm(challenge.token, 2);
+  await f.confirm(challenge.token, 3);
+  return challenge;
 }
 
 test('reset rejects anonymous, delegated employees, missing CSRF, cross-origin and forced-password sessions', async t => {
@@ -97,29 +120,27 @@ test('reset rechecks administrator access under the mutation lock', async t => {
 });
 
 test('reset rolls back all deletions if any cleanup fails', async t => {
-  const f = await fixture(t), before = await f.app.store.readState();
+  const f = await fixture(t);
+  const records = await createdRecords(f, { sharing: true });
+  const before = await f.app.store.readState();
   let challenge = await f.prepare();
   challenge = await f.confirm(challenge.token, 1);
   challenge = await f.confirm(challenge.token, 2);
   const exec = f.app.db.exec;
-  f.app.db.exec = async sql => { if (sql === 'DELETE FROM categories') throw new Error('Injected cleanup failure'); return exec(sql); };
+  f.app.db.exec = async sql => { if (sql === 'DELETE FROM customer_delivery_addresses') throw new Error('Injected cleanup failure'); return exec(sql); };
   try { await f.confirm(challenge.token, 3, 500); }
   finally { f.app.db.exec = exec; }
   assert.deepEqual(await f.app.store.readState(), before);
   await f.confirm(challenge.token, 3);
-  assert.equal((await f.app.store.readState()).state.products.length, 0);
+  assert.equal((await f.app.store.readState()).state.quotes.some(q => q.id === records.quote.data.id), false);
+  assert.ok((await f.app.store.readState()).state.products.length);
 });
 
-test('reset empties business tables, retains accounts/settings/backups and stays empty after restart', async t => {
+test('selected reset deletes created records while preserving seeds, catalog, settings, history and backups across restart', async t => {
   const f = await fixture(t), before = await f.app.store.readState(), db = f.app.db;
   const other = f.client();
   await other.call('/api/auth/login', 'POST', { username: 'resetowner', password: f.password });
-  const customer = (await f.admin.call('/api/customers', 'POST', {
-    name: 'Reset delivery customer', mob: '9876500003', categoryId: 'cc_bni',
-    deliveryAddresses: [{ label: 'Delivery', line1: 'Test street', country: 'India', isDefault: true }],
-  }, 201)).data;
-  const quote = await f.admin.call('/api/quotations', 'POST', { cid: customer.id, items: [{ pid: 'p2', cfg: { ...DP.defCfg(DP.resolveProduct(before.state.products.find(p => p.id === 'p2'), before.state.set)), qty: 3 } }] }, 201);
-  await f.admin.call('/api/quotations/' + quote.data.id + '/whatsapp', 'POST', { version: quote.version, number: '+919876500003', message: 'Reset test sharing PDF' }, 201);
+  const { customer, quote } = await createdRecords(f, { sharing: true });
   const sharp = require('sharp');
   const png = await sharp({ create: { width: 4, height: 4, channels: 3, background: '#112233' } }).png().toBuffer();
   await f.admin.call('/api/customer-categories/cc_bni', 'PATCH', { version: 1, data: { logoDataUrl: 'data:image/png;base64,' + png.toString('base64') } });
@@ -130,36 +151,98 @@ test('reset empties business tables, retains accounts/settings/backups and stays
   const users = await db.prepare('SELECT * FROM users ORDER BY id').all();
   const settings = await db.prepare('SELECT settings,settings_version FROM workspace WHERE id=1').get();
   const fields = await db.prepare("SELECT * FROM configurable_fields WHERE scope_type<>'product' ORDER BY id").all();
-  const businessTables = ['categories', 'products', 'customers', 'quotations', 'quotation_items', 'quotation_history',
-    'quote_sequences', 'whatsapp_message_logs', 'pricing_imports', 'customer_delivery_addresses', 'customer_categories',
-    'customer_category_logos', 'quotation_item_analytics', 'product_field_bindings', 'field_configuration_audit_logs'];
-  for (const table of businessTables)
-    assert.ok((await db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).n > 0, 'Nonempty fixture: ' + table);
+  const retainedTables = ['categories', 'products', 'quote_sequences', 'pricing_imports', 'customer_categories',
+    'customer_category_logos', 'product_field_bindings', 'field_configuration_audit_logs', 'configurable_fields', 'configurable_field_options'];
+  const retained = {};
+  for (const table of retainedTables) retained[table] = (await db.query(`SELECT row_to_json(t) AS row FROM ${table} t ORDER BY row_to_json(t)::text`)).rows;
   const current = await f.admin.call('/api/state');
+  const seedCustomers = current.state.customers.filter(c => c.id !== customer.id);
+  const seedQuotes = current.state.quotes.filter(q => q.id !== quote.data.id);
+  const auditBefore = await db.prepare('SELECT * FROM audit_events ORDER BY id').all();
   let challenge = await f.prepare();
   challenge = await f.confirm(challenge.token, 1);
   challenge = await f.confirm(challenge.token, 2);
   await f.confirm(challenge.token, 3);
   await f.confirm(challenge.token, 3, 403); // Signing-key rotation makes completion single use.
-  for (const table of businessTables) assert.equal((await db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).n, 0, table);
-  assert.equal((await db.prepare("SELECT count(*) AS n FROM configurable_fields WHERE scope_type='product'").get()).n, 0);
-  assert.equal((await db.prepare('SELECT count(*) AS n FROM configurable_field_options o JOIN configurable_fields f ON f.id=o.field_id WHERE f.scope_type=\'product\'').get()).n, 0);
+  for (const table of retainedTables) assert.deepEqual((await db.query(`SELECT row_to_json(t) AS row FROM ${table} t ORDER BY row_to_json(t)::text`)).rows, retained[table], table);
+  for (const table of ['whatsapp_message_logs', 'customer_delivery_addresses']) assert.equal((await db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).n, 0, table);
+  for (const table of ['quotation_items', 'quotation_history', 'quotation_item_analytics']) assert.equal((await db.prepare(`SELECT count(*) AS n FROM ${table} WHERE quotation_id=?`).get(quote.data.id)).n, 0, table);
   assert.deepEqual(await db.prepare('SELECT * FROM users ORDER BY id').all(), users);
   assert.deepEqual(await db.prepare('SELECT settings,settings_version FROM workspace WHERE id=1').get(), settings);
   assert.deepEqual(await db.prepare("SELECT * FROM configurable_fields WHERE scope_type<>'product' ORDER BY id").all(), fields);
   assert.equal(await fs.readFile(path.join(f.backupDir, 'existing.dump'), 'utf8'), 'retained-backup');
-  assert.deepEqual((await db.prepare('SELECT action FROM audit_events').all()).map(r => r.action), ['workspace.data_reset']);
+  const auditAfter = await db.prepare('SELECT * FROM audit_events ORDER BY id').all();
+  assert.deepEqual(auditAfter.slice(0, -1), auditBefore);
+  assert.equal(auditAfter.at(-1).action, 'workspace.data_reset');
   const clean = await f.admin.call('/api/state');
-  for (const collection of ['cats', 'products', 'customers', 'quotes', 'customerCategories']) assert.deepEqual(clean.state[collection], [], collection);
+  assert.deepEqual(clean.state.customers, seedCustomers);
+  assert.deepEqual(clean.state.quotes, seedQuotes);
+  for (const collection of ['cats', 'products', 'customerCategories']) assert.deepEqual(clean.state[collection], current.state[collection], collection);
   assert.equal(clean.revision, current.revision + 1);
   await f.admin.call('/api/changes', 'POST', { revision: before.revision, changes: [{ collection: 'customers', action: 'upsert', id: 'stale', record: { id: 'stale', name: 'Stale record', mob: '9876500099' } }] }, 409);
   await other.call('/api/state', 'GET', undefined, 401);
   await f.restart();
   const restarted = await f.admin.call('/api/state');
-  for (const collection of ['cats', 'products', 'customers', 'quotes', 'customerCategories']) assert.deepEqual(restarted.state[collection], [], collection);
+  for (const collection of ['cats', 'products', 'customers', 'quotes', 'customerCategories']) assert.deepEqual(restarted.state[collection], clean.state[collection], collection);
   assert.equal((await f.admin.call('/api/auth/status')).initialized, true);
-  // Normal work is possible in the empty database, without restoring a catalog.
+  // Normal work continues with the retained catalog and monotonically increasing numbers.
   await f.admin.call('/api/customers', 'POST', { name: 'First real customer', mob: '9876500004' }, 201);
   const login = f.client();
   await login.call('/api/auth/login', 'POST', { username: 'resetowner', password: f.password });
+});
+
+test('reset rejects missing, unknown, duplicate or changed checkbox selections', async t => {
+  const f = await fixture(t), revision = (await f.admin.call('/api/state')).revision;
+  for (const selection of [undefined, [], ['products'], ['quotations', 'quotations'], ['customers']])
+    await f.admin.call('/api/data/reset/prepare', 'POST', { revision, selection }, 422);
+  const prepared = await f.prepare(['quotations']);
+  assert.deepEqual(prepared.selection, ['quotations']);
+  await f.admin.call('/api/data/reset/confirm', 'POST', { token: prepared.token, step: 1, selection: ['customers', 'deliveryAddresses'] }, 422);
+});
+
+test('quotation-only reset keeps all customers and addresses, preserves edited seed identities and continues numbering', async t => {
+  const f = await fixture(t), { quote } = await createdRecords(f, { sharing: true });
+  await f.app.db.exec("UPDATE quotations SET body=(body::jsonb || '{\"project\":\"Renamed seed quotation\"}'::jsonb)::text WHERE id='Q1'");
+  await f.app.db.exec("UPDATE customers SET name='Renamed seed customer',body=(body::jsonb || '{\"name\":\"Renamed seed customer\"}'::jsonb)::text WHERE id='C1'");
+  const before = await f.admin.call('/api/state');
+  const sequences = await f.app.db.prepare('SELECT * FROM quote_sequences ORDER BY year').all();
+  await complete(f, ['quotations']);
+  const after = await f.admin.call('/api/state');
+  assert.deepEqual(after.state.customers, before.state.customers);
+  assert.deepEqual(after.state.quotes, before.state.quotes.filter(q => q.id !== quote.data.id));
+  assert.deepEqual(await f.app.db.prepare('SELECT * FROM quote_sequences ORDER BY year').all(), sequences);
+  const next = await f.admin.call('/api/quotations', 'POST', { cid: 'C1', items: [{ pid: 'p2', cfg: DP.defCfg(DP.resolveProduct(after.state.products.find(p => p.id === 'p2'), after.state.set)) }] }, 201);
+  assert.ok(Number(next.data.no.split('/').at(-1)) > Number(quote.data.no.split('/').at(-1)));
+});
+
+test('customer reset requires linked created quotations and never deletes a retained demo quotation', async t => {
+  const f = await fixture(t), { customer } = await createdRecords(f);
+  const revision = (await f.admin.call('/api/state')).revision;
+  await f.admin.call('/api/data/reset/prepare', 'POST', { revision, selection: ['customers', 'deliveryAddresses'] }, 409);
+  await f.app.db.prepare("UPDATE quotations SET customer_id=? WHERE id='Q1'").run(customer.id);
+  await f.admin.call('/api/data/reset/prepare', 'POST', { revision, selection: ['quotations', 'customers', 'deliveryAddresses'] }, 409);
+  assert.ok((await f.admin.call('/api/state')).state.customers.some(c => c.id === customer.id));
+});
+
+test('unlinked customer-only reset retains every quotation and demo customer', async t => {
+  const f = await fixture(t), { customer } = await createdRecords(f, { quotation: false });
+  const before = await f.admin.call('/api/state');
+  await complete(f, ['customers', 'deliveryAddresses']);
+  const after = await f.admin.call('/api/state');
+  assert.deepEqual(after.state.quotes, before.state.quotes);
+  assert.deepEqual(after.state.customers, before.state.customers.filter(c => c.id !== customer.id));
+});
+
+test('address-only reset clears live pointers, retains customers/quotations and their historical delivery snapshots', async t => {
+  const f = await fixture(t), { customer, quote } = await createdRecords(f);
+  const before = await f.admin.call('/api/state');
+  assert.ok(before.state.quotes.find(q => q.id === quote.data.id).deliveryAddressSnapshot);
+  await complete(f, ['deliveryAddresses']);
+  const after = await f.admin.call('/api/state');
+  assert.deepEqual(after.state.quotes, before.state.quotes);
+  assert.deepEqual(after.state.customers.map(c => c.id), before.state.customers.map(c => c.id));
+  const saved = await f.admin.call('/api/customers/' + customer.id);
+  assert.equal(saved.data.deliveryAddressId, undefined);
+  assert.deepEqual(saved.data.deliveryAddresses || [], []);
+  await f.admin.call('/api/customers/' + customer.id, 'PATCH', { version: saved.version, data: { name: 'Editable after address reset' } });
 });
